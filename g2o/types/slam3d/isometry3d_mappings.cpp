@@ -149,5 +149,35 @@ namespace g2o {
       return result;
     }
 
+    
+    Vector12 toFlatten(const Isometry3& t)
+    {
+      Vector12 v = Vector12::Zero();
+      v.block<3,1>(0,0) = t.matrix().block<3,1>(0,0);
+      v.block<3,1>(3,0) = t.matrix().block<3,1>(0,1);
+      v.block<3,1>(6,0) = t.matrix().block<3,1>(0,2);
+      v.block<3,1>(9,0) = t.matrix().block<3,1>(0,3);
+      return v;
+    }
+      
+    G2O_TYPES_SLAM3D_API Isometry3 fromFlatten(const Vector12& v, const bool reconditionate_rotation)
+    {
+      Isometry3 t = Isometry3::Identity();
+      t.matrix().block<3,1>(0,0) = v.block<3,1>(0,0);
+      t.matrix().block<3,1>(0,1) = v.block<3,1>(3,0);
+      t.matrix().block<3,1>(0,2) = v.block<3,1>(6,0);
+      t.matrix().block<3,1>(0,3) = v.block<3,1>(9,0);
+
+      if (reconditionate_rotation) {
+        const Matrix3& R = t.linear();
+        Eigen::JacobiSVD<Matrix3> svd(R, Eigen::ComputeThinU | Eigen::ComputeThinV);
+        Matrix3 R_enforced = svd.matrixU() * svd.matrixV().transpose();
+        t.linear() = R_enforced;
+      }
+
+      return t;
+    }
+
+
   } // end namespace internal
 } // end namespace g2o

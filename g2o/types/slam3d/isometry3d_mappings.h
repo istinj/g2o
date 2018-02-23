@@ -150,6 +150,12 @@ namespace g2o {
      */
     G2O_TYPES_SLAM3D_API Isometry3 fromSE3Quat(const SE3Quat& t);
 
+    // chordal distance
+
+    G2O_TYPES_SLAM3D_API Vector12 toFlatten(const Isometry3& t);
+    G2O_TYPES_SLAM3D_API Isometry3 fromFlatten(const Vector12& v, const bool reconditionate_rotation);
+
+
   } // end namespace internal
 } // end namespace g2o
 

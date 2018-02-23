@@ -94,6 +94,7 @@ namespace g2o {
       return T;
     }
 
+    // aka nearestOrthogonalMatrix
     inline Matrix3 reconditionateRotationMatrix(const Matrix3& R) {
       Eigen::JacobiSVD<Matrix3> svd(R, Eigen::ComputeThinU | Eigen::ComputeThinV);
       Matrix3 R_enforced = svd.matrixU() * svd.matrixV().transpose();

@@ -51,6 +51,8 @@ namespace g2o {
   using Vector4 = VectorN<4>;
   using Vector6 = VectorN<6>;
   using Vector7 = VectorN<7>;
+  using Vector9 = VectorN<9>;
+  using Vector12 = VectorN<12>;
   using VectorX = VectorN<Eigen::Dynamic>;
 
   typedef Eigen::Matrix<int,2,2,Eigen::ColMajor>                                  Matrix2I;
@@ -66,6 +68,8 @@ namespace g2o {
   typedef Eigen::Matrix<number_t,2,2,Eigen::ColMajor>                             Matrix2;
   typedef Eigen::Matrix<number_t,3,3,Eigen::ColMajor>                             Matrix3;
   typedef Eigen::Matrix<number_t,4,4,Eigen::ColMajor>                             Matrix4;
+  typedef Eigen::Matrix<number_t,6,6,Eigen::ColMajor>                             Matrix6;
+  typedef Eigen::Matrix<number_t,12,12,Eigen::ColMajor>                           Matrix12;
   typedef Eigen::Matrix<number_t,Eigen::Dynamic,Eigen::Dynamic,Eigen::ColMajor>   MatrixX;
 
   typedef Eigen::Transform<number_t,2,Eigen::Isometry,Eigen::ColMajor>            Isometry2;
@@ -83,3 +87,4 @@ namespace g2o {
 } // end namespace g2o
 
 #endif
+

@@ -10,6 +10,8 @@ ADD_LIBRARY(types_slam3d ${G2O_LIB_TYPE}
   parameter_se3_offset.h
   edge_se3.cpp
   edge_se3.h
+  edge_se3_chord.h
+  edge_se3_chord.cpp
   edge_se3_offset.cpp
   edge_se3_offset.h
   vertex_pointxyz.cpp

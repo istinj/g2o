@@ -26,6 +26,7 @@
 
 #include "vertex_se3.h"
 #include "edge_se3.h"
+#include "edge_se3_chord.h"
 #include "vertex_pointxyz.h"
 
 #include "parameter_se3_offset.h"
