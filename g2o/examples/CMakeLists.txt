@@ -1,6 +1,8 @@
 ADD_SUBDIRECTORY(data_fitting)
 
 ADD_SUBDIRECTORY(sphere)
+ADD_SUBDIRECTORY(torus3d)
+ADD_SUBDIRECTORY(noise_adder3d)
 
 # The condition on cholmod is required here because the cholmod solver
 # is explicitly used in these examples.
@@ -23,6 +25,10 @@ ENDIF()
 IF(CSPARSE_FOUND OR CHOLMOD_FOUND)
   ADD_SUBDIRECTORY(sba)
   ADD_SUBDIRECTORY(bal)
+ENDIF()
+
+IF(CSPARSE_FOUND AND CHOLMOD_FOUND)
+  ADD_SUBDIRECTORY(chordal_distance)
 ENDIF()
 
 IF(Qt5_FOUND AND QGLVIEWER_FOUND AND CSPARSE_FOUND)
