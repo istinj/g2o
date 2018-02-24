@@ -1,11 +1,9 @@
 #include <iostream>
 #include <string>
 
-//ia include new stuff
-#include "types_chordal_distance.h"
+//ia include types
 #include "g2o/types/slam3d/types_slam3d.h"
 #include "g2o/types/slam3d/isometry3d_mappings.h"
-
 
 //ia include g2o core stuff
 #include "g2o/stuff/command_args.h"
@@ -22,17 +20,12 @@
 
 using namespace std;
 using namespace g2o;
-using namespace g2o::chordal;
 
 int main(int argc, char *argv[]) {
-
-  VertexSE3Chord* v = new VertexSE3Chord();
-  EdgeSE3Chord* e = new EdgeSE3Chord();
+  // required for type factory
   VertexSE3* vv = new VertexSE3();
   EdgeSE3* ee = new EdgeSE3();
-  delete e;
   delete ee;
-  delete v;
   delete vv;
   // Command line parsing
   int maxIterations;
@@ -176,7 +169,7 @@ int main(int argc, char *argv[]) {
   for (int i = 0; i < maxIterations; ++i) {
     optimizer.optimize(1);
     for (std::pair<const int, g2o::HyperGraph::Vertex*> vit : optimizer.vertices()) {
-      VertexSE3Chord* current_vertex = dynamic_cast<VertexSE3Chord*>(vit.second);
+      VertexSE3* current_vertex = dynamic_cast<VertexSE3*>(vit.second);
       VertexSE3* other_vertex = dynamic_cast<VertexSE3*>(other_optimizer.vertex(current_vertex->id()));
       other_vertex->setEstimate(current_vertex->estimate());
     }

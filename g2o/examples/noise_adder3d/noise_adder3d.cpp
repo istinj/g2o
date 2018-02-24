@@ -21,8 +21,6 @@
 using namespace std;
 using namespace g2o;
 
-typedef Eigen::Matrix<double, 6, 6> Matrix6;
-
 int main(int argc, char *argv[]) {
   cerr << "graph must be in a OPMIMUM STATE" << endl << endl;
   //! stuff required for the factory
