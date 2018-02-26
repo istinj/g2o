@@ -25,6 +25,7 @@ namespace g2o {
   G2O_REGISTER_TYPE_GROUP(slam3d);
 
   G2O_REGISTER_TYPE(VERTEX_SE3:QUAT, VertexSE3);
+  G2O_REGISTER_TYPE(VERTEX_SE3:CHORD, VertexSE3Chord);
   G2O_REGISTER_TYPE(EDGE_SE3:QUAT, EdgeSE3);
   G2O_REGISTER_TYPE(EDGE_SE3:CHORD, EdgeSE3Chord);
   G2O_REGISTER_TYPE(VERTEX_TRACKXYZ, VertexPointXYZ);
@@ -48,12 +49,14 @@ namespace g2o {
 
   /*********** ACTIONS ************/
   G2O_REGISTER_ACTION(VertexSE3WriteGnuplotAction);
+  G2O_REGISTER_ACTION(VertexSE3ChordWriteGnuplotAction);
   G2O_REGISTER_ACTION(VertexPointXYZWriteGnuplotAction);
   G2O_REGISTER_ACTION(EdgeSE3WriteGnuplotAction);
 
 #ifdef G2O_HAVE_OPENGL
   G2O_REGISTER_ACTION(VertexPointXYZDrawAction);
   G2O_REGISTER_ACTION(VertexSE3DrawAction);
+  G2O_REGISTER_ACTION(VertexSE3ChordDrawAction);
   G2O_REGISTER_ACTION(EdgeSE3DrawAction);
   G2O_REGISTER_ACTION(EdgeSE3ChordDrawAction);
   G2O_REGISTER_ACTION(EdgeSE3PointXYZDrawAction);

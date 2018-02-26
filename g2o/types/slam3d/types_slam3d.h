@@ -25,6 +25,7 @@
 #define THREE_D_TYPES_ANALYTIC_JACOBIAN
 
 #include "vertex_se3.h"
+#include "vertex_se3_chord.h"
 #include "edge_se3.h"
 #include "edge_se3_chord.h"
 #include "vertex_pointxyz.h"

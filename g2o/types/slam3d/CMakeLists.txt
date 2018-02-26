@@ -6,6 +6,8 @@ ADD_LIBRARY(types_slam3d ${G2O_LIB_TYPE}
   isometry3d_gradients.h
   vertex_se3.cpp
   vertex_se3.h
+  vertex_se3_chord.cpp
+  vertex_se3_chord.h
   parameter_se3_offset.cpp
   parameter_se3_offset.h
   edge_se3.cpp

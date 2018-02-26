@@ -10,7 +10,7 @@
 
 namespace g2o {
   EdgeSE3Chord::EdgeSE3Chord() :
-    BaseBinaryEdge<12, Isometry3, VertexSE3, VertexSE3>() {
+    BaseBinaryEdge<12, Isometry3, VertexSE3Chord, VertexSE3Chord>() {
     _information.setIdentity();
   }
 
@@ -53,8 +53,8 @@ namespace g2o {
 
     
   void EdgeSE3Chord::computeError() {
-    VertexSE3* v_from = static_cast<VertexSE3*>(_vertices[0]);
-    VertexSE3* v_to   = static_cast<VertexSE3*>(_vertices[1]);
+    VertexSE3Chord* v_from = static_cast<VertexSE3Chord*>(_vertices[0]);
+    VertexSE3Chord* v_to   = static_cast<VertexSE3Chord*>(_vertices[1]);
 
     //! Prediction
     Isometry3 h_x = v_from->estimate().inverse() * v_to->estimate();
@@ -67,8 +67,8 @@ namespace g2o {
 
     
   void EdgeSE3Chord::linearizeOplus() {
-    VertexSE3* v_from = static_cast<VertexSE3*>(_vertices[0]);
-    VertexSE3* v_to   = static_cast<VertexSE3*>(_vertices[1]);
+    VertexSE3Chord* v_from = static_cast<VertexSE3Chord*>(_vertices[0]);
+    VertexSE3Chord* v_to   = static_cast<VertexSE3Chord*>(_vertices[1]);
 
     _jacobianOplusXi.setZero();
     _jacobianOplusXj.setZero();
@@ -106,8 +106,8 @@ namespace g2o {
   }
 
   void EdgeSE3Chord::initialEstimate(const OptimizableGraph::VertexSet& from_, OptimizableGraph::Vertex* /*to_*/) {
-    VertexSE3* from = static_cast<VertexSE3*>(_vertices[0]);
-    VertexSE3* to = static_cast<VertexSE3*>(_vertices[1]);
+    VertexSE3Chord* from = static_cast<VertexSE3Chord*>(_vertices[0]);
+    VertexSE3Chord* to = static_cast<VertexSE3Chord*>(_vertices[1]);
     if (from_.count(from) > 0) {
       to->setEstimate(from->estimate() * _measurement);
     } else
@@ -132,8 +132,8 @@ namespace g2o {
       return this;
       
     EdgeSE3Chord* e =  static_cast<EdgeSE3Chord*>(element);
-    VertexSE3* fromEdge = static_cast<VertexSE3*>(e->vertices()[0]);
-    VertexSE3* toEdge   = static_cast<VertexSE3*>(e->vertices()[1]);
+    VertexSE3Chord* fromEdge = static_cast<VertexSE3Chord*>(e->vertices()[0]);
+    VertexSE3Chord* toEdge   = static_cast<VertexSE3Chord*>(e->vertices()[1]);
     if (! fromEdge || ! toEdge)
       return this;
     glColor3f(POSE_EDGE_COLOR);

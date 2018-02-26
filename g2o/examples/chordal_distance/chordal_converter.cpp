@@ -47,8 +47,9 @@ Matrix12 _reconditionateSigma(const Matrix12& src_sigma_,
 
 int main(int argc, char *argv[]) {
   // factory setup
-  EdgeSE3* e_standard = new EdgeSE3();
   VertexSE3* v = new VertexSE3();
+  VertexSE3Chord* v_chord = new VertexSE3Chord();
+  EdgeSE3* e_standard = new EdgeSE3();
   EdgeSE3Chord* e_chord = new EdgeSE3Chord();
 
   // arguments of the executable
@@ -111,11 +112,11 @@ int main(int argc, char *argv[]) {
     cerr << "writing to stdout" << endl;
   }
 
-  std::string vertexTag = Factory::instance()->tag(v);
+  std::string vertexTag = Factory::instance()->tag(v_chord);
   
   std::ostream& fout = outFilename != "-" ? file_output_stream : cout;
   for (std::pair<const int, g2o::HyperGraph::Vertex*> vit : vertices) {
-    VertexSE3* v = dynamic_cast<VertexSE3*>(vit.second);
+    VertexSE3Chord* v = dynamic_cast<VertexSE3Chord*>(vit.second);
     fout << vertexTag << " " << v->id() << " ";
     v->write(fout);
     fout << endl;
@@ -130,8 +131,8 @@ int main(int argc, char *argv[]) {
 
   for (HyperGraph::Edge* eptr : chordal_edges) {
     EdgeSE3Chord* e = dynamic_cast<EdgeSE3Chord*>(eptr);
-    VertexSE3* from = dynamic_cast<VertexSE3*>(e->vertex(0));
-    VertexSE3* to = dynamic_cast<VertexSE3*>(e->vertex(1));
+    VertexSE3Chord* from = dynamic_cast<VertexSE3Chord*>(e->vertex(0));
+    VertexSE3Chord* to = dynamic_cast<VertexSE3Chord*>(e->vertex(1));
     fout << chod_edge_tag << " " << from->id() << " " << to->id() << " ";
     e->write(fout);
     fout << endl;
@@ -147,6 +148,7 @@ int main(int argc, char *argv[]) {
   }
   
   delete v;
+  delete v_chord;
   delete e_standard;
   delete e_chord;
 }  
