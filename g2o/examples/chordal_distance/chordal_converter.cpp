@@ -112,11 +112,13 @@ int main(int argc, char *argv[]) {
     cerr << "writing to stdout" << endl;
   }
 
+  cerr << "get vertex tag" << endl;
   std::string vertexTag = Factory::instance()->tag(v_chord);
   
   std::ostream& fout = outFilename != "-" ? file_output_stream : cout;
+  cerr << "write the vertices" << endl;
   for (std::pair<const int, g2o::HyperGraph::Vertex*> vit : vertices) {
-    VertexSE3Chord* v = dynamic_cast<VertexSE3Chord*>(vit.second);
+    VertexSE3* v = dynamic_cast<VertexSE3*>(vit.second);
     fout << vertexTag << " " << v->id() << " ";
     v->write(fout);
     fout << endl;
@@ -131,9 +133,7 @@ int main(int argc, char *argv[]) {
 
   for (HyperGraph::Edge* eptr : chordal_edges) {
     EdgeSE3Chord* e = dynamic_cast<EdgeSE3Chord*>(eptr);
-    VertexSE3Chord* from = dynamic_cast<VertexSE3Chord*>(e->vertex(0));
-    VertexSE3Chord* to = dynamic_cast<VertexSE3Chord*>(e->vertex(1));
-    fout << chod_edge_tag << " " << from->id() << " " << to->id() << " ";
+    fout << chod_edge_tag << " " << e->vertex(0)->id() << " " << e->vertex(1)->id() << " ";
     e->write(fout);
     fout << endl;
   }
