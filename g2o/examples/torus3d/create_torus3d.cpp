@@ -93,7 +93,7 @@ int main (int argc, char** argv) {
         EdgeSE3* e=new EdgeSE3;
         e->setVertex(0,v_previous);
         e->setVertex(1,v);
-	e->setMeasurement(v_previous->estimate().inverse()*v->estimate());
+        e->setMeasurement(v_previous->estimate().inverse()*v->estimate());
         e->setInformation(information);
         edges.push_back(e);
       }

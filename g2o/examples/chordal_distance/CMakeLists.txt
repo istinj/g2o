@@ -10,3 +10,8 @@ ADD_EXECUTABLE(chordal_converter chordal_converter.cpp)
 SET_TARGET_PROPERTIES(chordal_converter PROPERTIES OUTPUT_NAME chordal_converter${EXE_POSTFIX})
 TARGET_LINK_LIBRARIES(chordal_converter core types_slam3d)
 
+# inverse chordal converter
+ADD_EXECUTABLE(reverse_chordal_converter inverse_chordal_converter.cpp)
+SET_TARGET_PROPERTIES(reverse_chordal_converter PROPERTIES OUTPUT_NAME reverse_chordal_converter${EXE_POSTFIX})
+TARGET_LINK_LIBRARIES(reverse_chordal_converter core types_slam3d)
+

@@ -23,10 +23,11 @@ using namespace g2o;
 
 int main(int argc, char *argv[]) {
   // required for type factory
-  VertexSE3* vv = new VertexSE3();
-  EdgeSE3* ee = new EdgeSE3();
-  delete ee;
-  delete vv;
+  VertexSE3* v_quat = new VertexSE3();
+  EdgeSE3* e_quat = new EdgeSE3();
+  VertexSE3Chord* v_chord = new VertexSE3Chord();
+  EdgeSE3Chord* e_chord = new EdgeSE3Chord();
+
   // Command line parsing
   int maxIterations;
   string outputFilename;
@@ -169,7 +170,7 @@ int main(int argc, char *argv[]) {
   for (int i = 0; i < maxIterations; ++i) {
     optimizer.optimize(1);
     for (std::pair<const int, g2o::HyperGraph::Vertex*> vit : optimizer.vertices()) {
-      VertexSE3* current_vertex = dynamic_cast<VertexSE3*>(vit.second);
+      VertexSE3Chord* current_vertex = dynamic_cast<VertexSE3Chord*>(vit.second);
       VertexSE3* other_vertex = dynamic_cast<VertexSE3*>(other_optimizer.vertex(current_vertex->id()));
       other_vertex->setEstimate(current_vertex->estimate());
     }
@@ -202,5 +203,10 @@ int main(int argc, char *argv[]) {
   comp_stats_file.close();
   cerr << "done!" << endl;
 
+  // checkout things
+  delete v_quat;
+  delete e_quat;
+  delete v_chord;
+  delete e_chord;
   return 0;
 }

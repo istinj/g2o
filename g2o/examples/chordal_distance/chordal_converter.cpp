@@ -52,6 +52,9 @@ int main(int argc, char *argv[]) {
   EdgeSE3* e_standard = new EdgeSE3();
   EdgeSE3Chord* e_chord = new EdgeSE3Chord();
 
+  std::string chord_vertex_tag = Factory::instance()->tag(v_chord);
+  std::string chord_edge_tag = Factory::instance()->tag(e_chord);
+
   // arguments of the executable
   std::string outFilename, inputFilename;
   double omegaThreshold;
@@ -82,9 +85,9 @@ int main(int argc, char *argv[]) {
 
   // new edges
   HyperGraph::EdgeSet chordal_edges;
-  // std::map<IntPair, EdgeSE3Chord*> chordal_edges;
   
   // convert the edges
+  std::cerr << "convert the src_edges from standard quaternions to chordal" << std::endl;
   for (HyperGraph::Edge* eptr : edges) {
     EdgeSE3* e = dynamic_cast<EdgeSE3*>(eptr);
     const Isometry3& Z = e->measurement();
@@ -99,7 +102,9 @@ int main(int argc, char *argv[]) {
     chord_edge->setInformation(omega_chord);
     chord_edge->vertices() = eptr->vertices();
     chordal_edges.insert(chord_edge);
+    std::cerr << "x";
   }
+  std::cerr << "\n";
 
   cerr << "converted " << chordal_edges.size() << " edges"<< endl;
   
@@ -111,15 +116,12 @@ int main(int argc, char *argv[]) {
   } else {
     cerr << "writing to stdout" << endl;
   }
-
-  cerr << "get vertex tag" << endl;
-  std::string vertexTag = Factory::instance()->tag(v_chord);
   
   std::ostream& fout = outFilename != "-" ? file_output_stream : cout;
-  cerr << "write the vertices" << endl;
+
   for (std::pair<const int, g2o::HyperGraph::Vertex*> vit : vertices) {
     VertexSE3* v = dynamic_cast<VertexSE3*>(vit.second);
-    fout << vertexTag << " " << v->id() << " ";
+    fout << chord_vertex_tag << " " << v->id() << " ";
     v->write(fout);
     fout << endl;
     if (v->fixed()) {
@@ -127,13 +129,9 @@ int main(int argc, char *argv[]) {
     }
   }
 
-  cerr << "vertexes done, now edges" << endl;
-
-  std::string chod_edge_tag = Factory::instance()->tag(e_chord);
-
   for (HyperGraph::Edge* eptr : chordal_edges) {
     EdgeSE3Chord* e = dynamic_cast<EdgeSE3Chord*>(eptr);
-    fout << chod_edge_tag << " " << e->vertex(0)->id() << " " << e->vertex(1)->id() << " ";
+    fout << chord_edge_tag << " " << e->vertex(0)->id() << " " << e->vertex(1)->id() << " ";
     e->write(fout);
     fout << endl;
   }
@@ -237,6 +235,7 @@ Matrix12 _reconditionateSigma(const Matrix12& src_sigma_,
       conditioned_sigma = src_sigma_;
       conditioned_sigma.diagonal().array() += threshold_; //! Avoids rank loss (right value)
       // conditioned_sigma.diagonal().array() += 1e-10; //! Avoids rank loss (this value will restore original omegas +/-)
+      break;
     }
   default:
     std::cerr << "wrong conditionig type; allowed are -> 0 [soft], 1 [mid]" << std::endl;
