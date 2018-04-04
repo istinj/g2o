@@ -76,6 +76,10 @@ int main(int argc, char *argv[]) {
   information.block<3,3>(0,0) = transNoise.inverse();
   information.block<3,3>(3,3) = rotNoise.inverse();
 
+  std::cerr << "translational noise\n" << transNoise << std::endl;
+  std::cerr << "rotational noise\n" << rotNoise << std::endl;
+  std::cerr << "information matrix\n" << information << std::endl;
+
   //! required to easily operate on the graph
   g2o::SparseOptimizer optimizer;
 
@@ -146,6 +150,8 @@ int main(int argc, char *argv[]) {
     e->setMeasurement(noisy_meas);
     e->setInformation(information);
   }
+
+  std::cerr << std::endl;
 
   // write output
   std::ofstream fileOutputStream;
