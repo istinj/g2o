@@ -370,18 +370,18 @@ int main(int argc, char** argv)
 
   //  if (robustKernel) {
   //cerr << "# Preparing robust error function ... ";
-    for (SparseOptimizer::EdgeSet::iterator it = optimizer.edges().begin(); it != optimizer.edges().end(); ++it) {
-      SparseOptimizer::Edge* e = dynamic_cast<SparseOptimizer::Edge*>(*it);
-      if (kernelCreator) {
-	e->setRobustKernel(kernelCreator->construct());
-	if (huberWidth > 0)
-	  e->robustKernel()->setDelta(huberWidth);
-      }
+  for (SparseOptimizer::EdgeSet::iterator it = optimizer.edges().begin(); it != optimizer.edges().end(); ++it) {
+    SparseOptimizer::Edge* e = dynamic_cast<SparseOptimizer::Edge*>(*it);
+    if (kernelCreator) {
+      e->setRobustKernel(kernelCreator->construct());
+      if (huberWidth > 0)
+        e->robustKernel()->setDelta(huberWidth);
     }
-    //cerr << "done." << endl;
-    //}
+  }
+  //cerr << "done." << endl;
+  //}
   optimizer.computeActiveErrors();
-
+  
 
   StarSet stars;
 

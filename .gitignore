@@ -3,3 +3,9 @@ lib
 bin
 .vs
 .vscode
+
+.cproject
+.project
+.settings/*
+
+
