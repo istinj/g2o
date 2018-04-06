@@ -48,7 +48,7 @@ namespace g2o {
     for (HyperGraph::EdgeSet::iterator it=_optimizer->edges().begin(); it!=_optimizer->edges().end(); it++){
       OptimizableGraph::Edge* e = (OptimizableGraph::Edge*)(*it);
       if (e->level()==_level) {
-  _freeEdges.insert(e);
+        _freeEdges.insert(e);
       }
     }
   }
