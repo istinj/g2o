@@ -10,7 +10,7 @@ namespace g2o{
   namespace matchables{
 
     EdgeSE3Matchable::EdgeSE3Matchable():
-      BaseBinaryEdge<7,Matchable,VertexSE3,VertexMatchable>(){
+      BaseBinaryEdge<7,Matchable,VertexSE3Chord,VertexMatchable>(){
       _information.setIdentity();
     }
 
@@ -75,7 +75,7 @@ namespace g2o{
 
     void EdgeSE3Matchable::computeError(){
 
-      VertexSE3 *v_from = static_cast<VertexSE3*>(_vertices[0]);
+      VertexSE3Chord *v_from = static_cast<VertexSE3Chord*>(_vertices[0]);
       VertexMatchable *v_to = static_cast<VertexMatchable*>(_vertices[1]);
 
       const Isometry3 &pose = v_from->estimate();
@@ -115,7 +115,7 @@ namespace g2o{
         return this;
 
       EdgeSE3Matchable* e =  static_cast<EdgeSE3Matchable*>(element);
-      VertexSE3* fromEdge = static_cast<VertexSE3*>(e->vertex(0));
+      VertexSE3Chord* fromEdge = static_cast<VertexSE3Chord*>(e->vertex(0));
       VertexMatchable* toEdge   = static_cast<VertexMatchable*>(e->vertex(1));
       
       if (! fromEdge || ! toEdge)

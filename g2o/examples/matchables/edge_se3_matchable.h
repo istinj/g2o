@@ -1,7 +1,7 @@
 #pragma once
 
 #include <g2o/core/base_binary_edge.h>
-#include <g2o/types/slam3d/vertex_se3.h>
+#include <g2o/types/slam3d/vertex_se3_chord.h>
 
 #include "g2o_types_matchable_api.h"
 #include "vertex_matchable.h"
@@ -9,7 +9,7 @@
 namespace g2o {
   namespace matchables {
     
-    class G2O_TYPES_MATCHABLE_API EdgeSE3Matchable : public BaseBinaryEdge<7, Matchable, VertexSE3, VertexMatchable> {
+    class G2O_TYPES_MATCHABLE_API EdgeSE3Matchable : public BaseBinaryEdge<7, Matchable, VertexSE3Chord, VertexMatchable> {
     public:
       EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 

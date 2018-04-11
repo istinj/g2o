@@ -5,7 +5,6 @@ ADD_LIBRARY(matchables_library ${G2O_LIB_TYPE}
   edge_se3_matchable.cpp edge_se3_matchable.h
   vertex_matchable.cpp vertex_matchable.h
   types_matchable.cpp types_matchable.h
-  graph_generator.cpp graph_generator.h
   g2o_types_matchable_api.h
 )
 
@@ -24,3 +23,14 @@ TARGET_LINK_LIBRARIES(matchables_library
 #SET_TARGET_PROPERTIES(test_matchables PROPERTIES OUTPUT_NAME test_matchables${EXE_POSTFIX})
 
 #TARGET_LINK_LIBRARIES(test_matchables matchables_library)
+
+ADD_EXECUTABLE(graph_generator
+  graph_generator.cpp
+)
+
+SET_TARGET_PROPERTIES(graph_generator PROPERTIES OUTPUT_NAME graph_generator${EXE_POSTFIX})
+
+TARGET_LINK_LIBRARIES(graph_generator
+  matchables_library
+  types_slam3d
+)

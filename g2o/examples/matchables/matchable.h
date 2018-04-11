@@ -14,7 +14,7 @@ namespace g2o{
       typedef Eigen::Matrix<number_t,13,1,Eigen::ColMajor> Vector13;
       typedef Eigen::DiagonalMatrix<number_t,3> DiagMatrix3;
 
-      Matchable();
+      Matchable(){}
 
       Matchable(Type type_,
                 Vector3 point_,
@@ -34,6 +34,17 @@ namespace g2o{
 
       Matchable transform(const Isometry3 &T) const{
         return Matchable(_type,T*_point,T.linear()*_R);
+      }
+
+      Matchable perturb(const Vector5 &v) const{
+        Vector3 dp(v[0],v[1],v[2]);
+        Matrix3 dR;
+        dR = Eigen::AngleAxisd(v[3],Vector3::UnitY())*Eigen::AngleAxisd(v[4],Vector3::UnitZ());
+
+        Vector3 point = _point + dp;
+        Matrix3 R  = _R * dR;
+
+        return Matchable(_type,point,R);
       }
 
       Vector13 toVector() const;
