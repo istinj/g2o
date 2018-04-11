@@ -99,7 +99,7 @@ namespace g2o{
     }
 
 
-    
+
 #ifdef G2O_HAVE_OPENGL
     EdgeSE3MatchableDrawAction::EdgeSE3MatchableDrawAction(): DrawAction(typeid(EdgeSE3Matchable).name()){}
 
@@ -133,5 +133,6 @@ namespace g2o{
       return this;
     }
 #endif
+
   }
 }

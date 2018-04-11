@@ -59,7 +59,7 @@ namespace g2o{
     }
 
 
-    
+
     VertexMatchableDrawAction::VertexMatchableDrawAction(): DrawAction(typeid(VertexMatchable).name()){
       _cacheDrawActions = 0;
     }
@@ -118,5 +118,6 @@ namespace g2o{
     
     return this;
     }    
+
   }
 }

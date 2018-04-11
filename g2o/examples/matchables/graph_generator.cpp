@@ -12,6 +12,7 @@ namespace g2o{
     public:
 
       typedef Eigen::Matrix<number_t,6,6,Eigen::ColMajor> Matrix6;
+      typedef Eigen::Matrix<number_t,7,7,Eigen::ColMajor> Matrix7;
       typedef std::vector<std::pair<int,int> > IntIntPairVector;
 
       GraphGenerator(int num_points_ = 0,
@@ -29,6 +30,9 @@ namespace g2o{
 
         _matchable_dim = 13;
       }
+
+      inline const int numLandmarks() const {return _num_landmarks;}
+      inline const int numPoses() const {return _num_poses;}
 
       inline void setConstraints(const std::vector<int> &constraints_){_constraints = constraints_;}
 
@@ -313,13 +317,24 @@ int main(){
   generator.generateMeasurements(measurements,landmark_associations,landmarks,poses);
 
   //generate wrong initial guess
-  generator.applyPerturbationToData(landmarks,poses);
+  // generator.applyPerturbationToData(landmarks,poses);
 
   //write to file
   const char* filename = "graph.g2o";
   std::ofstream graph(filename);
 
   int id=0;
+  
+  for(size_t i=0; i<poses.size(); ++i){
+    const Isometry3 &pose = poses[i];
+    graph << "VERTEX_SE3:CHORD " << id << " ";
+    const Vector7 v = internal::toVectorQT(pose);
+    for(size_t j=0; j<7; ++j)
+      graph << v[j] << " ";
+    graph << std::endl;
+    ++id;
+  }
+
 
   for(size_t i=0; i<landmarks.size(); ++i){
     const Matchable &landmark = landmarks[i];
@@ -331,22 +346,24 @@ int main(){
     ++id;
   }
 
-  for(size_t i=0; i<poses.size(); ++i){
-    const Isometry3 &pose = poses[i];
-    graph << "VERTEX_SE3:CHORD " << id << " ";
-    const Vector7 v = internal::toVectorQT(pose);
-    for(size_t j=0; j<7; ++j)
-      graph << v[j] << " ";
-    graph << std::endl;
-    ++id;
-  }
-
+  GraphGenerator::Matrix7 omega = GraphGenerator::Matrix7::Identity();
+  
   for(size_t i=0; i<measurements.size(); ++i){
     Matchable measurement = measurements[i];
-    graph << "EDGE_SE3_MATCHABLE " << id << " ";
+    graph << "EDGE_SE3_MATCHABLE " 
+          << landmark_associations[i].first << " "
+          << generator.numPoses()+landmark_associations[i].second << " ";
+    
     Matchable::Vector13 v = measurement.toVector();
     for(size_t j=0; j<13; ++j)
       graph << v[j] << " ";
+
+    for (int r = 0; r < omega.rows(); ++r) {
+      for (int c = r; c < omega.cols(); ++c) {
+        graph << omega(r,c) << " ";
+      }
+    }
+    
     graph << std::endl;
     ++id;
   }
