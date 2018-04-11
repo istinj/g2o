@@ -1,5 +1,11 @@
 #include "edge_se3_matchable.h"
 
+#ifdef G2O_HAVE_OPENGL
+#include "g2o/stuff/opengl_wrapper.h"
+#include "g2o/stuff/opengl_primitives.h"
+#endif
+
+
 namespace g2o{
   namespace matchables{
 
@@ -91,5 +97,41 @@ namespace g2o{
       _error[6] = eo;
 
     }
+
+
+    
+#ifdef G2O_HAVE_OPENGL
+    EdgeSE3MatchableDrawAction::EdgeSE3MatchableDrawAction(): DrawAction(typeid(EdgeSE3Matchable).name()){}
+
+    HyperGraphElementAction* EdgeSE3MatchableDrawAction::operator()(HyperGraph::HyperGraphElement* element, HyperGraphElementAction::Parameters* params_) {
+      
+      if (typeid(*element).name()!=_typeName)
+        return 0;
+      refreshPropertyPtrs(params_);
+      if (! _previousParams)
+        return this;
+
+      if (_show && !_show->value())
+        return this;
+
+      EdgeSE3Matchable* e =  static_cast<EdgeSE3Matchable*>(element);
+      VertexSE3* fromEdge = static_cast<VertexSE3*>(e->vertex(0));
+      VertexMatchable* toEdge   = static_cast<VertexMatchable*>(e->vertex(1));
+      
+      if (! fromEdge || ! toEdge)
+        return this;
+      
+      Isometry3 fromTransform=fromEdge->estimate();
+      glColor3f(LANDMARK_EDGE_COLOR);
+      glPushAttrib(GL_ENABLE_BIT);
+      glDisable(GL_LIGHTING);
+      glBegin(GL_LINES);
+      glVertex3f((float)fromTransform.translation().x(),(float)fromTransform.translation().y(),(float)fromTransform.translation().z());
+      glVertex3f((float)toEdge->estimate().point().x(),(float)toEdge->estimate().point().y(),(float)toEdge->estimate().point().z());
+      glEnd();
+      glPopAttrib();
+      return this;
+    }
+#endif
   }
 }

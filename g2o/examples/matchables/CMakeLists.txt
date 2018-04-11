@@ -6,6 +6,7 @@ ADD_LIBRARY(matchables_library ${G2O_LIB_TYPE}
   vertex_matchable.cpp vertex_matchable.h
   types_matchable.cpp types_matchable.h
   graph_generator.cpp graph_generator.h
+  g2o_types_matchable_api.h
 )
 
 SET_TARGET_PROPERTIES(matchables_library PROPERTIES OUTPUT_NAME ${LIB_PREFIX}matchables)
