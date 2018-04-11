@@ -3,8 +3,9 @@
 namespace g2o {
   namespace matchables{
     Matchable::Matchable(Type type_,
-                         Vector3F point_,
-                         Matrix3F R_):
+                         Vector3 point_,
+                         Matrix3 R_):
+      _type(type_),
       _point(point_),
       _R(R_){
 
@@ -26,10 +27,5 @@ namespace g2o {
     void Matchable::setZero(){
       _point.setZero();
     }
-
-    void Matchable::fromVector(const Vector13F &v){
-
-    }
-
   }
 }

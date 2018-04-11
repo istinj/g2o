@@ -10,21 +10,21 @@ namespace g2o{
 
       enum Type {Point=0, Line=1, Plane=2};
 
-      typedef Eigen::Matrix<float,5,1,Eigen::ColMajor> Vector5F;
-      typedef Eigen::Matrix<float,13,1,Eigen::ColMajor> Vector13F;
-      typedef Eigen::DiagonalMatrix<float,3> DiagMatrix3F;
+      typedef Eigen::Matrix<number_t,5,1,Eigen::ColMajor> Vector5;
+      typedef Eigen::Matrix<number_t,13,1,Eigen::ColMajor> Vector13;
+      typedef Eigen::DiagonalMatrix<number_t,3> DiagMatrix3;
 
       Matchable();
 
       Matchable(Type type_,
-                Vector3F point_,
-                Matrix3F R_ = Matrix3F::Zero());
+                Vector3 point_,
+                Matrix3 R_ = Matrix3::Zero());
 
-      Matchable& operator *= (const Vector5F &v){
+      Matchable& operator *= (const Vector5 &v){
 
-        Vector3F dp(v[0],v[1],v[2]);
-        Matrix3F dR;
-        dR = Eigen::AngleAxisf(v[3],Vector3F::UnitY())*Eigen::AngleAxisf(v[4],Vector3F::UnitZ());
+        Vector3 dp(v[0],v[1],v[2]);
+        Matrix3 dR;
+        dR = Eigen::AngleAxisd(v[3],Vector3::UnitY())*Eigen::AngleAxisd(v[4],Vector3::UnitZ());
 
         _point += dp;
         _R *= dR;
@@ -32,20 +32,17 @@ namespace g2o{
         return *this;
       }
 
-      void fromVector(const Vector13F &v);
-
-      Vector13F toVector() const;
-
-
-      const Vector3F &point() const {return _point;}
-      const Matrix3F &R() const {return _R;}
+      const Type &type() const{return _type;}
+      const Vector3 &point() const {return _point;}
+      const Matrix3 &R() const {return _R;}
 
       void setZero();
 
     private:
-      Vector3F _point;
-      Matrix3F _R;
-      DiagMatrix3F _Omega;
+      Type _type;
+      Vector3 _point;
+      Matrix3 _R;
+      DiagMatrix3 _Omega;
     };
   }
 }

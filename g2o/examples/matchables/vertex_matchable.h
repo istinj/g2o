@@ -10,14 +10,16 @@ namespace g2o{
     public:
       EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 
-      VertexMatchable(Matchable::Type type_, const Vector3F &point_, Matrix3F R_ = Matrix3F::Zero());
+//      VertexMatchable(Matchable::Type type_, const Vector3F &point_, Matrix3F R_ = Matrix3F::Zero());
+
+      VertexMatchable(): BaseVertex<5,Matchable>() {}
 
       virtual void setToOriginImpl(){
         _estimate.setZero();
       }
 
       virtual void oplusImpl(const double *update){
-        Matchable::Vector5F v;
+        Matchable::Vector5 v;
         v << update[0],update[1],update[2],update[3],update[4];
 
         _estimate *= v;
@@ -25,10 +27,6 @@ namespace g2o{
 
       virtual bool read(std::istream &is);
       virtual bool write(std::ostream &os) const;
-
-    protected:
-      Matchable::Type _type;
-
     };
   }
 }

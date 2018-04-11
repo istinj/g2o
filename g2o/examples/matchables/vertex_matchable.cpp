@@ -3,16 +3,10 @@
 namespace g2o{
   namespace matchables{
 
-    VertexMatchable::VertexMatchable(Matchable::Type type_,
-                                     const Vector3F & point_,
-                                     Matrix3F R_): BaseVertex<5,Matchable>() {
-
-    }
-
     bool VertexMatchable::read(std::istream &is){
       int t;
-      Vector3F p;
-      Matrix3F R;
+      Vector3 p;
+      Matrix3 R;
 
       is >> t;
       is >> p[0] >> p[1] >> p[2];
@@ -34,16 +28,16 @@ namespace g2o{
       }
 
       _estimate = Matchable(type,p,R);
-      _type = type;
+
 
       return true;
     }
 
     bool VertexMatchable::write(std::ostream &os) const{
-      Vector3F p = _estimate.point();
-      Matrix3F R = _estimate.R();
+      Vector3 p = _estimate.point();
+      Matrix3 R = _estimate.R();
 
-      os << _type << " ";
+      os << _estimate.type() << " ";
       os << p[0] << " " << p[1] << " " << p[2] << " ";
       os << R(0,0) << " " << R(0,1) << " " << R(0,2) << " "
          << R(1,0) << " " << R(1,1) << " " << R(1,2) << " "
