@@ -32,6 +32,12 @@ namespace g2o{
         return *this;
       }
 
+      Matchable transform(const Isometry3 &T) const{
+        return Matchable(_type,T*_point,T.linear()*_R);
+      }
+
+      Vector13 toVector() const;
+
       const Type &type() const{return _type;}
       const Vector3 &point() const {return _point;}
       const Matrix3 &R() const {return _R;}

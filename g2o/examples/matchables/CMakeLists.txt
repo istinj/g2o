@@ -5,6 +5,7 @@ ADD_LIBRARY(matchables_library ${G2O_LIB_TYPE}
   edge_se3_matchable.cpp edge_se3_matchable.h
   vertex_matchable.cpp vertex_matchable.h
   types_matchable.cpp types_matchable.h
+  graph_generator.cpp graph_generator.h
 )
 
 SET_TARGET_PROPERTIES(matchables_library PROPERTIES OUTPUT_NAME ${LIB_PREFIX}matchables)
