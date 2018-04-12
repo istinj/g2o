@@ -39,7 +39,7 @@ namespace g2o{
       Matchable perturb(const Vector5 &v) const{
         Vector3 dp(v[0],v[1],v[2]);
         Matrix3 dR;
-        dR = Eigen::AngleAxisd(v[3],Vector3::UnitY())*Eigen::AngleAxisd(v[4],Vector3::UnitZ());
+        dR = AngleAxis(v[3],Vector3::UnitY())*AngleAxis(v[4],Vector3::UnitZ());
 
         Vector3 point = _point + dp;
         Matrix3 R  = _R * dR;
@@ -56,11 +56,14 @@ namespace g2o{
 
       void setZero();
 
-    private:
-      Type _type;
+    protected:
+      Type    _type;
       Vector3 _point;
       Matrix3 _R;
       DiagMatrix3 _Omega;
+
+    public:
+      static const number_t _epsilon;
     };
 
     typedef std::vector<Matchable> MatchableVector;

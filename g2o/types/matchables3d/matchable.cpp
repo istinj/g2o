@@ -1,7 +1,9 @@
 #include "matchable.h"
 
 namespace g2o {
-  namespace matchables{
+  namespace matchables {
+    const number_t Matchable::_epsilon = 1e-3;
+    
     Matchable::Matchable(Type type_,
                          Vector3 point_,
                          Matrix3 R_):
@@ -14,11 +16,14 @@ namespace g2o {
         case Point:
           _Omega.setIdentity();
         case Line:
+          _Omega.diagonal()[0]=_epsilon;
           _Omega.diagonal()[1]=1;
           _Omega.diagonal()[2]=1;
           break;
         case Plane:
           _Omega.diagonal()[0]=1;
+          _Omega.diagonal()[1]=_epsilon;
+          _Omega.diagonal()[2]=_epsilon;
           break;
         default: break;
       }
