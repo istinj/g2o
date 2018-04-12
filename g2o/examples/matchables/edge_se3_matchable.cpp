@@ -23,22 +23,7 @@ namespace g2o{
       is >> p[0] >> p[1] >> p[2];
       is >> R(0,0) >> R(0,1) >> R(0,2) >> R(1,0) >> R(1,1) >> R(1,2) >> R(2,0) >> R(2,1) >> R(2,2);
 
-      Matchable::Type type;
-      switch(t){
-        case 0:
-          type = Matchable::Type::Point;
-          break;
-        case 1:
-          type = Matchable::Type::Line;
-          break;
-        case 2:
-          type = Matchable::Type::Plane;
-          break;
-        default:
-          throw std::runtime_error("[EdgeSE3Matchable][Read] irrumati!!!");
-      }
-
-      setMeasurement(Matchable(type,p,R));
+      setMeasurement(Matchable(t,p,R));
 
       if (is.bad())
         return false;

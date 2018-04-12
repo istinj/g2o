@@ -31,8 +31,7 @@ namespace g2o{
         _matchable_dim = 13;
       }
 
-      inline const int numLandmarks() const {return _num_landmarks;}
-      inline const int numPoses() const {return _num_poses;}
+      inline int numPoses() const {return _num_poses;}
 
       inline void setConstraints(const std::vector<int> &constraints_){_constraints = constraints_;}
 
@@ -43,10 +42,10 @@ namespace g2o{
           landmarks[i]=generatePointLandmark();
         }
         for(int i=0; i<_num_lines; ++i){
-          landmarks[_num_points+i]=generatePointLandmark();
+          landmarks[_num_points+i]=generateLineLandmark();
         }
         for(int i=0; i<_num_planes; ++i){
-          landmarks[_num_points+_num_lines+i]=generatePointLandmark();
+          landmarks[_num_points+_num_lines+i]=generatePlaneLandmark();
         }
       }
 
@@ -286,16 +285,16 @@ using namespace g2o;
 using namespace matchables;
 
 int main(){
-  int num_points=10;
-  int num_lines=0;
+  int num_points=0;
+  int num_lines=10;
   int num_planes=0;
   int num_poses=10;
   float world_size=10;
   std::vector<int> constraints(6);
 
-  constraints[0] = 1; //point-point
+  constraints[0] = 0; //point-point
   constraints[1] = 0; //line-point
-  constraints[2] = 0; //line-line
+  constraints[2] = 1; //line-line
   constraints[3] = 0; //plane-point
   constraints[4] = 0; //plane-line
   constraints[5] = 0; //plane-plane

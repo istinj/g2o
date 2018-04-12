@@ -2,7 +2,7 @@
 
 namespace g2o {
   namespace matchables{
-    Matchable::Matchable(Type type_,
+    Matchable::Matchable(int type_,
                          Vector3 point_,
                          Matrix3 R_):
       _type(type_),
@@ -11,13 +11,13 @@ namespace g2o {
 
       _Omega.setZero();
       switch(type_){
-        case Point:
+        case Type::Point:
           _Omega.setIdentity();
-        case Line:
+        case Type::Line:
           _Omega.diagonal()[1]=1;
           _Omega.diagonal()[2]=1;
           break;
-        case Plane:
+        case Type::Plane:
           _Omega.diagonal()[0]=1;
           break;
         default: break;
