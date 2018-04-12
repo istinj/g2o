@@ -71,6 +71,9 @@ namespace g2o {
       float _world_size;
       IntVector _constraints;
 
+      /* g2o::HyperGraph::EdgeSet edges; */
+      /* g2o::HyperGraph::VertexIDMap vertices; */
+
     public:
       EIGEN_MAKE_ALIGNED_OPERATOR_NEW
     };

@@ -22,11 +22,11 @@ TARGET_LINK_LIBRARIES(matchable_generator_library
   core 
   )
 
-ADD_EXECUTABLE(matchable_simulator_3d matchable_graph_generator.cpp)
+ADD_EXECUTABLE(matchable_graph_generator matchable_graph_generator.cpp)
 
-SET_TARGET_PROPERTIES(matchable_simulator_3d PROPERTIES OUTPUT_NAME matchable_simulator_3d${EXE_POSTFIX})
+SET_TARGET_PROPERTIES(matchable_graph_generator PROPERTIES OUTPUT_NAME matchable_graph_generator${EXE_POSTFIX})
 
-TARGET_LINK_LIBRARIES(matchable_simulator_3d
+TARGET_LINK_LIBRARIES(matchable_graph_generator
   g2o_cli_library
   matchable_generator_library
   types_matchables_library
