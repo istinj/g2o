@@ -1,7 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <vector>
-#include "matchable.h"
+#include "g2o/types/matchables3d/matchable.h"
 
 #include <g2o/types/slam3d/isometry3d_mappings.h>
 
@@ -285,11 +285,13 @@ using namespace g2o;
 using namespace matchables;
 
 int main(){
+
   int num_points=0;
   int num_lines=10;
   int num_planes=0;
   int num_poses=10;
   float world_size=10;
+
   std::vector<int> constraints(6);
 
   constraints[0] = 0; //point-point
@@ -297,7 +299,7 @@ int main(){
   constraints[2] = 1; //line-line
   constraints[3] = 0; //plane-point
   constraints[4] = 0; //plane-line
-  constraints[5] = 0; //plane-plane
+  constraints[5] = 1; //plane-plane
 
   GraphGenerator generator(num_points,num_lines,num_planes,num_poses,world_size);
   generator.setConstraints(constraints);

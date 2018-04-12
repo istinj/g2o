@@ -1,5 +1,6 @@
 #pragma once
-
+#include <set>
+#include <vector>
 #include <g2o/core/eigen_types.h>
 
 namespace g2o{
@@ -8,19 +9,19 @@ namespace g2o{
     public:
       EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 
+      enum Type {Point=0, Line=1, Plane=2};
+
       typedef Eigen::Matrix<number_t,5,1,Eigen::ColMajor> Vector5;
       typedef Eigen::Matrix<number_t,13,1,Eigen::ColMajor> Vector13;
       typedef Eigen::DiagonalMatrix<number_t,3> DiagMatrix3;
 
-      enum Type {Point = 0, Line = 1, Plane = 2};
-
       Matchable(){}
 
-      Matchable(int type_,
+      Matchable(Type type_,
                 Vector3 point_,
                 Matrix3 R_ = Matrix3::Zero());
 
-      Matchable& operator *= (const Vector5 &v){
+      Matchable& operator *= (const Vector5 &v) {
 
         Vector3 dp(v[0],v[1],v[2]);
         Matrix3 dR;
@@ -49,17 +50,21 @@ namespace g2o{
 
       Vector13 toVector() const;
 
-      int type() const{return _type;}
-      const Vector3 &point() const {return _point;}
-      const Matrix3 &R() const {return _R;}
+      inline const Type &type() const{return _type;}
+      inline const Vector3 &point() const {return _point;}
+      inline const Matrix3 &R() const {return _R;}
+      inline const DiagMatrix3& omega() const {return _Omega;}
 
       void setZero();
 
     private:
-      int _type;
+      Type _type;
       Vector3 _point;
       Matrix3 _R;
       DiagMatrix3 _Omega;
     };
+
+    typedef std::vector<Matchable> MatchableVector;
+    typedef std::set<Matchable> MatchableSet;
   }
 }
