@@ -52,7 +52,7 @@ int main(int argc, char** argv) {
   bool apply_perturbation;
   
   arg.param("numPoses", num_poses, 1, "number of robot poses");
-  arg.param("numPoints", num_points, 1, "number of matchable-points in the graph");
+  arg.param("numPoints", num_points, 0, "number of matchable-points in the graph");
   arg.param("numLines", num_lines, 0, "number of matchable-lines in the graph");
   arg.param("numPlanes", num_planes, 0, "number of matchable-planes in the graph");
   arg.param("worldSize", world_size, 10.0, "dimension of the world");
@@ -156,6 +156,8 @@ int main(int argc, char** argv) {
     file << std::endl;
     ++id;
   }
+
+  file << "FIX 0" << std::endl;
 
   file.close();
   return 0;

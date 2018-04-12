@@ -56,17 +56,17 @@ namespace g2o {
 
     
     void GraphGenerator::applyPerturbationToData(MatchableVector& landmarks,
-                                                 Isometry3Vector& poses){
-      float pert_deviation = 1.0f;
+                                                 Isometry3Vector& poses) {
+      float pert_deviation = 0.1f;
       Matrix6 pert_scale = Matrix6::Identity()*pert_deviation;
 
       for(int i=1; i<_num_poses; ++i) {
         Vector6 xr = Vector6::Random()-0.5*Vector6::Ones();
         Isometry3 dXr = g2o::internal::fromVectorET(pert_scale*xr);
-        poses[i] = dXr*poses[i];
+        poses[i] = poses[i]*dXr;
       }
 
-      for(int i=0; i<_num_landmarks; ++i){
+      for(int i=0; i<_num_landmarks; ++i) {
         Vector5 dXl = (Vector5::Random()-0.5*Vector5::Ones())*pert_deviation;
         landmarks[i] = landmarks[i].perturb(dXl);
       }
@@ -151,9 +151,12 @@ namespace g2o {
         if(_constraints[3]){
           for(int landmark_idx=0; landmark_idx<_num_planes; ++landmark_idx){
             Matchable landmark = landmarks[_num_points+_num_lines+landmark_idx];
+            MatchableMatrix7Pair measurement = _generatePointMeasurementFromPlane(landmark,inv_pose);
+            if(measurement.first.point().x() < 10.0f){
             landmark_associations[measurement_idx] = std::make_pair(pose_idx,_num_points+_num_lines+landmark_idx);
-            measurements[measurement_idx] = _generatePointMeasurementFromPlane(landmark,inv_pose);
-            ++measurement_idx;
+              measurements[measurement_idx] = measurement;
+              ++measurement_idx;
+            }
           }
         }
 
@@ -177,6 +180,10 @@ namespace g2o {
           }
         }
       }
+
+      measurements.resize(measurement_idx);
+      landmark_associations.resize(measurement_idx);
+
     }
 
     //ia protected functions
@@ -189,6 +196,7 @@ namespace g2o {
     Matchable GraphGenerator::_generateLineLandmark() {
       Vector3 p = (Vector3::Random()-0.5*Vector3::Ones())*_world_size;
       Vector3 d = (Vector3::Random()-0.5*Vector3::Ones())*_world_size;
+      d.normalize();
       Matrix3 R = d2R(d);
       return Matchable(Matchable::Type::Line,p,R);
     }
@@ -196,6 +204,7 @@ namespace g2o {
     Matchable GraphGenerator::_generatePlaneLandmark() {
       Vector3 p = (Vector3::Random()-0.5*Vector3::Ones())*_world_size;
       Vector3 d = (Vector3::Random()-0.5*Vector3::Ones())*_world_size;
+      d.normalize();
       Matrix3 R = d2R(d);
       return Matchable(Matchable::Type::Plane,p,R);
     }
@@ -205,7 +214,7 @@ namespace g2o {
       MatchableMatrix7Pair z;
       z.first = landmark.transform(inv_pose);
       z.second = Matrix7::Zero();
-      z.second.block<3,3>(0,0) = Matrix3::Identity();
+      z.second.block<3,3>(0,0) = landmark.omega();
       return z;
     }
 
@@ -221,6 +230,29 @@ namespace g2o {
       return z;
     }
 
+    MatchableMatrix7Pair GraphGenerator::_generatePointMeasurementFromPlane(const Matchable& landmark,
+                                                                            const Isometry3& inv_pose) {
+
+      using namespace std;
+      
+      Matchable prediction = landmark.transform(inv_pose);
+      MatchableMatrix7Pair z;
+      
+      const Vector3& p = prediction.point();
+      const Vector3& n = prediction.R().col(0);
+      const float d  = n.transpose()*p;
+
+      const Vector3 zp(-d/n.x(), 0, 0);
+
+      cerr << "madre: " << zp.transpose() << " " << p.transpose() << endl;
+      // z.first = Matchable(Matchable::Type::Point,zp,Matrix3::Identity());
+      //z.first = Matchable(Matchable::Type::Point,p+10*prediction.R().col(1)+20*prediction.R().col(2),Matrix3::Identity());
+      z.first = Matchable(Matchable::Type::Point,p,Matrix3::Identity());
+      z.second = Matrix7::Zero();
+      z.second.block<3,3>(0,0) = landmark.omega();
+      return z;
+    }
+
         
     MatchableMatrix7Pair GraphGenerator::_generateLineMeasurementFromLine(const Matchable& landmark,
                                                                           const Isometry3& inv_pose) {
@@ -232,30 +264,6 @@ namespace g2o {
       return z;
     }
 
-    MatchableMatrix7Pair GraphGenerator::_generatePointMeasurementFromPlane(const Matchable& landmark,
-                                                                 const Isometry3& inv_pose) {
-      const Vector3 &p = inv_pose.translation();
-      const Vector3 &n = inv_pose.linear().col(2);
-      const float d  = -n.transpose()*p;
-
-      Matchable prediction = landmark.transform(inv_pose);
-      const Vector3 &pl = prediction.point();
-      const Vector3 &nl = prediction.R().col(0);
-      const float dl  = -nl.transpose()*pl;
-
-      Matrix2 A;
-      Vector2 b;
-      A << n(0),n(1),nl(0),nl(1);
-      b << -d,-dl;
-      Vector2 x = A.colPivHouseholderQr().solve(b);
-
-      MatchableMatrix7Pair z;
-      z.first = Matchable(Matchable::Type::Point,Vector3(x(0),x(1),0.0f),Matrix3::Identity());
-      z.second = Matrix7::Zero();
-      z.second.block<3,3>(0,0) = landmark.omega();
-
-      return z;
-    }
 
     MatchableMatrix7Pair GraphGenerator::_generateLineMeasurementFromPlane(const Matchable& landmark,
                                                                 const Isometry3& inv_pose) {

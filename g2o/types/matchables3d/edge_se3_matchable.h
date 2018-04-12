@@ -24,6 +24,9 @@ namespace g2o {
       //! @brief computes the error
       void computeError();
 
+      //! @brief computes the jacobian
+      /* void linearizeOplus(); */
+
       inline void setMeasurement(const Matchable &m){
         _measurement = m;
       }

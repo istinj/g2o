@@ -2,7 +2,7 @@
 
 namespace g2o {
   namespace matchables {
-    const number_t Matchable::_epsilon = 1e-3;
+    const number_t Matchable::_epsilon = 1e-6;
     
     Matchable::Matchable(Type type_,
                          Vector3 point_,
