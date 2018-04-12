@@ -9,13 +9,11 @@
 namespace g2o {
   namespace matchables {
 
-    typedef Eigen::Matrix<number_t,6,6,Eigen::ColMajor> Matrix6;
-    typedef Eigen::Matrix<number_t,7,7,Eigen::ColMajor> Matrix7;
+
     typedef std::vector<std::pair<int, int> > IntIntPairVector;
     typedef std::vector<int> IntVector;
     typedef std::vector<Isometry3> Isometry3Vector;
-    typedef std::pair<Matchable, Matrix7> MatchableMatrix7Pair;
-    typedef std::vector<MatchableMatrix7Pair> MatchableMatrix7PairVector;
+
 
     class GraphGenerator {
     public:

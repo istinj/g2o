@@ -26,7 +26,7 @@ namespace g2o {
       virtual bool write(std::ostream &os) const;
 
       virtual void oplusImpl(const double *update){
-        Matchable::Vector5 v;
+        Vector5 v;
         v << update[0],update[1],update[2],update[3],update[4];
 
         _estimate *= v;

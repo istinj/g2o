@@ -28,8 +28,8 @@ namespace g2o {
       _point.setZero();
     }
 
-    Matchable::Vector13 Matchable::toVector()const{
-      Matchable::Vector13 ret;
+    Vector13 Matchable::toVector()const{
+      Vector13 ret;
       ret << _type,
              _point.x(),_point.y(),_point.z(),
              _R(0,0),_R(0,1),_R(0,2),_R(1,0),_R(1,1),_R(1,2),_R(2,0),_R(2,1),_R(2,2);

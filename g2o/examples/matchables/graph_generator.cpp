@@ -180,7 +180,7 @@ namespace g2o{
         }
 
         for(int i=0; i<_num_landmarks; ++i){
-          Matchable::Vector5 dXl = (Matchable::Vector5::Random()-0.5*Matchable::Vector5::Ones())*pert_deviation;
+          Vector5 dXl = (Vector5::Random()-0.5*Vector5::Ones())*pert_deviation;
           landmarks[i] = landmarks[i].perturb(dXl);
         }
       }
@@ -340,7 +340,7 @@ int main(){
   for(size_t i=0; i<landmarks.size(); ++i){
     const Matchable &landmark = landmarks[i];
     graph << "VERTEX_MATCHABLE " << id << " ";
-    const Matchable::Vector13 v = landmark.toVector();
+    const Vector13 v = landmark.toVector();
     for(size_t j=0; j<13; ++j)
       graph << v[j] << " ";
     graph << std::endl;
@@ -355,7 +355,7 @@ int main(){
           << landmark_associations[i].first << " "
           << generator.numPoses()+landmark_associations[i].second << " ";
     
-    Matchable::Vector13 v = measurement.toVector();
+    Vector13 v = measurement.toVector();
     for(size_t j=0; j<13; ++j)
       graph << v[j] << " ";
 

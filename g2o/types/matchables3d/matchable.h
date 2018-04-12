@@ -5,15 +5,14 @@
 
 namespace g2o{
   namespace matchables{
+    
+    typedef Eigen::DiagonalMatrix<number_t,3> DiagMatrix3;
+    
     class Matchable{
     public:
       EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
 
       enum Type {Point=0, Line=1, Plane=2};
-
-      typedef Eigen::Matrix<number_t,5,1,Eigen::ColMajor> Vector5;
-      typedef Eigen::Matrix<number_t,13,1,Eigen::ColMajor> Vector13;
-      typedef Eigen::DiagonalMatrix<number_t,3> DiagMatrix3;
 
       Matchable(){}
 
@@ -25,7 +24,7 @@ namespace g2o{
 
         Vector3 dp(v[0],v[1],v[2]);
         Matrix3 dR;
-        dR = Eigen::AngleAxisd(v[3],Vector3::UnitY())*Eigen::AngleAxisd(v[4],Vector3::UnitZ());
+        dR = AngleAxis(v[3],Vector3::UnitY())*AngleAxis(v[4],Vector3::UnitZ());
 
         _point += dp;
         _R *= dR;
@@ -50,9 +49,9 @@ namespace g2o{
 
       Vector13 toVector() const;
 
-      inline const Type &type() const{return _type;}
-      inline const Vector3 &point() const {return _point;}
-      inline const Matrix3 &R() const {return _R;}
+      inline const Type& type() const{return _type;}
+      inline const Vector3& point() const {return _point;}
+      inline const Matrix3& R() const {return _R;}
       inline const DiagMatrix3& omega() const {return _Omega;}
 
       void setZero();
@@ -66,5 +65,7 @@ namespace g2o{
 
     typedef std::vector<Matchable> MatchableVector;
     typedef std::set<Matchable> MatchableSet;
+    typedef std::pair<Matchable, Matrix7> MatchableMatrix7Pair;
+    typedef std::vector<MatchableMatrix7Pair> MatchableMatrix7PairVector;
   }
 }

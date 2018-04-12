@@ -49,10 +49,12 @@ namespace g2o {
   using Vector2 = VectorN<2>;
   using Vector3 = VectorN<3>;
   using Vector4 = VectorN<4>;
+  using Vector5 = VectorN<5>;
   using Vector6 = VectorN<6>;
   using Vector7 = VectorN<7>;
   using Vector9 = VectorN<9>;
   using Vector12 = VectorN<12>;
+  using Vector13 = VectorN<13>;
   using VectorX = VectorN<Eigen::Dynamic>;
 
   typedef Eigen::Matrix<int,2,2,Eigen::ColMajor>                                  Matrix2I;
@@ -69,6 +71,7 @@ namespace g2o {
   typedef Eigen::Matrix<number_t,3,3,Eigen::ColMajor>                             Matrix3;
   typedef Eigen::Matrix<number_t,4,4,Eigen::ColMajor>                             Matrix4;
   typedef Eigen::Matrix<number_t,6,6,Eigen::ColMajor>                             Matrix6;
+  typedef Eigen::Matrix<number_t,7,7,Eigen::ColMajor>                             Matrix7;
   typedef Eigen::Matrix<number_t,12,12,Eigen::ColMajor>                           Matrix12;
   typedef Eigen::Matrix<number_t,Eigen::Dynamic,Eigen::Dynamic,Eigen::ColMajor>   MatrixX;
 

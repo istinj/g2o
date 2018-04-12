@@ -134,7 +134,7 @@ int main(int argc, char** argv) {
   for(size_t i=0; i<landmarks.size(); ++i){
     const Matchable &landmark = landmarks[i];
     file << "VERTEX_MATCHABLE " << id << " ";
-    const Matchable::Vector13 v = landmark.toVector();
+    const Vector13 v = landmark.toVector();
     for(size_t j=0; j<13; ++j)
       file << v[j] << " ";
     file << std::endl;
@@ -149,7 +149,7 @@ int main(int argc, char** argv) {
           << landmark_associations[i].first << " "
           << g.numPoses()+landmark_associations[i].second << " ";
     
-    Matchable::Vector13 v = matchable.toVector();
+    Vector13 v = matchable.toVector();
     for(size_t j=0; j<13; ++j)
       file << v[j] << " ";
 

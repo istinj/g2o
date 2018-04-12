@@ -67,7 +67,7 @@ namespace g2o {
       }
 
       for(int i=0; i<_num_landmarks; ++i){
-        Matchable::Vector5 dXl = (Matchable::Vector5::Random()-0.5*Matchable::Vector5::Ones())*pert_deviation;
+        Vector5 dXl = (Vector5::Random()-0.5*Vector5::Ones())*pert_deviation;
         landmarks[i] = landmarks[i].perturb(dXl);
       }
     }
