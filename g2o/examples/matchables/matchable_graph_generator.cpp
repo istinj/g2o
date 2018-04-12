@@ -68,12 +68,15 @@ int main(int argc, char** argv) {
   
   arg.parseArgs(argc, argv);
 
+  if (!output_filename.size()) {
+    throw std::runtime_error("No output specified");
+  } 
+
   // ia registering all the types from the libraries
   g2o::DlWrapper dlTypesWrapper;
   g2o::loadStandardTypes(dlTypesWrapper, argc, argv);
 
   //ia generate constraints vector
-  std::cerr << "creating constraints" << std::endl;
   matchables::IntVector constraints(6, 0);
   constraints[0] = has_point_point_factor; //point-point
   constraints[1] = has_line_point_factor; //line-point
@@ -82,12 +85,7 @@ int main(int argc, char** argv) {
   constraints[4] = has_plane_line_factor; //plane-line
   constraints[5] = has_plane_plane_factor; //plane-plane
 
-  for (auto c : constraints) 
-    std::cerr << c << std::endl;
-  std::cerr << "done" << std::endl;
-
   //ia setup the generator
-  std::cerr << "set up generator" << std::endl;
   matchables::GraphGenerator g;
   g.setConstraints(constraints);
   g.setNumPoses(num_poses);
@@ -97,17 +95,14 @@ int main(int argc, char** argv) {
   g.setWorldSize(world_size);
 
   g.init();
-  std::cerr << "done" << std::endl;
 
   Isometry3Vector poses;
   MatchableVector landmarks;
   MatchableMatrix7PairVector measurements;
   IntIntPairVector landmark_associations;
-  std::cerr << "generate pose" << std::endl;
+  
   g.generatePoses(poses);
-  std::cerr << "generate landmarks" << std::endl;
   g.generateLandmarks(landmarks);
-  std::cerr << "generate meas" << std::endl;
   g.generateMeasurements(measurements,
                          landmark_associations,
                          landmarks,
@@ -115,8 +110,7 @@ int main(int argc, char** argv) {
 
   if (apply_perturbation)
     g.applyPerturbationToData(landmarks, poses);
-
-  std::cerr << "writing to file" << std::endl;
+    
   std::ofstream file(output_filename.c_str());  
   int id=0;
   
