@@ -1,8 +1,11 @@
+#include <iostream>
+#include <g2o/stuff/color_macros.h>
 #include "matchable_generator.h"
+
 
 namespace g2o {
   namespace matchables {
-   
+
     Matrix3 d2R(const Vector3& d) {
       Matrix3 R;
       float d_norm = std::sqrt(d(0)*d(0) + d(1)*d(1));
@@ -14,295 +17,287 @@ namespace g2o {
         R.setIdentity();
 
       return R;
-    } 
-
-    GraphGenerator::GraphGenerator() {}
-
-    void GraphGenerator::init() {
-      _num_landmarks = _num_points + _num_lines + _num_planes;
-      _matchable_dim = 13;
     }
-            
-    GraphGenerator::~GraphGenerator() {}
     
-    void GraphGenerator::generateLandmarks(MatchableVector& landmarks) {
-      landmarks.clear();
-      landmarks.resize(_num_landmarks);
-      for(int i=0; i<_num_points; ++i){
-        landmarks[i]=_generatePointLandmark();
-      }
-      for(int i=0; i<_num_lines; ++i){
-        landmarks[_num_points+i]=_generateLineLandmark();
-      }
-      for(int i=0; i<_num_planes; ++i){
-        landmarks[_num_points+_num_lines+i]=_generatePlaneLandmark();
-      }
+    MatchableGenerator::MatchableGenerator() {
+      _id = 0;
+      _is_setup = false;
+      _is_init = false;
     }
 
+    MatchableGenerator::~MatchableGenerator() {
+      //ia placeholder
+    }
 
-    void GraphGenerator::generatePoses(Isometry3Vector& poses){
+    void MatchableGenerator::setup() {
+      if (!_params.num_poses)
+        throw std::runtime_error("no poses");
+
+      if (!_params.num_points && !_params.num_lines && !_params.num_planes)
+        throw std::runtime_error("no landmarks");
+
+      if (!_params.has_point_factors && !_params.has_line_factors && !_params.has_plane_factors)
+        throw std::runtime_error("no factors");
+
+      if (!(_params.world_size > 0))
+        throw std::runtime_error("invalid world size");
+      
+      _is_setup = true;
+    }
+
+    void MatchableGenerator::init() {
+      if (!_vertices)
+        throw std::runtime_error("you must set the vertices");
+      if (!_edges)
+        throw std::runtime_error("you must set the edges");
+
+      _vertices->clear();
+      _edges->clear();
+      _factory = Factory::instance();
+
+      _is_init = true;
+    }
+
+    void MatchableGenerator::compute() {
+      if (!_is_setup)
+        throw std::runtime_error("please setup the MatchableGenerator");
+      if (!_is_init)
+        throw std::runtime_error("please initialize the MatchableGenerator");
+      
+      std::cerr << "generate poses" << std::endl;
+      _computePoses();
+
+      std::cerr << "generate matchables" << std::endl;
+      if (_params.num_points) {
+        _computePoints();
+      }
+
+      if (_params.num_lines) {
+        _computeLines();
+      }
+
+      if (_params.num_planes) {
+        _computePlanes();
+      }
+
+      std::cerr << "generate edges" << std::endl;
+      _computeEdges();
+
+      std::cerr << CL_GREEN("done!") << std::endl << std::endl;
+      std::cerr << "num vertices: " << _vertices->size() << std::endl;
+      std::cerr << "num edges   : " << _edges->size() << std::endl;
+      std::cerr << std::endl;
+    }
+    
+    void MatchableGenerator::_computePoses() {
       Matrix6 rand_scale = Matrix6::Identity();
-      rand_scale.block<3,3>(0,0) *= (0.5*_world_size);
+      rand_scale.block<3,3>(0,0) *= (0.5*_params.world_size);
       rand_scale.block<3,3>(3,3) *= M_PI;
 
-      poses.clear();
-      poses.resize(_num_poses);
-      poses[0] = Isometry3::Identity();
-      for(int i=1; i<_num_poses; ++i){
-        Vector6 v = Vector6::Random()-0.5*Vector6::Ones();
-        poses[i] = g2o::internal::fromVectorET(v);
+      //ia the first pose vertex is always the gauge. stop.
+      VertexSE3Chord* gauge = new VertexSE3Chord();
+      gauge->setEstimate(Isometry3::Identity());
+      gauge->setId(_id);
+      gauge->setFixed(true);
+      _vertices->insert(std::make_pair(_id++, gauge));
+
+      for (int i=1; i<_params.num_poses; ++i, ++_id) {
+        Vector6 minimal_estimate = Vector6::Random()-0.5*Vector6::Ones();
+        VertexSE3Chord* v = new VertexSE3Chord();
+        v->setEstimate(internal::fromVectorET(minimal_estimate));
+        v->setId(_id);
+        _vertices->insert(std::make_pair(_id, v));
       }
     }
 
-    
-    void GraphGenerator::applyPerturbationToData(MatchableVector& landmarks,
-                                                 Isometry3Vector& poses) {
-      float pert_deviation = 0.1f;
-      Matrix6 pert_scale = Matrix6::Identity()*pert_deviation;
+    void MatchableGenerator::_computePoints() {
+      for (int i = 0; i < _params.num_points; ++i, ++_id) {
+        Vector3 p = (Vector3::Random()-0.5*Vector3::Ones())*_params.world_size;
+        Matrix3 R = Matrix3::Identity();
+        Matchable m(Matchable::Type::Point,p,R);
 
-      for(int i=1; i<_num_poses; ++i) {
-        Vector6 xr = Vector6::Random()-0.5*Vector6::Ones();
-        Isometry3 dXr = g2o::internal::fromVectorET(pert_scale*xr);
-        poses[i] = poses[i]*dXr;
-      }
-
-      for(int i=0; i<_num_landmarks; ++i) {
-        Vector5 dXl = (Vector5::Random()-0.5*Vector5::Ones())*pert_deviation;
-        landmarks[i] = landmarks[i].perturb(dXl);
-      }
-    }
-
-
-    
-    void GraphGenerator::generateMeasurements(MatchableMatrix7PairVector& measurements,
-                                              IntIntPairVector& landmark_associations,
-                                              const MatchableVector& landmarks,
-                                              const Isometry3Vector& poses) {
-
-      int num_point_point_measurements=0;
-      int num_line_point_measurements=0;
-      int num_line_line_measurements=0;
-      int num_plane_point_measurements=0;
-      int num_plane_line_measurements=0;
-      int num_plane_plane_measurements=0;
-
-      if(_constraints[0]) //point-point
-        num_point_point_measurements = _num_points;
-      if(_constraints[1]) //line-point
-        num_line_point_measurements = _num_lines;
-      if(_constraints[2]) //line-line
-        num_line_line_measurements = _num_lines;
-      if(_constraints[3]) //plane-point
-        num_plane_point_measurements = _num_planes;
-      if(_constraints[4]) //plane-line
-        num_plane_line_measurements = _num_planes;
-      if(_constraints[5]) //plane-plane
-        num_plane_plane_measurements = _num_planes;
-
-      int num_measurements = _num_poses*(num_point_point_measurements+
-                                         num_line_point_measurements+
-                                         num_line_line_measurements+
-                                         num_plane_point_measurements+
-                                         num_plane_line_measurements+
-                                         num_plane_plane_measurements);
-
-      measurements.clear();
-      measurements.resize(num_measurements);
-
-      landmark_associations.clear();
-      landmark_associations.resize(num_measurements);
-
-      int measurement_idx = 0;
-
-      for(int pose_idx=0; pose_idx<_num_poses; ++pose_idx){
-        const Isometry3 inv_pose = poses[pose_idx].inverse();
-
-        //point-point
-        if(_constraints[0]){
-          for(int landmark_idx=0; landmark_idx<_num_points; ++landmark_idx){
-            Matchable landmark = landmarks[landmark_idx];
-            landmark_associations[measurement_idx] = std::make_pair(pose_idx,landmark_idx);
-            measurements[measurement_idx] = _generatePointMeasurementFromPoint(landmark, inv_pose);
-            ++measurement_idx;
-          }
-        }
-
-        //line-point
-        if(_constraints[1]){
-          for(int landmark_idx=0; landmark_idx<_num_lines; ++landmark_idx){
-            Matchable landmark = landmarks[_num_points+landmark_idx];
-            landmark_associations[measurement_idx] = std::make_pair(pose_idx,_num_points+landmark_idx);
-            measurements[measurement_idx] = _generatePointMeasurementFromLine(landmark,inv_pose);
-            ++measurement_idx;
-          }
-        }
-
-        //line-line
-        if(_constraints[2]){
-          for(int landmark_idx=0; landmark_idx<_num_lines; ++landmark_idx){
-            Matchable landmark = landmarks[_num_points+landmark_idx];
-            landmark_associations[measurement_idx] = std::make_pair(pose_idx,_num_points+landmark_idx);
-            measurements[measurement_idx] = _generateLineMeasurementFromLine(landmark,inv_pose);
-            ++measurement_idx;
-          }
-        }
-
-        //plane-point
-        if(_constraints[3]){
-          for(int landmark_idx=0; landmark_idx<_num_planes; ++landmark_idx){
-            Matchable landmark = landmarks[_num_points+_num_lines+landmark_idx];
-            MatchableMatrix7Pair measurement = _generatePointMeasurementFromPlane(landmark,inv_pose);
-            if(measurement.first.point().x() < 10.0f){
-            landmark_associations[measurement_idx] = std::make_pair(pose_idx,_num_points+_num_lines+landmark_idx);
-              measurements[measurement_idx] = measurement;
-              ++measurement_idx;
-            }
-          }
-        }
-
-        //plane-line
-        if(_constraints[4]){
-          for(int landmark_idx=0; landmark_idx<_num_planes; ++landmark_idx){
-            Matchable landmark = landmarks[_num_points+_num_lines+landmark_idx];
-            landmark_associations[measurement_idx] = std::make_pair(pose_idx,_num_points+_num_lines+landmark_idx);
-            measurements[measurement_idx] = _generateLineMeasurementFromPlane(landmark,inv_pose);
-            ++measurement_idx;
-          }
-        }
-
-        //plane-plane
-        if(_constraints[5]){
-          for(int landmark_idx=0; landmark_idx<_num_planes; ++landmark_idx){
-            Matchable landmark = landmarks[_num_points+_num_lines+landmark_idx];
-            landmark_associations[measurement_idx] = std::make_pair(pose_idx,_num_points+_num_lines+landmark_idx);
-            measurements[measurement_idx] = _generatePlaneMeasurementFromPlane(landmark,inv_pose);
-            ++measurement_idx;
-          }
-        }
-      }
-
-      measurements.resize(measurement_idx);
-      landmark_associations.resize(measurement_idx);
-
-    }
-
-    //ia protected functions
-    Matchable GraphGenerator::_generatePointLandmark() {
-      Vector3 p = (Vector3::Random()-0.5*Vector3::Ones())*_world_size;
-      Matrix3 R = Matrix3::Identity();
-      return Matchable(Matchable::Type::Point,p,R);
-    }
-
-    Matchable GraphGenerator::_generateLineLandmark() {
-      Vector3 p = (Vector3::Random()-0.5*Vector3::Ones())*_world_size;
-      Vector3 d = (Vector3::Random()-0.5*Vector3::Ones())*_world_size;
-      d.normalize();
-      Matrix3 R = d2R(d);
-      return Matchable(Matchable::Type::Line,p,R);
-    }
-
-    Matchable GraphGenerator::_generatePlaneLandmark() {
-      Vector3 p = (Vector3::Random()-0.5*Vector3::Ones())*_world_size;
-      Vector3 d = (Vector3::Random()-0.5*Vector3::Ones())*_world_size;
-      d.normalize();
-      Matrix3 R = d2R(d);
-      return Matchable(Matchable::Type::Plane,p,R);
-    }
-    
-    MatchableMatrix7Pair GraphGenerator::_generatePointMeasurementFromPoint(const Matchable& landmark,
-                                                                            const Isometry3& inv_pose) {
-      MatchableMatrix7Pair z;
-      z.first = landmark.transform(inv_pose);
-      z.second = Matrix7::Zero();
-      z.second.block<3,3>(0,0) = landmark.omega();
-      return z;
-    }
-
-    MatchableMatrix7Pair GraphGenerator::_generatePointMeasurementFromLine(const Matchable& landmark,
-                                                                           const Isometry3& inv_pose) {
-      Matchable prediction = landmark.transform(inv_pose);
-      MatchableMatrix7Pair z;
-
-      z.first = Matchable(Matchable::Type::Point,prediction.point(),Matrix3::Identity());
-      z.second = Matrix7::Zero();
-      z.second.block<3,3>(0,0) = landmark.omega();
-      
-      return z;
-    }
-
-    MatchableMatrix7Pair GraphGenerator::_generatePointMeasurementFromPlane(const Matchable& landmark,
-                                                                            const Isometry3& inv_pose) {
-
-      using namespace std;
-      
-      Matchable prediction = landmark.transform(inv_pose);
-      MatchableMatrix7Pair z;
-      
-      const Vector3& p = prediction.point();
-      const Vector3& n = prediction.R().col(0);
-      const float d  = n.transpose()*p;
-
-      const Vector3 zp(-d/n.x(), 0, 0);
-
-      cerr << "madre: " << zp.transpose() << " " << p.transpose() << endl;
-      // z.first = Matchable(Matchable::Type::Point,zp,Matrix3::Identity());
-      //z.first = Matchable(Matchable::Type::Point,p+10*prediction.R().col(1)+20*prediction.R().col(2),Matrix3::Identity());
-      z.first = Matchable(Matchable::Type::Point,p,Matrix3::Identity());
-      z.second = Matrix7::Zero();
-      z.second.block<3,3>(0,0) = landmark.omega();
-      return z;
-    }
-
+        VertexMatchable* v = new VertexMatchable();
+        v->setId(_id);
+        v->setEstimate(Matchable(Matchable::Type::Point,p,R));
         
-    MatchableMatrix7Pair GraphGenerator::_generateLineMeasurementFromLine(const Matchable& landmark,
-                                                                          const Isometry3& inv_pose) {
-      MatchableMatrix7Pair z;
-      z.first = landmark.transform(inv_pose);
-      z.second = Matrix7::Zero();
-      z.second.block<3,3>(0,0) = landmark.omega();
-      z.second.block<3,3>(3,3) = Matrix3::Identity();
-      return z;
+        //TODO some check could be done here
+        _vertices->insert(std::make_pair(_id, v));
+      }
     }
 
+    void MatchableGenerator::_computeLines() {
+      for (int i = 0; i < _params.num_lines; ++i, ++_id) {
+        Vector3 p = (Vector3::Random()-0.5*Vector3::Ones())*_params.world_size;
+        Vector3 d = (Vector3::Random()-0.5*Vector3::Ones())*_params.world_size;
+        d.normalize();
+        Matrix3 R = d2R(d);
 
-    MatchableMatrix7Pair GraphGenerator::_generateLineMeasurementFromPlane(const Matchable& landmark,
-                                                                const Isometry3& inv_pose) {
-      const Vector3 &p = inv_pose.translation();
-      const Vector3 &n = inv_pose.linear().col(2);
-      const float d  = -n.transpose()*p;
-
-      Matchable prediction = landmark.transform(inv_pose);
-      const Vector3 &pl = prediction.point();
-      const Vector3 &nl = prediction.R().col(0);
-      const float dl  = -nl.transpose()*pl;
-
-      Matrix2 A;
-      Vector2 b;
-      A << n(0),n(1),nl(0),nl(1);
-      b << -d,-dl;
-      Vector2 x = A.colPivHouseholderQr().solve(b);
-
-      Vector3 nz = n.cross(nl);
-      nz.normalize();
-
-      MatchableMatrix7Pair z;
-      z.first = Matchable(Matchable::Type::Line,Vector3(x(0),x(1),0.0f),d2R(nz));
-      z.second = Matrix7::Zero();
-      z.second.block<3,3>(0,0) = landmark.omega();
-      z.second(6,6) = 1;
-
-      return z;
+        VertexMatchable* v = new VertexMatchable();
+        v->setId(_id);
+        v->setEstimate(Matchable(Matchable::Type::Line,p,R));
+        
+        //TODO some check could be done here
+        _vertices->insert(std::make_pair(_id, v));
+      }
     }
 
-    MatchableMatrix7Pair GraphGenerator::_generatePlaneMeasurementFromPlane(const Matchable& landmark,
-                                                                            const Isometry3& inv_pose) {
-      MatchableMatrix7Pair z;
-      z.first = landmark.transform(inv_pose);
-      z.second = Matrix7::Zero();
-      z.second.block<3,3>(0,0) = landmark.omega();
-      z.second.block<3,3>(3,3) = Matrix3::Identity();
-      return z;
+    void MatchableGenerator::_computePlanes() {
+      for (int i = 0; i < _params.num_planes; ++i, ++_id) {
+        Vector3 p = (Vector3::Random()-0.5*Vector3::Ones())*_params.world_size;
+        Vector3 d = (Vector3::Random()-0.5*Vector3::Ones())*_params.world_size;
+        d.normalize();
+        Matrix3 R = d2R(d);
+
+        VertexMatchable* v = new VertexMatchable();
+        v->setId(_id);
+        v->setEstimate(Matchable(Matchable::Type::Plane,p,R));
+
+        //TODO some check could be done here
+        _vertices->insert(std::make_pair(_id, v));
+      }
+    }
+
+    //ia edges are generated supposing that each pose sees all landmarks
+    void MatchableGenerator::_computeEdges() {
+      //ia for each vertex
+      VertexSE3Chord* v_from = 0;
+      VertexMatchable* v_to = 0;
+      for (HyperGraph::VertexIDMap::const_iterator v_from_it = _vertices->begin();
+           v_from_it != _vertices->end(); ++v_from_it) {
+
+        //ia if the first vertex is not a pose, continue
+        if (_factory->tag(v_from_it->second) == "VERTEX_SE3:CHORD") {
+          v_from = static_cast<VertexSE3Chord*>(v_from_it->second);
+        } else {
+          v_from = 0;
+          continue;
+        }
+
+        //ia take all the the other matchable vertexes
+        for (HyperGraph::VertexIDMap::const_iterator v_to_it = _vertices->begin();
+             v_to_it != _vertices->end(); ++v_to_it) {
+          
+          if (_factory->tag(v_to_it->second) == "VERTEX_MATCHABLE") {
+            v_to = static_cast<VertexMatchable*>(v_to_it->second);
+          } else {
+            v_to = 0;
+            continue;
+          }
+
+          switch (v_to->estimate().type()) {
+          case Matchable::Type::Point:
+            {
+              if (_params.has_point_factors) {
+                HyperGraph::Edge* e_point = _computePointEdge(v_from, v_to);
+                if (e_point) {
+                  _edges->insert(e_point);
+                } else {
+                  std::cerr << "skip invalid point edge" << std::endl;
+                }
+              }
+
+              //ia here you can add other constraints if you want
+              
+              break;
+            }
+          case Matchable::Type::Line:
+            {
+              if (_params.has_line_factors) {
+                HyperGraph::Edge* e_point = _computeLineEdge(v_from, v_to);
+                if (e_point) {
+                  _edges->insert(e_point);
+                } else {
+                  std::cerr << "skip invalid line edge" << std::endl;
+                }
+              }
+
+              //ia here you can add other constraints if you want
+              
+              break;
+            }
+          case Matchable::Type::Plane:
+            {
+              if (_params.has_plane_factors) {
+                HyperGraph::Edge* e_point = _computePlaneEdge(v_from, v_to);
+                if (e_point) {
+                  _edges->insert(e_point);
+                } else {
+                  std::cerr << "skip invalid plane edge" << std::endl;
+                }
+              }
+              
+              //ia here you can add other constraints if you want
+              
+              break;
+            }
+          default:
+            throw std::runtime_error("unexepected matchable type");
+          }
+        }
+      }
+    }
+
+    HyperGraph::Edge* MatchableGenerator::_computePointEdge(VertexSE3Chord* vfrom_,
+                                                            VertexMatchable* vto_) {
+      const Isometry3& pose = vfrom_->estimate();
+      const Matchable& matchable = vto_->estimate();
+      
+      Matchable measurement = matchable.transform(pose.inverse());
+      Matrix7 omega = Matrix7::Zero();
+      omega.block<3,3>(0,0) = matchable.omega();
+
+      //TODO some consistency checks could be done here and return NULL if something is wrong
+      // if (measurement_is_not_valid) return 0
+
+      EdgeSE3Matchable* e = new EdgeSE3Matchable();
+      e->vertices()[0] = vfrom_;
+      e->vertices()[1] = vto_;
+      e->setInformation(omega);
+      e->setMeasurement(measurement);
+      return e;
+    }
+
+    HyperGraph::Edge* MatchableGenerator::_computeLineEdge(VertexSE3Chord* vfrom_,
+                                                           VertexMatchable* vto_) {
+      const Isometry3& pose = vfrom_->estimate();
+      const Matchable& matchable = vto_->estimate();
+      
+      Matchable measurement = matchable.transform(pose.inverse());
+      Matrix7 omega = Matrix7::Zero();
+      omega.block<3,3>(0,0) = matchable.omega();
+      omega.block<3,3>(3,3) = Matrix3::Identity();
+
+      //TODO some consistency checks could be done here and return NULL if something is wrong
+      // if (measurement_is_not_valid) return 0
+
+      EdgeSE3Matchable* e = new EdgeSE3Matchable();
+      e->vertices()[0] = vfrom_;
+      e->vertices()[1] = vto_;
+      e->setInformation(omega);
+      e->setMeasurement(measurement);
+      return e;
+    }
+
+    HyperGraph::Edge* MatchableGenerator::_computePlaneEdge(VertexSE3Chord* vfrom_,
+                                                            VertexMatchable* vto_) {
+      const Isometry3& pose = vfrom_->estimate();
+      const Matchable& matchable = vto_->estimate();
+      
+      Matchable measurement = matchable.transform(pose.inverse());
+      Matrix7 omega = Matrix7::Zero();
+      omega.block<3,3>(0,0) = matchable.omega();
+      omega.block<3,3>(3,3) = Matrix3::Identity();
+
+      //TODO some consistency checks could be done here and return NULL if something is wrong
+      // if (measurement_is_not_valid) return 0
+
+      EdgeSE3Matchable* e = new EdgeSE3Matchable();
+      e->vertices()[0] = vfrom_;
+      e->vertices()[1] = vto_;
+      e->setInformation(omega);
+      e->setMeasurement(measurement);
+      return e;
     }
     
-  } //ia end matchable namespace
-} //ia end g2o namespace
+  } //ia end namespace matchables
+} //ia end namespace g2o
