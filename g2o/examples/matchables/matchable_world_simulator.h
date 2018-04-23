@@ -16,9 +16,9 @@ namespace g2o {
 
       struct MatchableSimulatorFactors {
         MatchableSimulatorFactors() {
-          point_factors = false;
-          line_factors = false;
-          plane_factors = false;
+          point_factors = true;
+          line_factors = true;
+          plane_factors = true;
         }
         bool point_factors;
         bool line_factors;
@@ -46,16 +46,32 @@ namespace g2o {
       //ia checks that everything is ok
       void init();
 
+      void compute();
+
     protected:
       //ia vertices and edges to be inzepped (not owned)
       HyperGraph::VertexIDMap* _vertices = 0;
       HyperGraph::EdgeSet*     _edges = 0;
       MatchableWorld*          _world = 0;
 
+      uint64_t _vertex_id;
+
       //ia parameters
       number_t _sense_radius;
       int _num_poses;
       MatchableSimulatorFactors _factors_types;
+
+    private:
+      void senseMatchables(g2o::VertexSE3Chord* v_);
+
+      g2o::HyperGraph::Edge* _computeEdgeMatchable(g2o::VertexSE3Chord* v_from,
+                                                   g2o::matchables::VertexMatchable* v_to);
+      g2o::HyperGraph::Edge* _computePointEdge(g2o::VertexSE3Chord* vfrom_,
+                                               g2o::matchables::VertexMatchable* vto_);
+      g2o::HyperGraph::Edge* _computeLineEdge(g2o::VertexSE3Chord* vfrom_,
+                                              g2o::matchables::VertexMatchable* vto_);
+      g2o::HyperGraph::Edge* _computePlaneEdge(g2o::VertexSE3Chord* vfrom_,
+                                               g2o::matchables::VertexMatchable* vto_);
     };
     
   }

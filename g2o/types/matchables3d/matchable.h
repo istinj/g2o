@@ -1,6 +1,7 @@
 #pragma once
 #include <set>
 #include <vector>
+#include <memory>
 #include <g2o/core/eigen_types.h>
 
 namespace g2o{
@@ -70,5 +71,8 @@ namespace g2o{
     typedef std::set<Matchable> MatchableSet;
     typedef std::pair<Matchable, Matrix7> MatchableMatrix7Pair;
     typedef std::vector<MatchableMatrix7Pair> MatchableMatrix7PairVector;
+    typedef std::shared_ptr<Matchable> MatchablePtr;
+    typedef std::set<MatchablePtr> MatchablePtrSet;
+
   }
 }
