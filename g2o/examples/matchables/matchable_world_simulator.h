@@ -19,10 +19,18 @@ namespace g2o {
           point_factors = true;
           line_factors = true;
           plane_factors = true;
+
+          //ia mixed convenction: from_to
+          line_point_factor = false;
+          plane_line_factor = false;
+          plane_point_factor = false;
         }
         bool point_factors;
         bool line_factors;
         bool plane_factors;
+        bool line_point_factor;
+        bool plane_line_factor;
+        bool plane_point_factor;
       };
       
       WorldSimulator();
@@ -66,14 +74,18 @@ namespace g2o {
     private:
       void senseMatchables(g2o::VertexSE3Chord* v_);
 
-      g2o::HyperGraph::Edge* _computeEdgeMatchable(g2o::VertexSE3Chord* v_from,
-                                                   g2o::matchables::VertexMatchable* v_to);
       g2o::HyperGraph::Edge* _computePointEdge(g2o::VertexSE3Chord* vfrom_,
                                                g2o::matchables::VertexMatchable* vto_);
       g2o::HyperGraph::Edge* _computeLineEdge(g2o::VertexSE3Chord* vfrom_,
                                               g2o::matchables::VertexMatchable* vto_);
       g2o::HyperGraph::Edge* _computePlaneEdge(g2o::VertexSE3Chord* vfrom_,
                                                g2o::matchables::VertexMatchable* vto_);
+      g2o::HyperGraph::Edge* _computeLinePointEdge(g2o::VertexSE3Chord* vfrom_,
+                                                   g2o::matchables::VertexMatchable* vto_);
+      g2o::HyperGraph::Edge* _computePlaneLineEdge(g2o::VertexSE3Chord* vfrom_,
+                                                   g2o::matchables::VertexMatchable* vto_);
+      g2o::HyperGraph::Edge* _computePlanePointEdge(g2o::VertexSE3Chord* vfrom_,
+                                                    g2o::matchables::VertexMatchable* vto_);
     };
     
   }
