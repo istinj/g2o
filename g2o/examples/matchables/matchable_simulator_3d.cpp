@@ -56,7 +56,7 @@ int main(int argc, char** argv) {
 
   WorldSimulator ws;
   ws.setNumPoses(num_poses);
-  ws.setSenseRadius(5);
+  ws.setSenseRadius(2*resolution);
   ws.setVertices(&(opt.vertices()));
   ws.setEdges(&(opt.edges()));
 

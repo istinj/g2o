@@ -39,7 +39,6 @@ namespace g2o {
       e->vertices()[1] = vto_;
       e->setInformation(omega);
       e->setMeasurement(measurement);
-      //      std::cerr << "created point edge " << vfrom_->id() << "->" << vto_->id() << std::endl;
       return e;
     }
 
@@ -132,6 +131,7 @@ namespace g2o {
         
 
         if (mptr->applyTransformation(robot_pose_inverse).point().norm() < _sense_radius) {
+          // std::cerr << "sensed something" << std::endl;
 
           VertexMatchable* v_m = new VertexMatchable();
           v_m->setId(_vertex_id);
@@ -156,13 +156,15 @@ namespace g2o {
       std::random_device rd;
       std::mt19937 gen(rd());
       std::uniform_real_distribution<> dis(0, 1);
+      Vector3 new_position = Vector3::Zero();
 
-      Vector3 position(_world->width()/2-1,_world->height()/2-1,0.0f);
-      Isometry3 pose = Isometry3::Identity();
-      pose.translation() = Vector3(position.x(), position.y(), 0.1);
+      Vector3 cell_pos(_world->width()/2-1, _world->height()/2-1, 0);
+      Vector3 position((_world->width()/2-1) * _world->resolution(),
+                       (_world->height()/2-1) * _world->resolution(),
+                       0.0f);
 
       Vector6 minimal_estimate = Vector6::Zero();
-      minimal_estimate.head(3) = Vector3(position.x(), position.y(), 0.1);
+      minimal_estimate.head(3) = Vector3(position.x(), position.y(), 0);
       minimal_estimate.tail(3) = Vector3(0,0,position.z());
 
       VertexSE3Chord* prev_vertex = new VertexSE3Chord();      
@@ -194,19 +196,28 @@ namespace g2o {
           increment.y() = round(-cos(position.z()));
           increment.z() = -M_PI/2.0f;
         }
-        Vector3 new_position = position+increment;
+
+        Vector3 new_cell_pos = cell_pos+increment;
 
         //check if new position is out of grid
-        if(new_position.x() < 0.0f || new_position.x() > (float)(_world->width()-1) ||
-           new_position.y() < 0.0f || new_position.y() > (float)(_world->height()-1)){
+        if(new_cell_pos.x() < 0.0f || new_cell_pos.x() > (float)(_world->width()-1) ||
+           new_cell_pos.y() < 0.0f || new_cell_pos.y() > (float)(_world->height()-1)){
           continue;
         }
 
+        new_position.head(2) = new_cell_pos.head(2)*_world->resolution();
+        new_position.z() = new_cell_pos.z();
+        
+        //sense
+        senseMatchables(prev_vertex);
+
+        //move
         //new position is valid
         position = new_position;
+        cell_pos = new_cell_pos;
 
         //generate pose vertex
-        minimal_estimate.head(3) = Vector3(position.x(), position.y(), 0.1);
+        minimal_estimate.head(3) = Vector3(position.x(), position.y(), 0);
         minimal_estimate.tail(3) = Vector3(0,0,position.z());
         VertexSE3Chord* vertex = new VertexSE3Chord();
         vertex->setId(_vertex_id);
@@ -214,20 +225,17 @@ namespace g2o {
         _vertices->insert(std::make_pair(_vertex_id++, vertex));
 
         // ia generate odom
-        // EdgeSE3* e = new EdgeSE3();
-        // e->vertices()[0] = prev_vertex;
-        // e->vertices()[1] = vertex;
-        // e->information().setIdentity();
-        // e->setMeasurementFromState();
-        // _edges->insert(e);
+        EdgeSE3Chord* e = new EdgeSE3Chord();
+        e->vertices()[0] = prev_vertex;
+        e->vertices()[1] = vertex;
+        e->information().setIdentity();
+        e->setMeasurementFromState();
+        _edges->insert(e);
         // std::cerr << "creating odom edge " << prev_vertex->id() << "->" << vertex->id() << std::endl;
         // std::cerr << "from estimate:\n" << prev_vertex->estimate().matrix() << std::endl;
         // std::cerr << "to estimate:\n" << vertex->estimate().matrix() << std::endl;
         // std::cerr << "measurement:\n" << e->measurement().matrix() << std::endl;
         // std::cin.get();
-
-        //sense
-        senseMatchables(vertex);
 
         // end
         prev_vertex = vertex;

@@ -31,7 +31,7 @@ namespace g2o {
       //insert points
       for(size_t j=0; j<_height; ++j) {
         for(size_t i=0; i<_width; ++i) {
-          const Vector3 p(i*_resolution, j*_resolution, 0.0f);
+          const Vector3 p(i*_resolution, j*_resolution, 0.5f);
           MatchablePtr point_matchable(new Matchable(Matchable::Point,p));
           _landmarks.insert(point_matchable);
         }
@@ -40,7 +40,7 @@ namespace g2o {
       //insert lines along x axes
       for(size_t j=0; j<_height; ++j) {
         for(size_t i=0; i<_width-1; ++i){
-          const Vector3 p(i*_resolution, j*_resolution, 0.0f);
+          const Vector3 p(i*_resolution, j*_resolution, 0.5f);
           const Matrix3 R = _computeRotationMatrixZXY(Vector3::UnitX());
           MatchablePtr line_matchable(new Matchable(Matchable::Line,p,R));
           _landmarks.insert(line_matchable);
@@ -50,7 +50,7 @@ namespace g2o {
       //insert lines along y axes
       for(size_t i=0; i<_width; ++i) {
         for(size_t j=0; j<_height-1; ++j){
-          const Vector3 p(i*_resolution, j*_resolution, 0.0f);
+          const Vector3 p(i*_resolution, j*_resolution, 0.5f);
           const Matrix3 R = _computeRotationMatrixZXY(Vector3::UnitY());
           MatchablePtr line_matchable(new Matchable(Matchable::Line,p,R));
           _landmarks.insert(line_matchable);
@@ -130,7 +130,9 @@ namespace g2o {
       number_t n = 0;
       Vector3 increment = Vector3::Zero();
       Vector3 new_position = Vector3::Zero();
-      Vector3 position(_width/2-1,_height/2-1,0.0f);
+      Vector3 new_cell_pos = Vector3::Zero();
+      Vector3 cell_pos(_width/2-1, _height/2-1, 0);
+      Vector3 position((_width/2-1)*_resolution,(_height/2-1)*_resolution,0.0f);
       Isometry3 pose = Isometry3::Identity();
       pose.translation() = Vector3(position.x(), position.y(), 0.1);
       Matrix3 R;
@@ -159,13 +161,16 @@ namespace g2o {
           increment.z() = -M_PI/2.0f;
         }
 
-        new_position = position+increment;
+        new_cell_pos = cell_pos+increment;
 
         //check if new position is out of grid
-        if(new_position.x() < 0.0f || new_position.x() > (number_t)(_width-1) ||
-           new_position.y() < 0.0f || new_position.y() > (number_t)(_height-1)) {
+        if(new_cell_pos.x() < 0.0f || new_cell_pos.x() > (number_t)(_width-1) ||
+           new_cell_pos.y() < 0.0f || new_cell_pos.y() > (number_t)(_height-1)) {
           continue;
         }
+
+        new_position.head(2) = new_cell_pos.head(2)*_resolution;
+        new_position.z() = new_cell_pos.z();
 
         //sbraco
         const Eigen::Vector2i p = position.head(2).cast<int>();
@@ -183,6 +188,7 @@ namespace g2o {
         }
 
         position = new_position;
+        cell_pos = new_cell_pos;
         count++;
 
         if(count == num_hits)

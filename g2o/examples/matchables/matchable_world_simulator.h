@@ -17,8 +17,8 @@ namespace g2o {
       struct MatchableSimulatorFactors {
         MatchableSimulatorFactors() {
           point_factors = true;
-          line_factors = false;
-          plane_factors = false;
+          line_factors = true;
+          plane_factors = true;
         }
         bool point_factors;
         bool line_factors;

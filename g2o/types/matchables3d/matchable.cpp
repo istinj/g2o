@@ -31,6 +31,7 @@ namespace g2o {
 
     void Matchable::setZero(){
       _point.setZero();
+      _R.setIdentity();
     }
 
     Vector13 Matchable::toVector() const {

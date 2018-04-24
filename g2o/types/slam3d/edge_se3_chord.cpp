@@ -105,6 +105,14 @@ namespace g2o {
     _jacobianOplusXi = -_jacobianOplusXj;
   }
 
+  bool EdgeSE3Chord::setMeasurementFromState(){
+    VertexSE3Chord* from = static_cast<VertexSE3Chord*>(_vertices[0]);
+    VertexSE3Chord* to   = static_cast<VertexSE3Chord*>(_vertices[1]);
+    Isometry3 delta = from->estimate().inverse() * to->estimate();
+    setMeasurement(delta);
+    return true;
+  }
+
   void EdgeSE3Chord::initialEstimate(const OptimizableGraph::VertexSet& from_, OptimizableGraph::Vertex* /*to_*/) {
     VertexSE3Chord* from = static_cast<VertexSE3Chord*>(_vertices[0]);
     VertexSE3Chord* to = static_cast<VertexSE3Chord*>(_vertices[1]);

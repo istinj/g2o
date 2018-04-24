@@ -19,7 +19,7 @@ namespace g2o{
 
       Matchable(const Type& type_,
                 const Vector3& point_,
-                const Matrix3& R_ = Matrix3::Zero());
+                const Matrix3& R_ = Matrix3::Identity());
 
       inline Matchable applyTransformation(const Isometry3& T) const {
         return Matchable(_type,T*_point,T.linear()*_R);
