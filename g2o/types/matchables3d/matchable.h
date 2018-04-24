@@ -17,27 +17,20 @@ namespace g2o{
 
       Matchable(){}
 
-      Matchable(Type type_,
-                Vector3 point_,
-                Matrix3 R_ = Matrix3::Zero());
+      Matchable(const Type& type_,
+                const Vector3& point_,
+                const Matrix3& R_ = Matrix3::Zero());
 
-      Matchable& operator *= (const Vector5 &v) {
-
-        Vector3 dp(v[0],v[1],v[2]);
-        Matrix3 dR;
-        dR = AngleAxis(v[3],Vector3::UnitY())*AngleAxis(v[4],Vector3::UnitZ());
-
-        _point += dp;
-        _R *= dR;
-
-        return *this;
-      }
-
-      Matchable transform(const Isometry3 &T) const{
+      inline Matchable applyTransformation(const Isometry3& T) const {
         return Matchable(_type,T*_point,T.linear()*_R);
       }
 
-      Matchable perturb(const Vector5 &v) const{
+      inline void applyTransformationInPlace(const Isometry3& T) {
+        _point = T*_point;
+        _R = T.linear() *_R;
+      }
+      
+      inline Matchable applyMinimalPert(const Vector5& v) const {
         Vector3 dp(v[0],v[1],v[2]);
         Matrix3 dR;
         dR = AngleAxis(v[3],Vector3::UnitY())*AngleAxis(v[4],Vector3::UnitZ());
@@ -46,6 +39,15 @@ namespace g2o{
         Matrix3 R  = _R * dR;
 
         return Matchable(_type,point,R);
+      }
+
+      inline void applyMinimalPertInPlace(const Vector5& v) {
+        Vector3 dp(v[0],v[1],v[2]);
+        Matrix3 dR;
+        dR = AngleAxis(v[3],Vector3::UnitY())*AngleAxis(v[4],Vector3::UnitZ());
+
+        _point += dp;
+        _R *= dR;
       }
 
       Vector13 toVector() const;

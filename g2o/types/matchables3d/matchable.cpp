@@ -4,9 +4,9 @@ namespace g2o {
   namespace matchables {
     const number_t Matchable::_epsilon = 1e-6;
     
-    Matchable::Matchable(Type type_,
-                         Vector3 point_,
-                         Matrix3 R_):
+    Matchable::Matchable(const Type& type_,
+                         const Vector3& point_,
+                         const Matrix3& R_):
       _type(type_),
       _point(point_),
       _R(R_){
@@ -33,7 +33,7 @@ namespace g2o {
       _point.setZero();
     }
 
-    Vector13 Matchable::toVector()const{
+    Vector13 Matchable::toVector() const {
       Vector13 ret;
       ret << _type,
              _point.x(),_point.y(),_point.z(),

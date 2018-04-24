@@ -20,8 +20,8 @@ int main(int argc, char** argv) {
     throw std::runtime_error("<program> [options] filename");
 
   float resolution = 1.0f;
-  int width=6;
-  int height=6;
+  int width=10;
+  int height=10;
   int num_poses=10;
   std::string filename;
 
@@ -51,16 +51,17 @@ int main(int argc, char** argv) {
   world->setResolution(resolution);
   world->setWidth(width);
   world->setHeight(height);
-  world->populate();
+  world->createGrid();
   world->removeWalls(num_poses);
 
   WorldSimulator ws;
-  ws.setSenseRadius(2*resolution);
+  ws.setNumPoses(num_poses);
+  ws.setSenseRadius(5);
   ws.setVertices(&(opt.vertices()));
   ws.setEdges(&(opt.edges()));
 
   ws.init();
-
+  
   ws.setWorld(world);
   ws.compute();
 

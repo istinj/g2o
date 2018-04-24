@@ -29,7 +29,7 @@ namespace g2o {
         Vector5 v;
         v << update[0],update[1],update[2],update[3],update[4];
 
-        _estimate *= v;
+        _estimate.applyMinimalPertInPlace(v);
       }
     };
 

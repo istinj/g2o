@@ -17,8 +17,8 @@ namespace g2o {
       struct MatchableSimulatorFactors {
         MatchableSimulatorFactors() {
           point_factors = true;
-          line_factors = true;
-          plane_factors = true;
+          line_factors = false;
+          plane_factors = false;
         }
         bool point_factors;
         bool line_factors;
@@ -42,6 +42,8 @@ namespace g2o {
 
       inline void setWorld(MatchableWorld* world_) {_world = world_;}
       inline MatchableWorld* world() const {return _world;}
+
+      inline void setNumPoses(const int num_poses_) {_num_poses = num_poses_;}
 
       //ia checks that everything is ok
       void init();

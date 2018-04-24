@@ -17,6 +17,9 @@ namespace g2o {
       if (!_edges) {
         throw std::runtime_error("please set the edges");
       }
+      
+      _vertices->clear();
+      _edges->clear();
     }
 
     HyperGraph::Edge* WorldSimulator::_computePointEdge(VertexSE3Chord *vfrom_,
@@ -24,7 +27,7 @@ namespace g2o {
       const Isometry3& pose = vfrom_->estimate();
       const Matchable& matchable = vto_->estimate();
 
-      Matchable measurement = matchable.transform(pose.inverse());
+      Matchable measurement = matchable.applyTransformation(pose.inverse());
       Matrix7 omega = Matrix7::Zero();
       omega.block<3,3>(0,0) = matchable.omega();
 
@@ -45,7 +48,7 @@ namespace g2o {
       const Isometry3& pose = vfrom_->estimate();
       const Matchable& matchable = vto_->estimate();
 
-      Matchable measurement = matchable.transform(pose.inverse());
+      Matchable measurement = matchable.applyTransformation(pose.inverse());
       Matrix7 omega = Matrix7::Zero();
       omega.block<3,3>(0,0) = matchable.omega();
       omega.block<3,3>(3,3) = Eigen::Matrix3d::Identity();
@@ -67,7 +70,7 @@ namespace g2o {
       const Isometry3& pose = vfrom_->estimate();
       const Matchable& matchable = vto_->estimate();
 
-      Matchable measurement = matchable.transform(pose.inverse());
+      Matchable measurement = matchable.applyTransformation(pose.inverse());
       Matrix7 omega = Matrix7::Zero();
       omega.block<3,3>(0,0) = matchable.omega();
       omega.block<3,3>(3,3) = Matrix3::Identity();
@@ -120,13 +123,15 @@ namespace g2o {
     void WorldSimulator::senseMatchables(g2o::VertexSE3Chord* v_){
 
       const Eigen::Isometry3d& robot_pose = v_->estimate();
+      const Eigen::Isometry3d& robot_pose_inverse = robot_pose.inverse();
 
       for(MatchablePtr mptr : _world->landmarks()){
 
         const Vector3& m_position = mptr->point();
         const Vector3& robot_position = robot_pose.translation();
+        
 
-        if ((m_position - robot_position).norm() < _sense_radius) {
+        if (mptr->applyTransformation(robot_pose_inverse).point().norm() < _sense_radius) {
 
           VertexMatchable* v_m = new VertexMatchable();
           v_m->setId(_vertex_id);
@@ -137,7 +142,7 @@ namespace g2o {
           if (e_m) {
             _edges->insert(e_m);
           } else {
-            std::cerr << "skip invalid point edge" << std::endl;
+            std::cerr << "skip invalid edge" << std::endl;
           }
 
         }
@@ -145,9 +150,6 @@ namespace g2o {
     }
 
     void WorldSimulator::compute(){
-
-      _vertices->clear();
-      _edges->clear();
 
       int count=0;
       bool continue_=true;
@@ -159,10 +161,14 @@ namespace g2o {
       Isometry3 pose = Isometry3::Identity();
       pose.translation() = Vector3(position.x(), position.y(), 0.1);
 
-      VertexSE3Chord* prev_vertex = new VertexSE3Chord();
+      Vector6 minimal_estimate = Vector6::Zero();
+      minimal_estimate.head(3) = Vector3(position.x(), position.y(), 0.1);
+      minimal_estimate.tail(3) = Vector3(0,0,position.z());
+
+      VertexSE3Chord* prev_vertex = new VertexSE3Chord();      
       prev_vertex->setId(_vertex_id);
-      prev_vertex->setEstimate(pose);
       prev_vertex->setFixed(true);
+      prev_vertex->setEstimate(internal::fromVectorET(minimal_estimate));
       _vertices->insert(std::make_pair(_vertex_id++, prev_vertex));
 
       while(continue_){
@@ -191,43 +197,44 @@ namespace g2o {
         Vector3 new_position = position+increment;
 
         //check if new position is out of grid
-        if(new_position.x() < 0.0f || new_position.x() >= (float)(_world->width()-1) ||
-           new_position.y() < 0.0f || new_position.y() >= (float)(_world->height()-1)){
+        if(new_position.x() < 0.0f || new_position.x() > (float)(_world->width()-1) ||
+           new_position.y() < 0.0f || new_position.y() > (float)(_world->height()-1)){
           continue;
         }
 
         //new position is valid
         position = new_position;
-        count++;
 
         //generate pose vertex
-        pose.setIdentity();
-        pose.translation() = Vector3(position.x(), position.y(), 0.1);
-        Matrix3 R;
-        R = AngleAxis(position.z(), Vector3::UnitZ());
-        pose.linear() = R;
+        minimal_estimate.head(3) = Vector3(position.x(), position.y(), 0.1);
+        minimal_estimate.tail(3) = Vector3(0,0,position.z());
         VertexSE3Chord* vertex = new VertexSE3Chord();
         vertex->setId(_vertex_id);
-        vertex->setEstimate(pose);
+        vertex->setEstimate(internal::fromVectorET(minimal_estimate));
         _vertices->insert(std::make_pair(_vertex_id++, vertex));
 
         // ia generate odom
-        EdgeSE3* e = new EdgeSE3();
-        Isometry3 pose_meas = Isometry3::Identity();
-        pose_meas = prev_vertex->estimate().inverse() * pose;
-        e->vertices()[0] = prev_vertex;
-        e->vertices()[1] = vertex;
-        e->setInformation(Eigen::Matrix<double, 6, 6>::Identity());
-        e->setMeasurement(pose_meas);
-        _edges->insert(e);
+        // EdgeSE3* e = new EdgeSE3();
+        // e->vertices()[0] = prev_vertex;
+        // e->vertices()[1] = vertex;
+        // e->information().setIdentity();
+        // e->setMeasurementFromState();
+        // _edges->insert(e);
+        // std::cerr << "creating odom edge " << prev_vertex->id() << "->" << vertex->id() << std::endl;
+        // std::cerr << "from estimate:\n" << prev_vertex->estimate().matrix() << std::endl;
+        // std::cerr << "to estimate:\n" << vertex->estimate().matrix() << std::endl;
+        // std::cerr << "measurement:\n" << e->measurement().matrix() << std::endl;
+        // std::cin.get();
 
         //sense
         senseMatchables(vertex);
 
         // end
         prev_vertex = vertex;
-        if(count == _num_poses)
+        if(count > _num_poses)
           continue_=false;
+
+        count++;
       }
 
     }

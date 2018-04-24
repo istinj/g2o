@@ -43,6 +43,7 @@ namespace g2o {
       Eigen::Vector2i first_cell;
       Eigen::Vector2i second_cell;
     };
+    
     typedef std::map<CellPair,MatchablePtr> CellPairPlaneMap;
 
     class MatchableWorld {
@@ -54,17 +55,16 @@ namespace g2o {
       inline const number_t& resolution() const {return _resolution;}
       inline void setResolution(const number_t& resolution_) {_resolution = resolution_;}
       
-      inline int width() const {return _width;}
+      inline size_t width() const {return _width;}
       inline void setWidth(const int width_) {_width = width_;}
 
-      inline int height() const {return _height;}
+      inline size_t height() const {return _height;}
       inline void setHeight(const int height_) {_height = height_;}
 
-      void populate();
+      inline const MatchablePtrSet& landmarks() const {return _landmarks;}
 
+      void createGrid();
       void removeWalls(int num_hits);
-
-      const MatchablePtrSet &landmarks(){return _landmarks;}
       
     protected:
       number_t  _resolution;
@@ -73,9 +73,6 @@ namespace g2o {
 
       MatchablePtrSet _landmarks;
       CellPairPlaneMap _walls;
-
-    private:
-      Matrix3 computeRotationMatrixZXY(const Eigen::Vector3d& direction);
     };
   }
 }
