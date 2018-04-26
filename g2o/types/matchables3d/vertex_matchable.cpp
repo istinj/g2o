@@ -47,7 +47,7 @@ namespace g2o{
 
     bool VertexMatchable::write(std::ostream &os) const{
       Vector3 p = _estimate.point();
-      Matrix3 R = _estimate.R();
+      Matrix3 R = _estimate.rotation();
 
       os << _estimate.type() << " ";
       os << p[0] << " " << p[1] << " " << p[2] << " ";

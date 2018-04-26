@@ -58,7 +58,7 @@ namespace g2o{
 
     bool EdgeSE3Matchable::write(std::ostream &os) const{
       Vector3 p = _measurement.point();
-      Matrix3 R = _measurement.R();
+      Matrix3 R = _measurement.rotation();
 
       os << _measurement.type() << " ";
       os << p[0] << " " << p[1] << " " << p[2] << " ";
@@ -83,10 +83,10 @@ namespace g2o{
       const Matrix3 &R = pose.linear();
 
       const Vector3 &pl = v_to->estimate().point();
-      const Matrix3 &Rl = v_to->estimate().R();
+      const Matrix3 &Rl = v_to->estimate().rotation();
 
       const Vector3 &pz = _measurement.point();
-      const Matrix3 &Rz = _measurement.R();
+      const Matrix3 &Rz = _measurement.rotation();
 
       const Vector3 ep = Rl.transpose()*(R*pz + t - pl);
       const Vector3 ed = (R*Rz - Rl).col(0);

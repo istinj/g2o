@@ -242,7 +242,7 @@ namespace g2o {
       const Isometry3& pose = vfrom_->estimate();
       const Matchable& matchable = vto_->estimate();
       
-      Matchable measurement = matchable.applyTransformation(pose.inverse());
+      Matchable measurement = matchable.applyTransform(pose.inverse());
       Matrix7 omega = Matrix7::Zero();
       omega.block<3,3>(0,0) = matchable.omega();
 
@@ -262,7 +262,7 @@ namespace g2o {
       const Isometry3& pose = vfrom_->estimate();
       const Matchable& matchable = vto_->estimate();
       
-      Matchable measurement = matchable.applyTransformation(pose.inverse());
+      Matchable measurement = matchable.applyTransform(pose.inverse());
       Matrix7 omega = Matrix7::Zero();
       omega.block<3,3>(0,0) = matchable.omega();
       omega.block<3,3>(3,3) = Matrix3::Identity();
@@ -283,7 +283,7 @@ namespace g2o {
       const Isometry3& pose = vfrom_->estimate();
       const Matchable& matchable = vto_->estimate();
       
-      Matchable measurement = matchable.applyTransformation(pose.inverse());
+      Matchable measurement = matchable.applyTransform(pose.inverse());
       Matrix7 omega = Matrix7::Zero();
       omega.block<3,3>(0,0) = matchable.omega();
       omega.block<3,3>(3,3) = Matrix3::Identity();

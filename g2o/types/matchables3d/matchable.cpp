@@ -9,37 +9,70 @@ namespace g2o {
                          const Matrix3& R_):
       _type(type_),
       _point(point_),
-      _R(R_){
+      _rotation(R_){
 
-      _Omega.setZero();
+      _omega.setZero();
       switch(type_){
         case Point:
-          _Omega.setIdentity();
+          _omega.setIdentity();
         case Line:
-          _Omega.diagonal()[0]=_epsilon;
-          _Omega.diagonal()[1]=1;
-          _Omega.diagonal()[2]=1;
+          _omega.diagonal()[0]=_epsilon;
+          _omega.diagonal()[1]=1;
+          _omega.diagonal()[2]=1;
           break;
         case Plane:
-          _Omega.diagonal()[0]=1;
-          _Omega.diagonal()[1]=_epsilon;
-          _Omega.diagonal()[2]=_epsilon;
+          _omega.diagonal()[0]=1;
+          _omega.diagonal()[1]=_epsilon;
+          _omega.diagonal()[2]=_epsilon;
           break;
         default: break;
       }
-    }
-
-    void Matchable::setZero(){
-      _point.setZero();
-      _R.setIdentity();
     }
 
     Vector13 Matchable::toVector() const {
       Vector13 ret;
       ret << _type,
              _point.x(),_point.y(),_point.z(),
-             _R(0,0),_R(0,1),_R(0,2),_R(1,0),_R(1,1),_R(1,2),_R(2,0),_R(2,1),_R(2,2);
+             _rotation(0,0),_rotation(0,1),_rotation(0,2),
+        _rotation(1,0),_rotation(1,1),_rotation(1,2),
+        _rotation(2,0),_rotation(2,1),_rotation(2,2);
       return ret;
     }
+
+    void Matchable::applyMinimalPertInPlace(const Vector5& dm_) {
+      Matrix3 dR;
+      dR = AngleAxis(dm_[3],Vector3::UnitY())*AngleAxis(dm_[4],Vector3::UnitZ());
+
+      _point += dm_.head(3);
+      _rotation *= dR;
+    }
+
+    Matchable Matchable::applyMinimalPert(const Vector5& dm_) const  {
+      Matrix3 dR;
+      dR = AngleAxis(dm_[3],Vector3::UnitY())*AngleAxis(dm_[4],Vector3::UnitZ());
+
+      Vector3 point = _point + dm_.head(3);
+      Matrix3 R  = _rotation * dR;
+
+      return Matchable(_type,point,R);
+    }
+
+    void Matchable::computeRotationMatrixZXY(const Vector3& normal_) {
+      number_t d = std::sqrt(normal_.x()*normal_.x() + normal_.y()*normal_.y());
+
+      const number_t& dirx = normal_.x();
+      const number_t& diry = normal_.y();
+      const number_t& dirz = normal_.z();
+
+      if(d > std::numeric_limits<number_t>::min()) {
+        _rotation <<
+          dirx, diry/d,  dirx*dirz/d,
+          diry, -dirx/d, diry*dirz/d,
+          dirz, 0,       -d;
+      } else {
+        _rotation.setIdentity();
+      }
+    }
+    
   }
 }

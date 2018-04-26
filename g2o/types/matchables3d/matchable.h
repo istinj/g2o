@@ -21,49 +21,39 @@ namespace g2o{
                 const Vector3& point_,
                 const Matrix3& R_ = Matrix3::Identity());
 
-      inline Matchable applyTransformation(const Isometry3& T) const {
-        return Matchable(_type,T*_point,T.linear()*_R);
+      inline const Type& type() const{return _type;}
+      inline const Vector3& point() const {return _point;}
+      inline const Matrix3& rotation() const {return _rotation;}
+      inline const DiagMatrix3& omega() const {return _omega;}
+      
+      inline void setZero() {
+        _point.setZero();
+        _rotation.setIdentity();
       }
 
-      inline void applyTransformationInPlace(const Isometry3& T) {
-        _point = T*_point;
-        _R = T.linear() *_R;
+      inline Matchable applyTransform(const Isometry3& T) const {
+        return Matchable(_type,T*_point,T.linear()*_rotation);
       }
       
-      inline Matchable applyMinimalPert(const Vector5& v) const {
-        Vector3 dp(v[0],v[1],v[2]);
-        Matrix3 dR;
-        dR = AngleAxis(v[3],Vector3::UnitY())*AngleAxis(v[4],Vector3::UnitZ());
-
-        Vector3 point = _point + dp;
-        Matrix3 R  = _R * dR;
-
-        return Matchable(_type,point,R);
+      inline void applyTransformInPlace(const Isometry3& T) {
+        _point = T*_point;
+        _rotation = T.linear() *_rotation;
       }
+      
+      Matchable applyMinimalPert(const Vector5& v) const;
 
-      inline void applyMinimalPertInPlace(const Vector5& v) {
-        Vector3 dp(v[0],v[1],v[2]);
-        Matrix3 dR;
-        dR = AngleAxis(v[3],Vector3::UnitY())*AngleAxis(v[4],Vector3::UnitZ());
+      void applyMinimalPertInPlace(const Vector5& v);
 
-        _point += dp;
-        _R *= dR;
-      }
+      void computeRotationMatrixZXY(const Vector3& normal_);
 
       Vector13 toVector() const;
 
-      inline const Type& type() const{return _type;}
-      inline const Vector3& point() const {return _point;}
-      inline const Matrix3& R() const {return _R;}
-      inline const DiagMatrix3& omega() const {return _Omega;}
-
-      void setZero();
 
     protected:
       Type    _type;
       Vector3 _point;
-      Matrix3 _R;
-      DiagMatrix3 _Omega;
+      Matrix3 _rotation;
+      DiagMatrix3 _omega;
 
     public:
       static const number_t _epsilon;
