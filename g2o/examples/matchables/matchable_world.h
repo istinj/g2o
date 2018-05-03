@@ -6,6 +6,7 @@
 
 namespace g2o {
   namespace matchables {
+
     struct CellPair{
       CellPair(const Eigen::Vector2i &first_cell_,
                const Eigen::Vector2i &second_cell_):

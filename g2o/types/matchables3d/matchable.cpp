@@ -32,10 +32,10 @@ namespace g2o {
     Vector13 Matchable::toVector() const {
       Vector13 ret;
       ret << _type,
-             _point.x(),_point.y(),_point.z(),
-             _rotation(0,0),_rotation(0,1),_rotation(0,2),
-        _rotation(1,0),_rotation(1,1),_rotation(1,2),
-        _rotation(2,0),_rotation(2,1),_rotation(2,2);
+          _point.x(),_point.y(),_point.z(),
+          _rotation(0,0),_rotation(0,1),_rotation(0,2),
+          _rotation(1,0),_rotation(1,1),_rotation(1,2),
+          _rotation(2,0),_rotation(2,1),_rotation(2,2);
       return ret;
     }
 
@@ -66,11 +66,13 @@ namespace g2o {
 
       if(d > std::numeric_limits<number_t>::min()) {
         _rotation <<
-          dirx, diry/d,  dirx*dirz/d,
-          diry, -dirx/d, diry*dirz/d,
-          dirz, 0,       -d;
+                     dirx, diry/d,  dirx*dirz/d,
+            diry, -dirx/d, diry*dirz/d,
+            dirz, 0,       -d;
       } else {
-        _rotation.setIdentity();
+        _rotation << 0,1,0,
+            0,0,1,
+            1,0,0;
       }
     }
     

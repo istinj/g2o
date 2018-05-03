@@ -21,9 +21,9 @@ namespace g2o {
           plane_factors = true;
 
           //ia mixed convenction: from_to
-          line_point_factor = false;
-          plane_line_factor = false;
-          plane_point_factor = false;
+          line_point_factor = true;
+          plane_line_factor = true;
+          plane_point_factor = true;
         }
         bool point_factors;
         bool line_factors;
@@ -86,6 +86,13 @@ namespace g2o {
                                                    g2o::matchables::VertexMatchable* vto_);
       g2o::HyperGraph::Edge* _computePlanePointEdge(g2o::VertexSE3Chord* vfrom_,
                                                     g2o::matchables::VertexMatchable* vto_);
+
+      size_t point_point;
+      size_t line_line;
+      size_t plane_plane;
+      size_t line_point;
+      size_t plane_point;
+      size_t plane_line;
     };
     
   }

@@ -89,8 +89,8 @@ namespace g2o{
       const Matrix3 &Rz = _measurement.rotation();
 
       const Vector3 ep = Rl.transpose()*(R*pz + t - pl);
-      const Vector3 ed = (R*Rz - Rl).col(0);
-      const float eo    = (R*Rz).col(0).transpose() * Rl.col(0);
+      const Vector3 ed = R*Rz.col(0) - Rl.col(0);
+      const float eo   = (R*Rz).col(0).transpose() * Rl.col(0);
 
       _error.block<3,1>(0,0) = ep;
       _error.block<3,1>(3,0) = ed;

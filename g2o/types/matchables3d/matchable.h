@@ -32,12 +32,18 @@ namespace g2o{
       }
 
       inline Matchable applyTransform(const Isometry3& T) const {
-        return Matchable(_type,T*_point,T.linear()*_rotation);
+        Matchable m(_type,T*_point);
+
+        if(_type != Type::Point)
+          m.setRotation(T.linear()*_rotation);
+
+        return m;
       }
       
       inline void applyTransformInPlace(const Isometry3& T) {
         _point = T*_point;
-        _rotation = T.linear() *_rotation;
+        if(_type != Type::Point)
+          setRotation(T.linear()*_rotation);
       }
       
       Matchable applyMinimalPert(const Vector5& v) const;
@@ -45,6 +51,8 @@ namespace g2o{
       void applyMinimalPertInPlace(const Vector5& v);
 
       void computeRotationMatrixZXY(const Vector3& normal_);
+
+      void setRotation(const Matrix3& rotation_){_rotation = rotation_;}
 
       Vector13 toVector() const;
 

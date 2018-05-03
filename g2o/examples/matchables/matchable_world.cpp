@@ -3,37 +3,20 @@
 namespace g2o {
   namespace matchables {
 
-    //ia aid function
-    Matrix3 _computeRotationMatrixZXY(const Vector3& direction_) {
-      number_t d = sqrt(direction_.x()*direction_.x() + direction_.y()*direction_.y());
-
-      const number_t& dirx = direction_.x();
-      const number_t& diry = direction_.y();
-      const number_t& dirz = direction_.z();
-
-      Matrix3 rotation_matrix;
-      if(d > std::numeric_limits<number_t>::min()) {
-        rotation_matrix <<
-          dirx, diry/d,  dirx*dirz/d,
-          diry, -dirx/d, diry*dirz/d,
-          dirz, 0,       -d;
-      } else {
-        rotation_matrix.setIdentity();
-      }
-      return rotation_matrix;
-    }
-    
     MatchableWorld::MatchableWorld() {}
     MatchableWorld::~MatchableWorld() {}
 
-    void MatchableWorld::createGrid() {      
+    void MatchableWorld::createGrid() {
+
+      int points=0,lines=0,planes=0;
 
       //insert points
       for(size_t j=0; j<_height; ++j) {
         for(size_t i=0; i<_width; ++i) {
-          const Vector3 p(i*_resolution, j*_resolution, 0.5f);
+          const Vector3 p(i*_resolution, j*_resolution, 0.0f);
           MatchablePtr point_matchable(new Matchable(Matchable::Point,p));
           _landmarks.insert(point_matchable);
+          points++;
         }
       }
 
@@ -41,9 +24,10 @@ namespace g2o {
       for(size_t j=0; j<_height; ++j) {
         for(size_t i=0; i<_width-1; ++i){
           const Vector3 p(i*_resolution, j*_resolution, 0.5f);
-          const Matrix3 R = _computeRotationMatrixZXY(Vector3::UnitX());
-          MatchablePtr line_matchable(new Matchable(Matchable::Line,p,R));
+          MatchablePtr line_matchable(new Matchable(Matchable::Line,p));
+          line_matchable->computeRotationMatrixZXY(Vector3::UnitX());
           _landmarks.insert(line_matchable);
+          lines++;
         }
       }
 
@@ -51,9 +35,10 @@ namespace g2o {
       for(size_t i=0; i<_width; ++i) {
         for(size_t j=0; j<_height-1; ++j){
           const Vector3 p(i*_resolution, j*_resolution, 0.5f);
-          const Matrix3 R = _computeRotationMatrixZXY(Vector3::UnitY());
-          MatchablePtr line_matchable(new Matchable(Matchable::Line,p,R));
+          MatchablePtr line_matchable(new Matchable(Matchable::Line,p));
+          line_matchable->computeRotationMatrixZXY(Vector3::UnitY());
           _landmarks.insert(line_matchable);
+          lines++;
         }
       }
 
@@ -61,9 +46,10 @@ namespace g2o {
       for(size_t j=0; j<_height; ++j) {
         for(size_t i=0; i<_width; ++i){
           const Vector3 p(i*_resolution, j*_resolution, 0.0f);
-          const Matrix3 R = _computeRotationMatrixZXY(Vector3::UnitZ());
-          MatchablePtr line_matchable(new Matchable(Matchable::Line,p,R));
+          MatchablePtr line_matchable(new Matchable(Matchable::Line,p));
+          line_matchable->computeRotationMatrixZXY(Vector3::UnitZ());
           _landmarks.insert(line_matchable);
+          lines++;
         }
       }
 
@@ -72,9 +58,10 @@ namespace g2o {
         for(size_t i=0; i<_width; ++i){
           const Eigen::Vector2i cell(i,j);
           const Vector3 p(cell.x()*_resolution, cell.y()*_resolution+_resolution/2.0f, _resolution/2.0f);
-          const Matrix3 R = _computeRotationMatrixZXY(Vector3::UnitX());
-          MatchablePtr plane_matchable(new Matchable(Matchable::Plane,p,R));
+          MatchablePtr plane_matchable(new Matchable(Matchable::Plane,p));
+          plane_matchable->computeRotationMatrixZXY(Vector3::UnitX());
           _landmarks.insert(plane_matchable);
+          planes++;
 
           if(i > 0 && i < _width-1){
             const Eigen::Vector2i left_cell(i-1,j);
@@ -91,9 +78,10 @@ namespace g2o {
         for(size_t j=0; j<_height; ++j){
           const Eigen::Vector2i cell(i,j);
           const Vector3 p(cell.x()*_resolution+_resolution/2.0f, cell.y()*_resolution, _resolution/2.0f);
-          const Matrix3 R = _computeRotationMatrixZXY(Vector3::UnitY());
-          MatchablePtr plane_matchable(new Matchable(Matchable::Plane,p,R));
+          MatchablePtr plane_matchable(new Matchable(Matchable::Plane,p));
+          plane_matchable->computeRotationMatrixZXY(Vector3::UnitY());
           _landmarks.insert(plane_matchable);
+          planes++;
 
           if(j > 0 && j < _height-1){
             const Eigen::Vector2i down_cell(i,j-1);
@@ -109,19 +97,24 @@ namespace g2o {
       for(size_t j=0; j<_height-1; ++j) {
         for(size_t i=0; i<_width-1; ++i){
           const Vector3 p(i*_resolution+_resolution/2.0f, j*_resolution+_resolution/2.0f, 0.0f);
-          const Matrix3 R = _computeRotationMatrixZXY(Vector3::UnitZ());
-          MatchablePtr plane_matchable(new Matchable(Matchable::Plane,p,R));
+          MatchablePtr plane_matchable(new Matchable(Matchable::Plane,p));
+          plane_matchable->computeRotationMatrixZXY(Vector3::UnitZ());
           _landmarks.insert(plane_matchable);
+          planes++;
         }
       }
 
       std::cerr << "World has " << _landmarks.size() << " matchables before sbraco" << std::endl;
+      std::cerr << "Points: " << points << std::endl;
+      std::cerr << "Lines : " << lines  << std::endl;
+      std::cerr << "Planes: " << planes << std::endl;
     }
 
     void MatchableWorld::removeWalls(int num_hits){
 
-      std::cerr << "sbraco..." << std::endl;
+      std::cerr << "sbraco...";
       int count=0;
+      int sbrachi=0;
       bool continue_=true;
       std::random_device rd;
       std::mt19937 gen(rd());
@@ -129,15 +122,12 @@ namespace g2o {
 
       number_t n = 0;
       Vector3 increment = Vector3::Zero();
+
       Vector3 new_position = Vector3::Zero();
       Vector3 new_cell_pos = Vector3::Zero();
-      Vector3 cell_pos(_width/2-1, _height/2-1, 0);
+
       Vector3 position((_width/2-1)*_resolution,(_height/2-1)*_resolution,0.0f);
-      Isometry3 pose = Isometry3::Identity();
-      pose.translation() = Vector3(position.x(), position.y(), 0.1);
-      Matrix3 R;
-      R = AngleAxis(position.z(), Vector3::UnitZ());
-      pose.linear() = R;
+      Vector3 cell_pos(_width/2-1, _height/2-1, 0);
 
       while(continue_){
         //sample new position
@@ -173,18 +163,19 @@ namespace g2o {
         new_position.z() = new_cell_pos.z();
 
         //sbraco
-        const Eigen::Vector2i p = position.head(2).cast<int>();
-        const Eigen::Vector2i np = new_position.head(2).cast<int>();
+        const Eigen::Vector2i p = cell_pos.head(2).cast<int>();
+        const Eigen::Vector2i np = new_cell_pos.head(2).cast<int>();
+
         CellPair pair(p,np);
         CellPairPlaneMap::iterator it = _walls.find(pair);
 
         if(it != _walls.end()) {
           MatchablePtr m = it->second;
           MatchablePtrSet::iterator jt = _landmarks.find(m);
-          if(jt != _landmarks.end())
+          if(jt != _landmarks.end()){
             _landmarks.erase(jt);
-        } else {
-          std::cerr << pair.first_cell.transpose() << " - " << pair.second_cell.transpose() << " not found!" << std::endl;
+            sbrachi++;
+          }
         }
 
         position = new_position;
@@ -195,6 +186,7 @@ namespace g2o {
           continue_=false;
 
       }
+      std::cerr << sbrachi << " planes!" << std::endl;
     }
   }
 }

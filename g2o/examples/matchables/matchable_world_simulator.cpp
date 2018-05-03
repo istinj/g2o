@@ -28,9 +28,6 @@ namespace g2o {
       const Eigen::Isometry3d& robot_pose_inverse = robot_pose.inverse();
 
       for(MatchablePtr mptr : _world->landmarks()){
-
-        // const Vector3& m_position = mptr->point();
-        // const Vector3& robot_position = robot_pose.translation();
         
         if (mptr->applyTransform(robot_pose_inverse).point().norm() < _sense_radius) {
 
@@ -40,50 +37,65 @@ namespace g2o {
           _vertices->insert(std::make_pair(_vertex_id++, v_m));
 
           switch (mptr->type()) {
-          case Matchable::Type::Point:
-            {
-              if (_factors_types.point_factors) {
-               HyperGraph::Edge* e = _computePointEdge(v_, v_m);
-               if (e)
-                 _edges->insert(e);
+            case Matchable::Type::Point:
+              {
+                if (_factors_types.point_factors) {
+                  HyperGraph::Edge* e = _computePointEdge(v_, v_m);
+                  if (e){
+                    _edges->insert(e);
+                    ++point_point;
+                  }
+                }
+                //ia here you can add other constraints if you want
+                break;
               }
-              //ia here you can add other constraints if you want
-              break;
-            }
-          case Matchable::Type::Line:
-            {
-              if (_factors_types.line_factors) {
-                HyperGraph::Edge* e = _computeLineEdge(v_, v_m);
-                if (e)
-                  _edges->insert(e);
-              } else if (_factors_types.line_point_factor) {
-                HyperGraph::Edge* e = _computeLinePointEdge(v_, v_m);
-                if (e)
-                  _edges->insert(e);
+            case Matchable::Type::Line:
+              {
+                if (_factors_types.line_factors) {
+                  HyperGraph::Edge* e = _computeLineEdge(v_, v_m);
+                  if (e){
+                    _edges->insert(e);
+                    ++line_line;
+                  }
+                }
+                if (_factors_types.line_point_factor) {
+                  HyperGraph::Edge* e = _computeLinePointEdge(v_, v_m);
+                  if (e){
+                    _edges->insert(e);
+                    ++line_point;
+                  }
+                }
+                //ia here you can add other constraints if you want
+                break;
               }
-              //ia here you can add other constraints if you want
-              break;
-            }
-          case Matchable::Type::Plane:
-            {
-              if (_factors_types.plane_factors) {
-                HyperGraph::Edge* e = _computePlaneEdge(v_, v_m);
-                if (e)
-                  _edges->insert(e);
-              } else if (_factors_types.plane_line_factor) {
-                HyperGraph::Edge* e = _computePlaneLineEdge(v_, v_m);
-                if (e)
-                  _edges->insert(e);                
-              } else if (_factors_types.plane_point_factor) {
-                HyperGraph::Edge* e = _computePlanePointEdge(v_, v_m);
-                if (e)
-                  _edges->insert(e);                
-              }              
-              //ia here you can add other constraints if you want
-              break;
-            }
-          default:
-            throw std::runtime_error("unexepected matchable type");
+            case Matchable::Type::Plane:
+              {
+                if (_factors_types.plane_factors) {
+                  HyperGraph::Edge* e = _computePlaneEdge(v_, v_m);
+                  if (e){
+                    _edges->insert(e);
+                    ++plane_plane;
+                  }
+                }
+                if (_factors_types.plane_line_factor) {
+                  HyperGraph::Edge* e = _computePlaneLineEdge(v_, v_m);
+                  if (e){
+                    _edges->insert(e);
+                    ++plane_line;
+                  }
+                }
+                if (_factors_types.plane_point_factor) {
+                  HyperGraph::Edge* e = _computePlanePointEdge(v_, v_m);
+                  if (e){
+                    _edges->insert(e);
+                    ++plane_point;
+                  }
+                }
+                //ia here you can add other constraints if you want
+                break;
+              }
+            default:
+              throw std::runtime_error("unexepected matchable type");
           }
         }
       }
@@ -92,22 +104,35 @@ namespace g2o {
     void WorldSimulator::compute(){
 
       int count=0;
+      point_point=0;
+      line_line=0;
+      plane_plane=0;
+      line_point=0;
+      plane_point=0;
+      plane_line=0;
+
       bool continue_=true;
       std::random_device rd;
       std::mt19937 gen(rd());
       std::uniform_real_distribution<> dis(0, 1);
-      Vector3 new_position = Vector3::Zero();
 
-      Vector3 cell_pos(_world->width()/2-1, _world->height()/2-1, 0);
+      float n = 0;
+      Vector3 increment = Vector3::Zero();
+
+
       Vector3 position((_world->width()/2-1) * _world->resolution(),
                        (_world->height()/2-1) * _world->resolution(),
                        0.0f);
+      Vector3 cell_pos(_world->width()/2-1, _world->height()/2-1, 0);
+
+      Vector3 new_position = Vector3::Zero();
+      Vector3 new_cell_pos = Vector3::Zero();
 
       Vector6 minimal_estimate = Vector6::Zero();
       minimal_estimate.head(3) = Vector3(position.x(), position.y(), 0);
       minimal_estimate.tail(3) = Vector3(0,0,position.z());
 
-      VertexSE3Chord* prev_vertex = new VertexSE3Chord();      
+      VertexSE3Chord* prev_vertex = new VertexSE3Chord();
       prev_vertex->setId(_vertex_id);
       prev_vertex->setFixed(true);
       prev_vertex->setEstimate(internal::fromVectorET(minimal_estimate));
@@ -116,8 +141,8 @@ namespace g2o {
       while(continue_){
 
         //sample new position
-        Vector3 increment = Vector3::Zero();
-        float n = dis(gen);
+        increment = Vector3::Zero();
+        n = dis(gen);
 
         //go forward
         if(n < 0.5f){
@@ -137,7 +162,7 @@ namespace g2o {
           increment.z() = -M_PI/2.0f;
         }
 
-        Vector3 new_cell_pos = cell_pos+increment;
+        new_cell_pos = cell_pos+increment;
 
         //check if new position is out of grid
         if(new_cell_pos.x() < 0.0f || new_cell_pos.x() > (float)(_world->width()-1) ||
@@ -179,6 +204,14 @@ namespace g2o {
 
         count++;
       }
+
+      std::cerr << "Graph has: " << std::endl;
+      std::cerr << "Point->Point: " << point_point << " factors" << std::endl;
+      std::cerr << "Line->Line: " << line_line << " factors" << std::endl;
+      std::cerr << "Plane->Plane: " << plane_plane << " factors" << std::endl;
+      std::cerr << "Line->Point: " << line_point << " factors" << std::endl;
+      std::cerr << "Plane->Point: " << plane_point << " factors" << std::endl;
+      std::cerr << "Plane->Line: " << plane_line << " factors" << std::endl;
 
     }
 
@@ -231,6 +264,7 @@ namespace g2o {
       const Matchable& matchable = vto_->estimate();
 
       Matchable measurement = matchable.applyTransform(pose.inverse());
+
       Matrix7 omega = Matrix7::Zero();
       omega.block<3,3>(0,0) = matchable.omega();
       omega.block<3,3>(3,3) = Matrix3::Identity();
@@ -250,17 +284,25 @@ namespace g2o {
     
     HyperGraph::Edge* WorldSimulator::_computeLinePointEdge(VertexSE3Chord* vfrom_,
                                                             VertexMatchable* vto_) {
-      const Isometry3& pose = vfrom_->estimate();
+      const Isometry3& inv_pose = vfrom_->estimate().inverse();
       const Matchable& matchable = vto_->estimate();
       
-      Matchable trans_match = matchable.applyTransform(pose.inverse());
-      Matchable measurement(Matchable::Type::Point, trans_match.point());
+      Matchable trans_match = matchable.applyTransform(inv_pose);
+      const Vector3& pl = trans_match.point();
+      const Vector3& nl = trans_match.rotation().col(0);
+
+      // fn orthogonality check
+      number_t x_d = Vector3::UnitZ().dot(nl);
+      if(x_d<1e-3){
+        return nullptr;
+      }
+
+      number_t x = -Vector3::UnitZ().dot(pl)/x_d;
+
+      Matchable measurement(Matchable::Type::Point, pl + x*nl);
 
       Matrix7 omega = Matrix7::Zero();
       omega.block<3,3>(0,0) = matchable.omega();
-
-      //TODO some consistency checks could be done here and return NULL if something is wrong
-      // if (measurement_is_not_valid) return 0
 
       EdgeSE3Matchable* e = new EdgeSE3Matchable();
       e->vertices()[0] = vfrom_;
@@ -273,25 +315,15 @@ namespace g2o {
 
     HyperGraph::Edge* WorldSimulator::_computePlanePointEdge(VertexSE3Chord* vfrom_,
                                                              VertexMatchable* vto_) {
-      const Isometry3& pose = vfrom_->estimate();
-      const Matchable& matchable = vto_->estimate();
-      
-      Matchable trans_match = matchable.applyTransform(pose.inverse());
-      
-      const Vector3& p = trans_match.point();
 
-      //ia DEBUG -> TODO which is the good point to take??
-      // const Vector3& n = trans_match.R().col(0);
-      // const number_t d  = n.transpose()*p;
-      // const Vector3 zp(-d/n.x(), 0, 0);
-      // cerr << "madre: " << zp.transpose() << " " << p.transpose() << endl;
-      // Matchable measurement(Matchable::Type::Point,zp);
-      // Matchable measurement(Matchable::Type::Point,p+10*prediction.R().col(1)+20*prediction.R().col(2));
-      
-      Matchable measurement(Matchable::Type::Point, p);
+      const Matchable& matchable = vto_->estimate();
+      const Isometry3& inv_pose = vfrom_->estimate().inverse();
+      Matchable trans_match = matchable.applyTransform(inv_pose);
+
+      Matchable measurement(Matchable::Type::Point, trans_match.point());
       Matrix7 omega = Matrix7::Zero();
       omega.block<3,3>(0,0) = matchable.omega();
-      
+
       EdgeSE3Matchable* e = new EdgeSE3Matchable();
       e->vertices()[0] = vfrom_;
       e->vertices()[1] = vto_;
@@ -304,28 +336,23 @@ namespace g2o {
 
     HyperGraph::Edge* WorldSimulator::_computePlaneLineEdge(VertexSE3Chord* vfrom_,
                                                             VertexMatchable* vto_) {
+
       const Isometry3& inv_pose = vfrom_->estimate().inverse();
       const Matchable& matchable = vto_->estimate();
-      
-      const Vector3& p = inv_pose.translation();
-      const Vector3& n = inv_pose.linear().col(2);
-      const number_t d  = -n.transpose()*p;
 
       Matchable trans_match = matchable.applyTransform(inv_pose);
       const Vector3& pl = trans_match.point();
       const Vector3& nl = trans_match.rotation().col(0);
-      const number_t dl  = -nl.transpose()*pl;
 
-      Matrix2 A;
-      Vector2 b;
-      A << n(0),n(1),nl(0),nl(1);
-      b << -d,-dl;
-      Vector2 x = A.colPivHouseholderQr().solve(b);
 
-      Vector3 nz = n.cross(nl);
+      Vector3 nz = Vector3::UnitZ().cross(nl);
+
+      //orthogonality check
+      if(nz.norm() < 1e-3)
+        return nullptr;
       nz.normalize();
 
-      Matchable measurement(Matchable::Type::Line,Vector3(x(0),x(1),0.0f)); 
+      Matchable measurement(Matchable::Type::Line,pl);
       measurement.computeRotationMatrixZXY(nz);
       Matrix7 omega = Matrix7::Zero();
       omega.block<3,3>(0,0) = matchable.omega();

@@ -22,7 +22,7 @@ int main(int argc, char** argv) {
   float resolution = 1.0f;
   int width=10;
   int height=10;
-  int num_poses=10;
+  int num_poses=20;
   std::string filename;
 
   int c=1;
