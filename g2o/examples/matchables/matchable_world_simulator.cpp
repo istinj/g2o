@@ -17,6 +17,14 @@ namespace g2o {
       if (!_edges) {
         throw std::runtime_error("please set the edges");
       }
+
+      if (!_world) {
+        throw std::runtime_error("please set the world");
+      }
+
+      if (!_world->isValid()) {
+        throw std::runtime_error("world is not valid");
+      }        
       
       _vertices->clear();
       _edges->clear();
@@ -37,65 +45,65 @@ namespace g2o {
           _vertices->insert(std::make_pair(_vertex_id++, v_m));
 
           switch (mptr->type()) {
-            case Matchable::Type::Point:
-              {
-                if (_factors_types.point_factors) {
-                  HyperGraph::Edge* e = _computePointEdge(v_, v_m);
-                  if (e){
-                    _edges->insert(e);
-                    ++point_point;
-                  }
+          case Matchable::Type::Point:
+            {
+              if (_factors_types.point_factors) {
+                HyperGraph::Edge* e = _computePointEdge(v_, v_m);
+                if (e){
+                  _edges->insert(e);
+                  ++point_point;
                 }
-                //ia here you can add other constraints if you want
-                break;
               }
-            case Matchable::Type::Line:
-              {
-                if (_factors_types.line_factors) {
-                  HyperGraph::Edge* e = _computeLineEdge(v_, v_m);
-                  if (e){
-                    _edges->insert(e);
-                    ++line_line;
-                  }
+              //ia here you can add other constraints if you want
+              break;
+            }
+          case Matchable::Type::Line:
+            {
+              if (_factors_types.line_factors) {
+                HyperGraph::Edge* e = _computeLineEdge(v_, v_m);
+                if (e){
+                  _edges->insert(e);
+                  ++line_line;
                 }
-                if (_factors_types.line_point_factor) {
-                  HyperGraph::Edge* e = _computeLinePointEdge(v_, v_m);
-                  if (e){
-                    _edges->insert(e);
-                    ++line_point;
-                  }
-                }
-                //ia here you can add other constraints if you want
-                break;
               }
-            case Matchable::Type::Plane:
-              {
-                if (_factors_types.plane_factors) {
-                  HyperGraph::Edge* e = _computePlaneEdge(v_, v_m);
-                  if (e){
-                    _edges->insert(e);
-                    ++plane_plane;
-                  }
+              if (_factors_types.line_point_factor) {
+                HyperGraph::Edge* e = _computeLinePointEdge(v_, v_m);
+                if (e){
+                  _edges->insert(e);
+                  ++line_point;
                 }
-                if (_factors_types.plane_line_factor) {
-                  HyperGraph::Edge* e = _computePlaneLineEdge(v_, v_m);
-                  if (e){
-                    _edges->insert(e);
-                    ++plane_line;
-                  }
-                }
-                if (_factors_types.plane_point_factor) {
-                  HyperGraph::Edge* e = _computePlanePointEdge(v_, v_m);
-                  if (e){
-                    _edges->insert(e);
-                    ++plane_point;
-                  }
-                }
-                //ia here you can add other constraints if you want
-                break;
               }
-            default:
-              throw std::runtime_error("unexepected matchable type");
+              //ia here you can add other constraints if you want
+              break;
+            }
+          case Matchable::Type::Plane:
+            {
+              if (_factors_types.plane_factors) {
+                HyperGraph::Edge* e = _computePlaneEdge(v_, v_m);
+                if (e){
+                  _edges->insert(e);
+                  ++plane_plane;
+                }
+              }
+              if (_factors_types.plane_line_factor) {
+                HyperGraph::Edge* e = _computePlaneLineEdge(v_, v_m);
+                if (e){
+                  _edges->insert(e);
+                  ++plane_line;
+                }
+              }
+              if (_factors_types.plane_point_factor) {
+                HyperGraph::Edge* e = _computePlanePointEdge(v_, v_m);
+                if (e){
+                  _edges->insert(e);
+                  ++plane_point;
+                }
+              }
+              //ia here you can add other constraints if you want
+              break;
+            }
+          default:
+            throw std::runtime_error("unexepected matchable type");
           }
         }
       }

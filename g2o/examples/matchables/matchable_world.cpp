@@ -3,8 +3,12 @@
 namespace g2o {
   namespace matchables {
 
-    MatchableWorld::MatchableWorld() {}
-    MatchableWorld::~MatchableWorld() {}
+    MatchableWorld::MatchableWorld() {
+      _is_created = false;
+    }
+    MatchableWorld::~MatchableWorld() {
+      //dtor
+    }
 
     void MatchableWorld::createGrid() {
 
@@ -104,20 +108,26 @@ namespace g2o {
         }
       }
 
-      std::cerr << "World has " << _landmarks.size() << " matchables before sbraco" << std::endl;
+      std::cerr << "Created grid with " << _landmarks.size() << " matchables" << std::endl;
       std::cerr << "Points: " << points << std::endl;
       std::cerr << "Lines : " << lines  << std::endl;
       std::cerr << "Planes: " << planes << std::endl;
+
+      _is_created = true;
     }
 
-    void MatchableWorld::removeWalls(int num_hits){
+    void MatchableWorld::removeWalls(int num_hits) {
+      if (!_is_created)
+        throw std::runtime_error("world has not been created. maybe you forgot to call createGrid()?");
 
-      std::cerr << "sbraco...";
+      std::cerr << "creating a traversable path" << std::endl;
       int count=0;
       int sbrachi=0;
       bool continue_=true;
+
+      //ia this fucking thing breaks valgrind so we will never know if there are leaks
       std::random_device rd;
-      std::mt19937 gen(rd());
+      // std::mt19937 gen(rd()); //ia not required until you need a lot of numbers
       std::uniform_real_distribution<> dis(0, 1);
 
       number_t n = 0;
@@ -130,8 +140,9 @@ namespace g2o {
       Vector3 cell_pos(_width/2-1, _height/2-1, 0);
 
       while(continue_){
+        std::cerr << "x";
         //sample new position
-        n = dis(gen);
+        n = dis(rd);
 
         //go forward
         if(n < 0.5f){
@@ -186,7 +197,9 @@ namespace g2o {
           continue_=false;
 
       }
-      std::cerr << sbrachi << " planes!" << std::endl;
+      std::cerr << std::endl << std::endl;
+      // std::cerr << "removed " << sbrachi << " planes!" << std::endl;
+      _is_valid = true;
     }
   }
 }

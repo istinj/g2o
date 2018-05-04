@@ -56,13 +56,15 @@ namespace g2o {
       inline const number_t& resolution() const {return _resolution;}
       inline void setResolution(const number_t& resolution_) {_resolution = resolution_;}
       
-      inline size_t width() const {return _width;}
-      inline void setWidth(const int width_) {_width = width_;}
+      inline const size_t& width() const {return _width;}
+      inline void setWidth(const size_t& width_) {_width = width_;}
 
-      inline size_t height() const {return _height;}
-      inline void setHeight(const int height_) {_height = height_;}
+      inline const size_t& height() const {return _height;}
+      inline void setHeight(const size_t& height_) {_height = height_;}
 
       inline const MatchablePtrSet& landmarks() const {return _landmarks;}
+      inline const CellPairPlaneMap& walls() const {return _walls;}
+      inline const bool& isValid() const {return _is_valid;}
 
       void createGrid();
       void removeWalls(int num_hits);
@@ -74,6 +76,9 @@ namespace g2o {
 
       MatchablePtrSet _landmarks;
       CellPairPlaneMap _walls;
+
+      bool _is_created;
+      bool _is_valid;
     };
   }
 }
