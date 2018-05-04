@@ -16,14 +16,14 @@ namespace g2o {
 
       struct MatchableSimulatorFactors {
         MatchableSimulatorFactors() {
-          point_factors = true;
-          line_factors = true;
+          point_factors = false;
+          line_factors = false;
           plane_factors = true;
 
           //ia mixed convenction: from_to
-          line_point_factor = true;
+          line_point_factor = false;
           plane_line_factor = true;
-          plane_point_factor = true;
+          plane_point_factor = false;
         }
         bool point_factors;
         bool line_factors;

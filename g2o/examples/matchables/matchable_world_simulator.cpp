@@ -337,22 +337,77 @@ namespace g2o {
     HyperGraph::Edge* WorldSimulator::_computePlaneLineEdge(VertexSE3Chord* vfrom_,
                                                             VertexMatchable* vto_) {
 
+
       const Isometry3& inv_pose = vfrom_->estimate().inverse();
       const Matchable& matchable = vto_->estimate();
+
+      const Isometry3 pose = Isometry3::Identity();
+      const Vector3 pr = pose.translation();
+      const Vector3 nr = pose.linear().col(2);
+      const float dr = pr.transpose()*nr;
 
       Matchable trans_match = matchable.applyTransform(inv_pose);
       const Vector3& pl = trans_match.point();
       const Vector3& nl = trans_match.rotation().col(0);
+      const float dl = pl.transpose()*nl;
 
-
-      Vector3 nz = Vector3::UnitZ().cross(nl);
+      Vector3 nz = nr.cross(nl);
 
       //orthogonality check
       if(nz.norm() < 1e-3)
         return nullptr;
       nz.normalize();
 
-      Matchable measurement(Matchable::Type::Line,pl);
+      //copute point
+      Matrix2 A;
+      A << nr.x(), nr.y(),
+          nl.x(), nl.y();
+      Vector2 b;
+      b << dr,dl;
+      Vector2 x = A.colPivHouseholderQr().solve(b);
+
+//      const Isometry3 &pose = vfrom_->estimate();
+//      const Matchable& matchable = vto_->estimate();
+
+//      const Vector3 pr = pose.translation();
+//      const Vector3 nr = pose.linear().col(2);
+//      const float dr = pr.transpose()*nr;
+
+//      const Vector3& pl = matchable.point();
+//      const Vector3& nl = matchable.rotation().col(0);
+//      const float dl = pl.transpose()*nl;
+
+//      Vector3 nz = nr.cross(nl);
+
+//      //orthogonality check
+//      if(nz.norm() < 1e-3)
+//        return nullptr;
+//      nz.normalize();
+
+//      //compute point
+//      Matrix2 A;
+//      A << nr.x(), nr.y(),
+//          nl.x(), nl.y();
+//      Vector2 b;
+//      b << -dr,-dl;
+//      Vector2 x = A.colPivHouseholderQr().solve(b);
+
+//      const Isometry3& inv_pose = vfrom_->estimate().inverse();
+//      pz = inv_pose*pz;
+//      nz = (inv_pose.linear()*nz).normalized();
+
+      Vector3 pz (x.x(),x.y(),0);
+
+      std::cerr << "Pr: " << pr.transpose() << std::endl;
+      std::cerr << "Nr: " << nr.transpose() << std::endl;
+
+      std::cerr << "Pl: " << pl.transpose() << std::endl;
+      std::cerr << "Nl: " << nl.transpose() << std::endl;
+
+      std::cerr << "Pz: " << pz.transpose() << std::endl;
+      std::cerr << "Nz: " << nz.transpose() << std::endl << std::endl;
+
+      Matchable measurement(Matchable::Type::Line,pz);
       measurement.computeRotationMatrixZXY(nz);
       Matrix7 omega = Matrix7::Zero();
       omega.block<3,3>(0,0) = matchable.omega();
