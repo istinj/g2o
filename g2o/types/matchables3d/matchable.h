@@ -67,12 +67,7 @@ namespace g2o{
       static const number_t _epsilon;
     };
 
-    typedef std::vector<Matchable> MatchableVector;
-    typedef std::set<Matchable> MatchableSet;
-    typedef std::pair<Matchable, Matrix7> MatchableMatrix7Pair;
-    typedef std::vector<MatchableMatrix7Pair> MatchableMatrix7PairVector;
-    typedef std::shared_ptr<Matchable> MatchablePtr;
-    typedef std::set<MatchablePtr> MatchablePtrSet;
-
+    typedef std::set<Matchable*> MatchableSet;
+    typedef std::vector<Matchable*> MatchableVector;
   }
 }

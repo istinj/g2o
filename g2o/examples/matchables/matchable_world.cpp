@@ -7,7 +7,9 @@ namespace g2o {
       _is_created = false;
     }
     MatchableWorld::~MatchableWorld() {
-      //dtor
+      for (Matchable* m : _landmarks) {
+        delete m;
+      }
     }
 
     void MatchableWorld::createGrid() {
@@ -18,7 +20,7 @@ namespace g2o {
       for(size_t j=0; j<_height; ++j) {
         for(size_t i=0; i<_width; ++i) {
           const Vector3 p(i*_resolution, j*_resolution, 0.0f);
-          MatchablePtr point_matchable(new Matchable(Matchable::Point,p));
+          Matchable* point_matchable = new Matchable(Matchable::Point,p);
           _landmarks.insert(point_matchable);
           points++;
         }
@@ -28,7 +30,7 @@ namespace g2o {
       for(size_t j=0; j<_height; ++j) {
         for(size_t i=0; i<_width-1; ++i){
           const Vector3 p(i*_resolution, j*_resolution, 0.5f);
-          MatchablePtr line_matchable(new Matchable(Matchable::Line,p));
+          Matchable* line_matchable = new Matchable(Matchable::Line,p);
           line_matchable->computeRotationMatrixZXY(Vector3::UnitX());
           _landmarks.insert(line_matchable);
           lines++;
@@ -39,7 +41,7 @@ namespace g2o {
       for(size_t i=0; i<_width; ++i) {
         for(size_t j=0; j<_height-1; ++j){
           const Vector3 p(i*_resolution, j*_resolution, 0.5f);
-          MatchablePtr line_matchable(new Matchable(Matchable::Line,p));
+          Matchable* line_matchable = new Matchable(Matchable::Line,p);
           line_matchable->computeRotationMatrixZXY(Vector3::UnitY());
           _landmarks.insert(line_matchable);
           lines++;
@@ -50,7 +52,7 @@ namespace g2o {
       for(size_t j=0; j<_height; ++j) {
         for(size_t i=0; i<_width; ++i){
           const Vector3 p(i*_resolution, j*_resolution, 0.0f);
-          MatchablePtr line_matchable(new Matchable(Matchable::Line,p));
+          Matchable* line_matchable = new Matchable(Matchable::Line,p);
           line_matchable->computeRotationMatrixZXY(Vector3::UnitZ());
           _landmarks.insert(line_matchable);
           lines++;
@@ -62,7 +64,7 @@ namespace g2o {
         for(size_t i=0; i<_width; ++i){
           const Eigen::Vector2i cell(i,j);
           const Vector3 p(cell.x()*_resolution, cell.y()*_resolution+_resolution/2.0f, _resolution/2.0f);
-          MatchablePtr plane_matchable(new Matchable(Matchable::Plane,p));
+          Matchable* plane_matchable = new Matchable(Matchable::Plane,p);
           plane_matchable->computeRotationMatrixZXY(Vector3::UnitX());
           _landmarks.insert(plane_matchable);
           planes++;
@@ -82,7 +84,7 @@ namespace g2o {
         for(size_t j=0; j<_height; ++j){
           const Eigen::Vector2i cell(i,j);
           const Vector3 p(cell.x()*_resolution+_resolution/2.0f, cell.y()*_resolution, _resolution/2.0f);
-          MatchablePtr plane_matchable(new Matchable(Matchable::Plane,p));
+          Matchable* plane_matchable = new Matchable(Matchable::Plane,p);
           plane_matchable->computeRotationMatrixZXY(Vector3::UnitY());
           _landmarks.insert(plane_matchable);
           planes++;
@@ -101,7 +103,7 @@ namespace g2o {
       for(size_t j=0; j<_height-1; ++j) {
         for(size_t i=0; i<_width-1; ++i){
           const Vector3 p(i*_resolution+_resolution/2.0f, j*_resolution+_resolution/2.0f, 0.0f);
-          MatchablePtr plane_matchable(new Matchable(Matchable::Plane,p));
+          Matchable* plane_matchable = new Matchable(Matchable::Plane,p);
           plane_matchable->computeRotationMatrixZXY(Vector3::UnitZ());
           _landmarks.insert(plane_matchable);
           planes++;
@@ -125,9 +127,9 @@ namespace g2o {
       int sbrachi=0;
       bool continue_=true;
 
-      //ia this fucking thing breaks valgrind so we will never know if there are leaks
+      // //ia this fucking thing breaks valgrind so we will never know if there are leaks
       std::random_device rd;
-      // std::mt19937 gen(rd()); //ia not required until you need a lot of numbers
+      std::mt19937 gen(rd()); //ia not required until you need a lot of numbers
       std::uniform_real_distribution<> dis(0, 1);
 
       number_t n = 0;
@@ -139,10 +141,14 @@ namespace g2o {
       Vector3 position((_width/2-1)*_resolution,(_height/2-1)*_resolution,0.0f);
       Vector3 cell_pos(_width/2-1, _height/2-1, 0);
 
+      //ia this rand is here to run valgrind :)
+      // Vector3 rand;
       while(continue_){
         std::cerr << "x";
         //sample new position
-        n = dis(rd);
+        n = dis(gen);
+        // rand.setRandom();
+        // n = rand.x();
 
         //go forward
         if(n < 0.5f){
@@ -181,8 +187,8 @@ namespace g2o {
         CellPairPlaneMap::iterator it = _walls.find(pair);
 
         if(it != _walls.end()) {
-          MatchablePtr m = it->second;
-          MatchablePtrSet::iterator jt = _landmarks.find(m);
+          Matchable* m = it->second;
+          MatchableSet::iterator jt = _landmarks.find(m);
           if(jt != _landmarks.end()){
             _landmarks.erase(jt);
             sbrachi++;

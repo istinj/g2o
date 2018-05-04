@@ -22,14 +22,15 @@ TARGET_LINK_LIBRARIES(matchable_graph_generator
   )
   
   
-  
+
   
 #ia grid world simulator
 ADD_LIBRARY(matchable_world_simulator_library ${G2O_LIB_TYPE}
   matchable_world.h
   matchable_world.cpp
   matchable_world_simulator.h
-  matchable_world_simulator.cpp)
+  matchable_world_simulator.cpp
+  )
 SET_TARGET_PROPERTIES(matchable_world_simulator_library PROPERTIES OUTPUT_NAME ${LIB_PREFIX}matchable_world_simulator)
 
 TARGET_LINK_LIBRARIES(matchable_world_simulator_library

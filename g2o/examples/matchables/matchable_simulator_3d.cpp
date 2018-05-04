@@ -2,17 +2,13 @@
 #include <fstream>
 
 #include "matchable_world_simulator.h"
+// #include "matchable_world.h"
 
 //ia include g2o core stuff
 #include "g2o/stuff/command_args.h"
 #include "g2o/core/sparse_optimizer.h"
 #include "g2o/core/block_solver.h"
 #include "g2o/core/factory.h"
-
-//ia include dynamic library things
-#include "g2o/apps/g2o_cli/dl_wrapper.h"
-#include "g2o/apps/g2o_cli/output_helper.h"
-#include "g2o/apps/g2o_cli/g2o_common.h"
 
 using namespace std;
 using namespace g2o;
@@ -57,15 +53,9 @@ int main(int argc, char** argv) {
     world_size.push_back(10);
   }
 
-  
-  // ia registering all the types from the libraries
-  DlWrapper dlTypesWrapper;
-  loadStandardTypes(dlTypesWrapper, argc, argv);
-
-
   g2o::SparseOptimizer opt;
 
-  MatchableWorld *world = new MatchableWorld();
+  MatchableWorld* world = new MatchableWorld();
   world->setResolution(resolution);
   world->setHeight(world_size[0]);
   world->setWidth(world_size[1]);
@@ -84,6 +74,8 @@ int main(int argc, char** argv) {
   ws.compute();
 
   opt.save(output_filename.c_str());
+  
+  std::cerr << "output graph saved in " << output_filename << std::endl;
 
   delete world;
   return 0;

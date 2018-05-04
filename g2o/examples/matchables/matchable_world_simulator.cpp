@@ -30,12 +30,12 @@ namespace g2o {
       _edges->clear();
     }
 
-    void WorldSimulator::senseMatchables(g2o::VertexSE3Chord* v_){
+    void WorldSimulator::senseMatchables(g2o::VertexSE3Chord* v_) {
 
       const Eigen::Isometry3d& robot_pose = v_->estimate();
       const Eigen::Isometry3d& robot_pose_inverse = robot_pose.inverse();
 
-      for(MatchablePtr mptr : _world->landmarks()){
+      for(Matchable* mptr : _world->landmarks()){
         
         if (mptr->applyTransform(robot_pose_inverse).point().norm() < _sense_radius) {
 
@@ -54,7 +54,6 @@ namespace g2o {
                   ++point_point;
                 }
               }
-              //ia here you can add other constraints if you want
               break;
             }
           case Matchable::Type::Line:
@@ -73,7 +72,6 @@ namespace g2o {
                   ++line_point;
                 }
               }
-              //ia here you can add other constraints if you want
               break;
             }
           case Matchable::Type::Plane:
@@ -99,7 +97,6 @@ namespace g2o {
                   ++plane_point;
                 }
               }
-              //ia here you can add other constraints if you want
               break;
             }
           default:
@@ -109,8 +106,7 @@ namespace g2o {
       }
     }
 
-    void WorldSimulator::compute(){
-
+    void WorldSimulator::compute() {
       int count=0;
       point_point=0;
       line_line=0;
@@ -120,8 +116,9 @@ namespace g2o {
       plane_line=0;
 
       bool continue_=true;
+      //ia this fucking thing breaks valgrind so we will never know if there are leaks
       std::random_device rd;
-      std::mt19937 gen(rd());
+      std::mt19937 gen(rd()); //ia not required until you need a lot of numbers
       std::uniform_real_distribution<> dis(0, 1);
 
       float n = 0;
@@ -146,11 +143,15 @@ namespace g2o {
       prev_vertex->setEstimate(internal::fromVectorET(minimal_estimate));
       _vertices->insert(std::make_pair(_vertex_id++, prev_vertex));
 
+      //ia this rand is here to run valgrind :)
+      // Vector3 rand;
       while(continue_){
 
         //sample new position
         increment = Vector3::Zero();
         n = dis(gen);
+        // rand.setRandom();
+        // n = rand.x();
 
         //go forward
         if(n < 0.5f){
@@ -213,16 +214,15 @@ namespace g2o {
         count++;
       }
 
-      std::cerr << "Graph has: " << std::endl;
-      std::cerr << "Point->Point: " << point_point << " factors" << std::endl;
-      std::cerr << "Line->Line: " << line_line << " factors" << std::endl;
-      std::cerr << "Plane->Plane: " << plane_plane << " factors" << std::endl;
-      std::cerr << "Line->Point: " << line_point << " factors" << std::endl;
-      std::cerr << "Plane->Point: " << plane_point << " factors" << std::endl;
-      std::cerr << "Plane->Line: " << plane_line << " factors" << std::endl;
-
+      std::cerr << "Graph has " << std::endl;
+      std::cerr << "Point->Point \t" << point_point << " factors" << std::endl;
+      std::cerr << "Line->Line   \t" << line_line << " factors" << std::endl;
+      std::cerr << "Plane->Plane \t" << plane_plane << " factors" << std::endl;
+      std::cerr << "Line->Point  \t" << line_point << " factors" << std::endl;
+      std::cerr << "Plane->Point \t" << plane_point << " factors" << std::endl;
+      std::cerr << "Plane->Line  \t" << plane_line << " factors" << std::endl;
     }
-
+    
     //ia private things
     HyperGraph::Edge* WorldSimulator::_computePointEdge(VertexSE3Chord* vfrom_,
                                                         VertexMatchable* vto_){
@@ -262,7 +262,6 @@ namespace g2o {
       e->vertices()[1] = vto_;
       e->setInformation(omega);
       e->setMeasurement(measurement);
-      //      std::cerr << "created line edge " << vfrom_->id() << "->" << vto_->id() << std::endl;
       return e;
     }
 
@@ -285,7 +284,6 @@ namespace g2o {
       e->vertices()[1] = vto_;
       e->setInformation(omega);
       e->setMeasurement(measurement);
-      //      std::cerr << "created plane edge " << vfrom_->id() << "->" << vto_->id() << std::endl;
       return e;
     }
 
@@ -374,6 +372,5 @@ namespace g2o {
 
       return e;
     }
-
   } //ia end namespace matchable
 } //ia end namespace g2o

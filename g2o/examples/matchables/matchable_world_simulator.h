@@ -73,7 +73,6 @@ namespace g2o {
 
     private:
       void senseMatchables(g2o::VertexSE3Chord* v_);
-
       g2o::HyperGraph::Edge* _computePointEdge(g2o::VertexSE3Chord* vfrom_,
                                                g2o::matchables::VertexMatchable* vto_);
       g2o::HyperGraph::Edge* _computeLineEdge(g2o::VertexSE3Chord* vfrom_,

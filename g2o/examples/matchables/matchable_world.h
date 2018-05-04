@@ -45,7 +45,7 @@ namespace g2o {
       Eigen::Vector2i second_cell;
     };
     
-    typedef std::map<CellPair,MatchablePtr> CellPairPlaneMap;
+    typedef std::map<CellPair,Matchable*> CellPairPlaneMap;
 
     class MatchableWorld {
     public:
@@ -62,7 +62,7 @@ namespace g2o {
       inline const size_t& height() const {return _height;}
       inline void setHeight(const size_t& height_) {_height = height_;}
 
-      inline const MatchablePtrSet& landmarks() const {return _landmarks;}
+      inline const MatchableSet& landmarks() const {return _landmarks;}
       inline const CellPairPlaneMap& walls() const {return _walls;}
       inline const bool& isValid() const {return _is_valid;}
 
@@ -70,11 +70,11 @@ namespace g2o {
       void removeWalls(int num_hits);
       
     protected:
-      number_t  _resolution;
+      double  _resolution;
       size_t    _width;
       size_t    _height;
 
-      MatchablePtrSet _landmarks;
+      MatchableSet _landmarks;
       CellPairPlaneMap _walls;
 
       bool _is_created;
