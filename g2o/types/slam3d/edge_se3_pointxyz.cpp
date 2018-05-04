@@ -150,7 +150,6 @@ namespace g2o {
     // if (! vcache){
     //   cerr << "fatal error in retrieving cache" << endl;
     // }
-
     Vector3 perr = cache->w2n() * pt;
     _measurement = perr;
     return true;
