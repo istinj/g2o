@@ -147,12 +147,18 @@ public:
     //! returns the id
     int id() const {return _id;}
     virtual void setId( int newId) { _id=newId; }
+    
+    //! returns the number of stars in which the vertex appears
+    const int& numStars() const {return _num_stars;}
+    int& numStars() {return _num_stars;}
+    
     //! returns the set of hyper-edges that are leaving/entering in this vertex
     const EdgeSet& edges() const {return _edges;}
     //! returns the set of hyper-edges that are leaving/entering in this vertex
     EdgeSet& edges() {return _edges;}
     virtual HyperGraphElementType elementType() const { return HGET_VERTEX;}
   protected:
+    int _num_stars; //ia now supposing just L0-L1 stuff
     int _id;
     EdgeSet _edges;
   };
