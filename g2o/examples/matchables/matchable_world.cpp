@@ -1,4 +1,5 @@
 #include "matchable_world.h"
+#include "g2o/stuff/sampler.h"
 
 namespace g2o {
   namespace matchables {
@@ -12,56 +13,70 @@ namespace g2o {
       }
     }
 
+    //ia I think we can reduce the number of lines and planes
     void MatchableWorld::createGrid() {
+      if (_num_points == 0 && _num_lines == 0 && _num_planes == 0) {
+        std::cerr << "no landmarks selected" << std::endl;
+        return;
+      }
 
+      //ia sampling landmarks
+      std::random_device rd;
+      std::mt19937 gen(rd()); //ia not required until you need a lot of numbers
+      std::uniform_real_distribution<> dis(0, 1);
       int points=0,lines=0,planes=0;
+      
+      //ia starting with points
+      for (size_t i = 0; i < _num_points; ++i) {
+        number_t x = dis(gen)*_width;
+        number_t y = dis(gen)*_height;
+        number_t z = dis(gen);
+        
+        Matchable* point_matchable = new Matchable(Matchable::Point, Vector3(x,y,z));
+        _landmarks.insert(point_matchable);
 
-      //insert points
-      for(size_t j=0; j<_height; ++j) {
-        for(size_t i=0; i<_width; ++i) {
-          const Vector3 p(i*_resolution, j*_resolution, 0.0f);
-          Matchable* point_matchable = new Matchable(Matchable::Point,p);
-          _landmarks.insert(point_matchable);
-          points++;
-        }
+        ++points;
       }
 
-      //insert lines along x axes
-      for(size_t j=0; j<_height; ++j) {
-        for(size_t i=0; i<_width-1; ++i){
-          const Vector3 p(i*_resolution, j*_resolution, 0.5f);
-          Matchable* line_matchable = new Matchable(Matchable::Line,p);
-          line_matchable->computeRotationMatrixZXY(Vector3::UnitX());
-          _landmarks.insert(line_matchable);
-          lines++;
-        }
+      //ia along x
+      for (size_t i = 0; i < _num_lines/3; ++i) {
+        number_t x = dis(gen)*_width;
+        number_t y = dis(gen)*_height;
+        number_t z = dis(gen);
+        
+        Matchable* line_matchable = new Matchable(Matchable::Line, Vector3(x,y,z));
+        line_matchable->computeRotationMatrixZXY(Vector3::UnitX());
+        _landmarks.insert(line_matchable);
+        lines++;
       }
 
-      //insert lines along y axes
-      for(size_t i=0; i<_width; ++i) {
-        for(size_t j=0; j<_height-1; ++j){
-          const Vector3 p(i*_resolution, j*_resolution, 0.5f);
-          Matchable* line_matchable = new Matchable(Matchable::Line,p);
-          line_matchable->computeRotationMatrixZXY(Vector3::UnitY());
-          _landmarks.insert(line_matchable);
-          lines++;
-        }
+      //ia along y
+      for (size_t i = 0; i < _num_lines/3; ++i) {
+        number_t x = dis(gen)*_width;
+        number_t y = dis(gen)*_height;
+        number_t z = dis(gen);
+        
+        Matchable* line_matchable = new Matchable(Matchable::Line, Vector3(x,y,z));
+        line_matchable->computeRotationMatrixZXY(Vector3::UnitY());
+        _landmarks.insert(line_matchable);
+        lines++;
       }
 
-      //insert lines along z axes
-      for(size_t j=0; j<_height; ++j) {
-        for(size_t i=0; i<_width; ++i){
-          const Vector3 p(i*_resolution, j*_resolution, 0.0f);
-          Matchable* line_matchable = new Matchable(Matchable::Line,p);
-          line_matchable->computeRotationMatrixZXY(Vector3::UnitZ());
-          _landmarks.insert(line_matchable);
-          lines++;
-        }
+      //ia along z
+      for (size_t i = 0; i < _num_lines/3; ++i) {
+        number_t x = dis(gen)*_width;
+        number_t y = dis(gen)*_height;
+        number_t z = dis(gen);
+        
+        Matchable* line_matchable = new Matchable(Matchable::Line, Vector3(x,y,z));
+        line_matchable->computeRotationMatrixZXY(Vector3::UnitZ());
+        _landmarks.insert(line_matchable);
+        lines++;
       }
 
       //insert planes along x axes
-      for(size_t j=0; j<_height-1; ++j) {
-        for(size_t i=0; i<_width; ++i){
+      for(size_t j=0; j<_height-1; j+=5) {
+        for(size_t i=0; i<_width; i+=5){
           const Eigen::Vector2i cell(i,j);
           const Vector3 p(cell.x()*_resolution, cell.y()*_resolution+_resolution/2.0f, _resolution/2.0f);
           Matchable* plane_matchable = new Matchable(Matchable::Plane,p);
@@ -80,8 +95,8 @@ namespace g2o {
       }
 
       //insert planes along y axes
-      for(size_t i=0; i<_width-1; ++i) {
-        for(size_t j=0; j<_height; ++j){
+      for(size_t i=0; i<_width-1; i+=5) {
+        for(size_t j=0; j<_height; j+=5){
           const Eigen::Vector2i cell(i,j);
           const Vector3 p(cell.x()*_resolution+_resolution/2.0f, cell.y()*_resolution, _resolution/2.0f);
           Matchable* plane_matchable = new Matchable(Matchable::Plane,p);
@@ -100,8 +115,8 @@ namespace g2o {
       }
 
       //insert planes along z axes
-      for(size_t j=0; j<_height-1; ++j) {
-        for(size_t i=0; i<_width-1; ++i){
+      for(size_t j=0; j<_height-1; j+=5) {
+        for(size_t i=0; i<_width-1; i+=5){
           const Vector3 p(i*_resolution+_resolution/2.0f, j*_resolution+_resolution/2.0f, 0.0f);
           Matchable* plane_matchable = new Matchable(Matchable::Plane,p);
           plane_matchable->computeRotationMatrixZXY(Vector3::UnitZ());

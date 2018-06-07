@@ -1,4 +1,5 @@
 #include "matchable_world_simulator.h"
+#include "g2o/stuff/timeutil.h"
 
 namespace g2o {
   namespace matchables {
@@ -30,78 +31,77 @@ namespace g2o {
       _edges->clear();
     }
 
-    void WorldSimulator::senseMatchables(g2o::VertexSE3Chord* v_) {
+    void WorldSimulator::_senseMatchables(g2o::VertexSE3Chord* v_) {
 
       const Eigen::Isometry3d& robot_pose = v_->estimate();
       const Eigen::Isometry3d& robot_pose_inverse = robot_pose.inverse();
 
-      for(Matchable* mptr : _world->landmarks()){
-        
-        if (mptr->applyTransform(robot_pose_inverse).point().norm() < _sense_radius) {
+      for(Matchable* mptr : _world->landmarks()) {
+        if (mptr->applyTransform(robot_pose_inverse).point().norm() >= _sense_radius)
+          continue;
 
-          VertexMatchable* v_m = new VertexMatchable();
-          v_m->setId(_vertex_id);
-          v_m->setEstimate(*mptr);
-          _vertices->insert(std::make_pair(_vertex_id++, v_m));
+        VertexMatchable* v_m = new VertexMatchable();
+        v_m->setId(_vertex_id);
+        v_m->setEstimate(*mptr);
+        _vertices->insert(std::make_pair(_vertex_id++, v_m));
 
-          switch (mptr->type()) {
-          case Matchable::Type::Point:
-            {
-              if (_factors_types.point_factors) {
-                HyperGraph::Edge* e = _computePointEdge(v_, v_m);
-                if (e){
-                  _edges->insert(e);
-                  ++point_point;
-                }
+        switch (mptr->type()) {
+        case Matchable::Type::Point:
+          {
+            if (_factors_types.point_factors) {
+              HyperGraph::Edge* e = _computePointEdge(v_, v_m);
+              if (e) {
+                _edges->insert(e);
+                ++point_point;
               }
-              break;
             }
-          case Matchable::Type::Line:
-            {
-              if (_factors_types.line_factors) {
-                HyperGraph::Edge* e = _computeLineEdge(v_, v_m);
-                if (e){
-                  _edges->insert(e);
-                  ++line_line;
-                }
-              }
-              if (_factors_types.line_point_factor) {
-                HyperGraph::Edge* e = _computeLinePointEdge(v_, v_m);
-                if (e){
-                  _edges->insert(e);
-                  ++line_point;
-                }
-              }
-              break;
-            }
-          case Matchable::Type::Plane:
-            {
-              if (_factors_types.plane_factors) {
-                HyperGraph::Edge* e = _computePlaneEdge(v_, v_m);
-                if (e){
-                  _edges->insert(e);
-                  ++plane_plane;
-                }
-              }
-              if (_factors_types.plane_line_factor) {
-                HyperGraph::Edge* e = _computePlaneLineEdge(v_, v_m);
-                if (e){
-                  _edges->insert(e);
-                  ++plane_line;
-                }
-              }
-              if (_factors_types.plane_point_factor) {
-                HyperGraph::Edge* e = _computePlanePointEdge(v_, v_m);
-                if (e){
-                  _edges->insert(e);
-                  ++plane_point;
-                }
-              }
-              break;
-            }
-          default:
-            throw std::runtime_error("unexepected matchable type");
+            break;
           }
+        case Matchable::Type::Line:
+          {
+            if (_factors_types.line_factors) {
+              HyperGraph::Edge* e = _computeLineEdge(v_, v_m);
+              if (e){
+                _edges->insert(e);
+                ++line_line;
+              }
+            }
+            if (_factors_types.line_point_factors) {
+              HyperGraph::Edge* e = _computeLinePointEdge(v_, v_m);
+              if (e){
+                _edges->insert(e);
+                ++line_point;
+              }
+            }
+            break;
+          }
+        case Matchable::Type::Plane:
+          {
+            if (_factors_types.plane_factors) {
+              HyperGraph::Edge* e = _computePlaneEdge(v_, v_m);
+              if (e){
+                _edges->insert(e);
+                ++plane_plane;
+              }
+            }
+            if (_factors_types.plane_line_factors) {
+              HyperGraph::Edge* e = _computePlaneLineEdge(v_, v_m);
+              if (e){
+                _edges->insert(e);
+                ++plane_line;
+              }
+            }
+            if (_factors_types.plane_point_factors) {
+              HyperGraph::Edge* e = _computePlanePointEdge(v_, v_m);
+              if (e){
+                _edges->insert(e);
+                ++plane_point;
+              }
+            }
+            break;
+          }
+        default:
+          throw std::runtime_error("unexepected matchable type");
         }
       }
     }
@@ -125,10 +125,13 @@ namespace g2o {
       Vector3 increment = Vector3::Zero();
 
 
-      Vector3 position((_world->width()/2-1) * _world->resolution(),
-                       (_world->height()/2-1) * _world->resolution(),
-                       0.0f);
-      Vector3 cell_pos(_world->width()/2-1, _world->height()/2-1, 0);
+      // Vector3 position((_world->width()/2-1) * _world->resolution(),
+      //                  (_world->height()/2-1) * _world->resolution(),
+      //                  0.0f);
+      // Vector3 cell_pos(_world->width()/2-1, _world->height()/2-1, 0);
+
+      Vector3 position(0,0,0);
+      Vector3 cell_pos(0,0,0);
 
       Vector3 new_position = Vector3::Zero();
       Vector3 new_cell_pos = Vector3::Zero();
@@ -145,6 +148,7 @@ namespace g2o {
 
       //ia this rand is here to run valgrind :)
       // Vector3 rand;
+      std::cerr << "simulating robot motion in the world" << std::endl;
       while(continue_){
 
         //sample new position
@@ -183,7 +187,8 @@ namespace g2o {
         new_position.z() = new_cell_pos.z();
         
         //sense
-        senseMatchables(prev_vertex);
+        std::cerr << "s"; 
+        _senseMatchables(prev_vertex);
 
         //move
         //new position is valid
@@ -199,13 +204,14 @@ namespace g2o {
         _vertices->insert(std::make_pair(_vertex_id++, vertex));
 
         // ia generate odom
+        std::cerr << "m";
         EdgeSE3Chord* e = new EdgeSE3Chord();
         e->vertices()[0] = prev_vertex;
         e->vertices()[1] = vertex;
         e->information().setIdentity();
         e->setMeasurementFromState();
         _edges->insert(e);
-
+        
         // end
         prev_vertex = vertex;
         if(count > _num_poses)
@@ -213,6 +219,7 @@ namespace g2o {
 
         count++;
       }
+      std::cerr << std::endl;
 
       std::cerr << "Graph has " << std::endl;
       std::cerr << "Point->Point \t" << point_point << " factors" << std::endl;

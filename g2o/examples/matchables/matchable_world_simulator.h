@@ -16,21 +16,21 @@ namespace g2o {
 
       struct MatchableSimulatorFactors {
         MatchableSimulatorFactors() {
-          point_factors = true;
-          line_factors = true;
-          plane_factors = true;
+          point_factors = false;
+          line_factors = false;
+          plane_factors = false;
 
           //ia mixed convenction: from_to
-          line_point_factor = true;
-          plane_line_factor = true;
-          plane_point_factor = true;
+          line_point_factors = false;
+          plane_line_factors = false;
+          plane_point_factors = false;
         }
         bool point_factors;
         bool line_factors;
         bool plane_factors;
-        bool line_point_factor;
-        bool plane_line_factor;
-        bool plane_point_factor;
+        bool line_point_factors;
+        bool plane_line_factors;
+        bool plane_point_factors;
       };
       
       WorldSimulator();
@@ -59,20 +59,8 @@ namespace g2o {
       void compute();
 
     protected:
-      //ia vertices and edges to be inzepped (not owned)
-      HyperGraph::VertexIDMap* _vertices = 0;
-      HyperGraph::EdgeSet*     _edges = 0;
-      MatchableWorld*          _world = 0;
-
-      uint64_t _vertex_id;
-
-      //ia parameters
-      number_t _sense_radius;
-      int _num_poses;
-      MatchableSimulatorFactors _factors_types;
-
-    private:
-      void senseMatchables(g2o::VertexSE3Chord* v_);
+      //ia sense part
+      void _senseMatchables(g2o::VertexSE3Chord* v_);
       g2o::HyperGraph::Edge* _computePointEdge(g2o::VertexSE3Chord* vfrom_,
                                                g2o::matchables::VertexMatchable* vto_);
       g2o::HyperGraph::Edge* _computeLineEdge(g2o::VertexSE3Chord* vfrom_,
@@ -85,6 +73,19 @@ namespace g2o {
                                                    g2o::matchables::VertexMatchable* vto_);
       g2o::HyperGraph::Edge* _computePlanePointEdge(g2o::VertexSE3Chord* vfrom_,
                                                     g2o::matchables::VertexMatchable* vto_);
+
+      
+      //ia vertices and edges to be inzepped (not owned)
+      HyperGraph::VertexIDMap* _vertices = 0;
+      HyperGraph::EdgeSet*     _edges = 0;
+      MatchableWorld*          _world = 0;
+
+      uint64_t _vertex_id;
+
+      //ia parameters
+      number_t _sense_radius;
+      int _num_poses;
+      MatchableSimulatorFactors _factors_types;
 
       size_t point_point;
       size_t line_line;

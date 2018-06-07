@@ -2,7 +2,6 @@
 #include <fstream>
 
 #include "matchable_world_simulator.h"
-// #include "matchable_world.h"
 
 //ia include g2o core stuff
 #include "g2o/stuff/command_args.h"
@@ -19,6 +18,9 @@ int main(int argc, char** argv) {
   //ia simulator paramers
   CommandArgs arg;
   int num_poses;
+  int num_points;
+  int num_lines;
+  int num_planes;
   float resolution;
   float sense_radius;
   std::string output_filename;
@@ -33,6 +35,9 @@ int main(int argc, char** argv) {
 
   arg.param("numPoses", num_poses, 0, "number of robot poses");
   arg.param("worldSize", world_size, std::vector<int>(), "world height and width separated by a semicolumn, e.g. \"7;5\". Default is \"10;10\"");
+  arg.param("numPoints", num_points, 0, "number of point landmarks in the world");
+  arg.param("numLines", num_lines, 0, "number of line landmarks in the world");
+  arg.param("numPlanes", num_planes, 0, "number of plane landmarks in the world");
   arg.param("resolution", resolution, 1.0f, "resolution of the world grid");
   arg.param("senseRadius", sense_radius, 2.0f, "sensing range of the robot");
   arg.param("hasPtPt", has_point_point_factor, false, "point-point factors enabled");
@@ -59,10 +64,19 @@ int main(int argc, char** argv) {
   world->setResolution(resolution);
   world->setHeight(world_size[0]);
   world->setWidth(world_size[1]);
+  world->setNumPoints(num_points);
+  world->setNumLines(num_lines);
+  world->setNumPlanes(num_planes);
   world->createGrid();
   world->removeWalls(num_poses);
 
   WorldSimulator ws;
+  ws.factorTypes().point_factors = has_point_point_factor;
+  ws.factorTypes().line_factors = has_line_line_factor;
+  ws.factorTypes().plane_factors = has_plane_plane_factor;
+  ws.factorTypes().line_point_factors = has_line_point_factor;
+  ws.factorTypes().plane_line_factors = has_plane_line_factor;
+  ws.factorTypes().plane_point_factors = has_plane_point_factor;
   ws.setNumPoses(num_poses);
   ws.setSenseRadius(sense_radius);
   ws.setVertices(&(opt.vertices()));

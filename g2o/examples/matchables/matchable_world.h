@@ -62,6 +62,15 @@ namespace g2o {
       inline const size_t& height() const {return _height;}
       inline void setHeight(const size_t& height_) {_height = height_;}
 
+      inline const size_t& numPoints() const {return _num_points;}
+      inline void setNumPoints(const size_t& num_points_) {_num_points = num_points_;}
+      
+      inline const size_t& numLines() const {return _num_lines;}
+      inline void setNumLines(const size_t& num_lines_) {_num_lines = num_lines_;}
+      
+      inline const size_t& numPlanes() const {return _num_planes;}
+      inline void setNumPlanes(const size_t& num_planes_) {_num_planes = num_planes_;}
+
       inline const MatchableSet& landmarks() const {return _landmarks;}
       inline const CellPairPlaneMap& walls() const {return _walls;}
       inline const bool& isValid() const {return _is_valid;}
@@ -70,13 +79,19 @@ namespace g2o {
       void removeWalls(int num_hits);
       
     protected:
+      //ia world configuration
       double  _resolution;
-      size_t    _width;
-      size_t    _height;
+      size_t  _width;
+      size_t  _height;
+      size_t  _num_points;
+      size_t  _num_lines;
+      size_t  _num_planes;
 
+      //ia world inner structures
       MatchableSet _landmarks;
       CellPairPlaneMap _walls;
 
+      //ia stuff
       bool _is_created;
       bool _is_valid;
     };
