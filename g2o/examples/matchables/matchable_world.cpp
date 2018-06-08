@@ -20,26 +20,40 @@ namespace g2o {
         return;
       }
 
-      //ia sampling landmarks
       std::random_device rd;
-      std::mt19937 gen(rd()); //ia not required until you need a lot of numbers
-      std::uniform_real_distribution<> pos_distribution(0, 1);
+      std::mt19937 generator(rd()); //ia not required until you need a lot of numbers
+
+      //ia starting with points...
+      _generateScatteredPoints(generator);
+      //ia ...now lines...
+      _generateScatteredLines(generator);
+      //ia ..finally planes
+      _generateScatteredPlanes(generator);
       
-      //ia starting with points
+      _is_created = true;
+    }
+
+    void MatchableWorld::_generateScatteredPoints(std::mt19937& random_generator_) {
+      std::uniform_real_distribution<> pos_distribution(0, 1);
       for (size_t i = 0; i < _num_points; ++i) {
-        number_t x = pos_distribution(gen)*_width;
-        number_t y = pos_distribution(gen)*_height;
-        number_t z = pos_distribution(gen);
+        number_t x = pos_distribution(random_generator_)*_width;
+        number_t y = pos_distribution(random_generator_)*_height;
+        number_t z = pos_distribution(random_generator_);
         
         Matchable* point_matchable = new Matchable(Matchable::Point, Vector3(x,y,z));
         _landmarks.insert(point_matchable);
       }
+    }
 
+    void MatchableWorld::_generateScatteredLines(std::mt19937& random_generator_) {
+      std::uniform_real_distribution<> pos_distribution(0, 1);
+
+      //ia TODO: probabilistic axis selection
       //ia along x
       for (size_t i = 0; i < _num_lines/3; ++i) {
-        number_t x = pos_distribution(gen)*_width;
-        number_t y = pos_distribution(gen)*_height;
-        number_t z = pos_distribution(gen);
+        number_t x = pos_distribution(random_generator_)*_width;
+        number_t y = pos_distribution(random_generator_)*_height;
+        number_t z = pos_distribution(random_generator_);
         
         Matchable* line_matchable = new Matchable(Matchable::Line, Vector3(x,y,z));
         line_matchable->computeRotationMatrixZXY(Vector3::UnitX());
@@ -48,9 +62,9 @@ namespace g2o {
 
       //ia along y
       for (size_t i = 0; i < _num_lines/3; ++i) {
-        number_t x = pos_distribution(gen)*_width;
-        number_t y = pos_distribution(gen)*_height;
-        number_t z = pos_distribution(gen);
+        number_t x = pos_distribution(random_generator_)*_width;
+        number_t y = pos_distribution(random_generator_)*_height;
+        number_t z = pos_distribution(random_generator_);
         
         Matchable* line_matchable = new Matchable(Matchable::Line, Vector3(x,y,z));
         line_matchable->computeRotationMatrixZXY(Vector3::UnitY());
@@ -59,16 +73,19 @@ namespace g2o {
 
       //ia along z
       for (size_t i = 0; i < _num_lines/3; ++i) {
-        number_t x = pos_distribution(gen)*_width;
-        number_t y = pos_distribution(gen)*_height;
-        number_t z = pos_distribution(gen);
+        number_t x = pos_distribution(random_generator_)*_width;
+        number_t y = pos_distribution(random_generator_)*_height;
+        number_t z = pos_distribution(random_generator_);
         
         Matchable* line_matchable = new Matchable(Matchable::Line, Vector3(x,y,z));
         line_matchable->computeRotationMatrixZXY(Vector3::UnitZ());
         _landmarks.insert(line_matchable);
       }
-      
-      //ia new plane generator (scattered)
+
+    }
+
+    void MatchableWorld::_generateScatteredPlanes(std::mt19937& random_generator_) {
+      std::uniform_real_distribution<> pos_distribution(0, 1);
       std::uniform_real_distribution<> axis_distribution(0,2.5);
       size_t i = 0;
       while (i < _num_planes) {
@@ -85,18 +102,18 @@ namespace g2o {
 
         Matchable* plane_matchable = 0; 
         
-        const int axis_selector = round(axis_distribution(gen));
+        const int axis_selector = round(axis_distribution(random_generator_));
         switch (axis_selector) {
         case (0):
           {
             n = Vector3::UnitX();
-            r = round(pos_distribution(gen)*_width);
-            c = round(pos_distribution(gen)*_height);
+            r = round(pos_distribution(random_generator_)*_width);
+            c = round(pos_distribution(random_generator_)*_height);
 
             x = r * _resolution;
             y = c * _resolution + _resolution/2.0;
           
-            z = pos_distribution(gen);
+            z = pos_distribution(random_generator_);
 
             plane_matchable = new Matchable(Matchable::Plane, Vector3(x,y,z));
             plane_matchable->computeRotationMatrixZXY(Vector3::UnitX());
@@ -110,13 +127,13 @@ namespace g2o {
         case (1):
           {
             n = Vector3::UnitY();
-            r = round(pos_distribution(gen)*_width);
-            c = round(pos_distribution(gen)*_height);
+            r = round(pos_distribution(random_generator_)*_width);
+            c = round(pos_distribution(random_generator_)*_height);
 
             x = r * _resolution + _resolution/2.0;
             y = c * _resolution;
           
-            z = pos_distribution(gen);
+            z = pos_distribution(random_generator_);
 
             plane_matchable = new Matchable(Matchable::Plane, Vector3(x,y,z));
             plane_matchable->computeRotationMatrixZXY(Vector3::UnitY());
@@ -130,8 +147,8 @@ namespace g2o {
         case (2):
           {
             n = Vector3::UnitZ();
-            x = round(pos_distribution(gen)*_width) + _resolution/2.0f;
-            y = round(pos_distribution(gen)*_height) + _resolution/2.0f;
+            x = round(pos_distribution(random_generator_)*_width) + _resolution/2.0f;
+            y = round(pos_distribution(random_generator_)*_height) + _resolution/2.0f;
 
             plane_matchable = new Matchable(Matchable::Plane, Vector3(x,y,z));
             plane_matchable->computeRotationMatrixZXY(Vector3::UnitZ());
@@ -162,9 +179,9 @@ namespace g2o {
         ++i;
       }
 
-      _is_created = true;
     }
 
+    //ia maybe this is not useful anymore (can be done while moving)
     void MatchableWorld::removeWalls(int num_hits) {
       if (!_is_created)
         throw std::runtime_error("world has not been created. maybe you forgot to call createGrid()?");
@@ -174,7 +191,7 @@ namespace g2o {
       int sbrachi=0;
       bool continue_=true;
 
-      // //ia this fucking thing breaks valgrind so we will never know if there are leaks
+      //ia this fucking thing breaks valgrind so we will never know if there are leaks
       std::random_device rd;
       std::mt19937 gen(rd()); //ia not required until you need a lot of numbers
       std::uniform_real_distribution<> dis(0, 1);

@@ -79,6 +79,11 @@ namespace g2o {
       void removeWalls(int num_hits);
       
     protected:
+      //ia utils functions
+      void _generateScatteredPoints(std::mt19937& random_generator_);
+      void _generateScatteredLines(std::mt19937& random_generator_);
+      void _generateScatteredPlanes(std::mt19937& random_generator_);
+      
       //ia world configuration
       double  _resolution;
       size_t  _width;

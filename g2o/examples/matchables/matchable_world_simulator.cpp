@@ -354,8 +354,7 @@ namespace g2o {
       Matchable trans_match = matchable.applyTransform(inv_pose);
       const Vector3& pl = trans_match.point();
       const Vector3& nl = trans_match.rotation().col(0);
-
-
+      
       Vector3 nz = Vector3::UnitZ().cross(nl);
 
       //orthogonality check
