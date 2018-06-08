@@ -89,19 +89,20 @@ namespace g2o {
       std::uniform_real_distribution<> axis_distribution(0,2.5);
       size_t i = 0;
       while (i < _num_planes) {
+        //ia world coords
         number_t x = 0;
         number_t y = 0;
         number_t z = 0;
 
         //ia grid coords
         int r = 0, c = 0;
-      
-        Vector3 n = Vector3::Zero();
         Vector2I prev_cell = Vector2I::Zero();
         Vector2I curr_cell = Vector2I::Zero();
 
-        Matchable* plane_matchable = 0; 
+        //ia normals
+        Vector3 n = Vector3::Zero();
         
+        Matchable* plane_matchable = 0; 
         const int axis_selector = round(axis_distribution(random_generator_));
         switch (axis_selector) {
         case (0):

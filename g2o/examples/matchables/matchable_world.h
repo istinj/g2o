@@ -7,6 +7,11 @@
 namespace g2o {
   namespace matchables {
 
+    //!TODO:
+    //1 probabilistic axis selection in lines
+    //2 0 to 1 probability for axis selection (to select a preferred axis)
+    //3 remove "removeWalls" function and move this phase in the motion simulation phase
+
     struct CellPair{
       CellPair(const Eigen::Vector2i &first_cell_,
                const Eigen::Vector2i &second_cell_):

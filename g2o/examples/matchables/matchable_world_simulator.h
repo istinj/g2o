@@ -10,6 +10,13 @@
 
 namespace g2o {
   namespace matchables {
+
+    //!TODO
+    //1 removeWalls may be performed here (has more sense)
+    //2 PLANE TO LINE EDGES
+    //3 viewer application?
+    //4 add noise components to the edges
+    //5 initialGuess to the edges
     
     class WorldSimulator {
     public:
