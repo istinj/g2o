@@ -75,10 +75,13 @@ namespace g2o {
       }
 
       //insert planes along x axes
-      for(size_t j=0; j<_height-1; j+=5) {
+      for(size_t j=0; j<_height-1; j+=3) {
         for(size_t i=0; i<_width; i+=5){
           const Eigen::Vector2i cell(i,j);
-          const Vector3 p(cell.x()*_resolution, cell.y()*_resolution+_resolution/2.0f, _resolution/2.0f);
+          const Vector3 p(cell.x()*_resolution,
+                          cell.y()*_resolution+_resolution/2.0f,
+                          _resolution/2.0f);
+          
           Matchable* plane_matchable = new Matchable(Matchable::Plane,p);
           plane_matchable->computeRotationMatrixZXY(Vector3::UnitX());
           _landmarks.insert(plane_matchable);
@@ -95,10 +98,12 @@ namespace g2o {
       }
 
       //insert planes along y axes
-      for(size_t i=0; i<_width-1; i+=5) {
+      for(size_t i=0; i<_width-1; i+=3) {
         for(size_t j=0; j<_height; j+=5){
           const Eigen::Vector2i cell(i,j);
-          const Vector3 p(cell.x()*_resolution+_resolution/2.0f, cell.y()*_resolution, _resolution/2.0f);
+          const Vector3 p(cell.x()*_resolution+_resolution/2.0f,
+                          cell.y()*_resolution,
+                          _resolution/2.0f);
           Matchable* plane_matchable = new Matchable(Matchable::Plane,p);
           plane_matchable->computeRotationMatrixZXY(Vector3::UnitY());
           _landmarks.insert(plane_matchable);
@@ -115,9 +120,11 @@ namespace g2o {
       }
 
       //insert planes along z axes
-      for(size_t j=0; j<_height-1; j+=5) {
-        for(size_t i=0; i<_width-1; i+=5){
-          const Vector3 p(i*_resolution+_resolution/2.0f, j*_resolution+_resolution/2.0f, 0.0f);
+      for(size_t j=0; j<_height-1; j+=3) {
+        for(size_t i=0; i<_width-1; i+=3){
+          const Vector3 p(i*_resolution+_resolution/2.0f,
+                          j*_resolution+_resolution/2.0f,
+                          0.0f);
           Matchable* plane_matchable = new Matchable(Matchable::Plane,p);
           plane_matchable->computeRotationMatrixZXY(Vector3::UnitZ());
           _landmarks.insert(plane_matchable);

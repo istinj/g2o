@@ -310,9 +310,7 @@ namespace g2o {
         return nullptr;
       }
 
-      number_t x = -Vector3::UnitZ().dot(pl)/x_d;
-
-      Matchable measurement(Matchable::Type::Point, pl + x*nl);
+      Matchable measurement(Matchable::Type::Point, pl);
 
       Matrix7 omega = Matrix7::Zero();
       omega.block<3,3>(0,0) = matchable.omega();
