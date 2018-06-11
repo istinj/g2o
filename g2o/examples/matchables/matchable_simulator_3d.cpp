@@ -53,7 +53,6 @@ int main(int argc, char** argv) {
     throw std::runtime_error("no graph-output specified");
   
   if (!world_size.size()) {
-    std::cerr << "using default world size" << std::endl;
     world_size.push_back(10);
     world_size.push_back(10);
   }
@@ -61,14 +60,13 @@ int main(int argc, char** argv) {
   g2o::SparseOptimizer opt;
 
   MatchableWorld* world = new MatchableWorld();
-  world->setResolution(resolution);
-  world->setHeight(world_size[0]);
-  world->setWidth(world_size[1]);
-  world->setNumPoints(num_points);
-  world->setNumLines(num_lines);
-  world->setNumPlanes(num_planes);
+  world->mutableParams().resolution = resolution;
+  world->mutableParams().height = world_size[0];
+  world->mutableParams().width = world_size[1];
+  world->mutableParams().num_points = num_points;
+  world->mutableParams().num_lines = num_lines;
+  world->mutableParams().num_planes = num_planes;
   world->createGrid();
-  world->removeWalls(num_poses);
 
   WorldSimulator ws;
   ws.factorTypes().point_factors = has_point_point_factor;

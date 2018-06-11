@@ -106,6 +106,61 @@ namespace g2o {
       }
     }
 
+
+    VertexSE3Chord* WorldSimulator::_moveRobot(VertexSE3Chord* from_vertex_) {
+      std::random_device rd;
+      std::mt19937 generator(rd()); //ia not required until you need a lot of numbers
+      std::uniform_real_distribution<> uniform_distribution(0, 1);
+
+      const Vector6 current_estimate = internal::toVectorET(from_vertex_->estimate());
+      Vector6 next_estimate = Vector6::Zero();
+
+      //ia sample new motion direction
+      const number_t current_theta = current_estimate[5];
+      number_t next_theta = 0;
+      number_t x = 0, y = 0;
+      number_t dir_selector = uniform_distribution(generator);
+
+      if (dir_selector < 0.5) {
+        x = round(cos(current_theta));
+        y = round(sin(current_theta));
+      } else if (dir_selector < 0.75 && 0.5 < dir_selector) {
+        x = round(-sin(current_theta));
+        y = round(cos(current_theta));
+        next_theta = M_PI/2.0f;
+      } else {
+        x = round(sin(current_theta));
+        y = round(-cos(current_theta));
+        next_theta = -M_PI/2.0f;
+      }
+
+      next_estimate.head(2) = current_estimate.head(2) + Vector2(x,y);
+      next_estimate[5] = current_estimate[5] + next_theta;
+
+      const Vector2I& current_cell = current_estimate.head(2).cast<int>();
+      const Vector2I& next_cell = next_estimate.head(2).cast<int>();
+
+      //ia check if it is inside
+      if (next_cell.x() < 0 || _world->params().width < (size_t)next_cell.x() ||
+          next_cell.y() < 0 || _world->params().height < (size_t)next_cell.y()) {
+        return 0;
+      }
+
+      //ia TODO check for walls and remove them
+      CellPair cell_motion(current_cell, next_cell);
+      if (_world->removeWall(cell_motion)) {
+        // std::cerr << "hit a wall -> removed" << std::endl;
+      } 
+
+      //ia create the new vertex
+      VertexSE3Chord* to_vertex = new VertexSE3Chord();
+      to_vertex->setId(_vertex_id);
+      to_vertex->setEstimate(internal::fromVectorET(next_estimate));
+      _vertices->insert(std::make_pair(_vertex_id++, to_vertex));
+      
+      return to_vertex;      
+    }
+
     void WorldSimulator::compute() {
       int count=0;
       point_point=0;
@@ -116,29 +171,11 @@ namespace g2o {
       plane_line=0;
 
       bool continue_=true;
-      //ia this fucking thing breaks valgrind so we will never know if there are leaks
-      std::random_device rd;
-      std::mt19937 gen(rd()); //ia not required until you need a lot of numbers
-      std::uniform_real_distribution<> dis(0, 1);
-
-      float n = 0;
-      Vector3 increment = Vector3::Zero();
-
-
-      // Vector3 position((_world->width()/2-1) * _world->resolution(),
-      //                  (_world->height()/2-1) * _world->resolution(),
-      //                  0.0f);
-      // Vector3 cell_pos(_world->width()/2-1, _world->height()/2-1, 0);
-
-      Vector3 position(0,0,0);
-      Vector3 cell_pos(0,0,0);
-
-      Vector3 new_position = Vector3::Zero();
-      Vector3 new_cell_pos = Vector3::Zero();
-
       Vector6 minimal_estimate = Vector6::Zero();
-      minimal_estimate.head(3) = Vector3(position.x(), position.y(), 0);
-      minimal_estimate.tail(3) = Vector3(0,0,position.z());
+      // minimal_estimate.head(3) = Vector3((_world->width()/2-1) * _world->resolution(),
+      //                                    (_world->height()/2-1) * _world->resolution(),
+      //                                    0);
+
 
       VertexSE3Chord* prev_vertex = new VertexSE3Chord();
       prev_vertex->setId(_vertex_id);
@@ -146,82 +183,38 @@ namespace g2o {
       prev_vertex->setEstimate(internal::fromVectorET(minimal_estimate));
       _vertices->insert(std::make_pair(_vertex_id++, prev_vertex));
 
-      //ia this rand is here to run valgrind :)
-      // Vector3 rand;
       std::cerr << "simulating robot motion in the world" << std::endl;
-      while(continue_){
-
-        //sample new position
-        increment = Vector3::Zero();
-        n = dis(gen);
-        // rand.setRandom();
-        // n = rand.x();
-
-        //go forward
-        if(n < 0.5f){
-          increment.x() = round(cos(position.z()));
-          increment.y() = round(sin(position.z()));
-        }
-        //go left
-        if(n >= 0.5f && n < 0.75f){
-          increment.x() = round(-sin(position.z()));
-          increment.y() = round(cos(position.z()));
-          increment.z() = M_PI/2.0f;
-        }
-        //go right
-        if(n >= 0.75f){
-          increment.x() = round(sin(position.z()));
-          increment.y() = round(-cos(position.z()));
-          increment.z() = -M_PI/2.0f;
-        }
-
-        new_cell_pos = cell_pos+increment;
-
-        //check if new position is out of grid
-        if(new_cell_pos.x() < 0.0f || new_cell_pos.x() > (float)(_world->width()-1) ||
-           new_cell_pos.y() < 0.0f || new_cell_pos.y() > (float)(_world->height()-1)){
+      while(continue_){        
+        //ia attempt to move
+        VertexSE3Chord* new_vertex = _moveRobot(prev_vertex);
+        if (!new_vertex)
           continue;
-        }
-
-        new_position.head(2) = new_cell_pos.head(2)*_world->resolution();
-        new_position.z() = new_cell_pos.z();
         
         //sense
         std::cerr << "s"; 
         _senseMatchables(prev_vertex);
 
-        //move
-        //new position is valid
-        position = new_position;
-        cell_pos = new_cell_pos;
-
-        //generate pose vertex
-        minimal_estimate.head(3) = Vector3(position.x(), position.y(), 0);
-        minimal_estimate.tail(3) = Vector3(0,0,position.z());
-        VertexSE3Chord* vertex = new VertexSE3Chord();
-        vertex->setId(_vertex_id);
-        vertex->setEstimate(internal::fromVectorET(minimal_estimate));
-        _vertices->insert(std::make_pair(_vertex_id++, vertex));
-
-        // ia generate odom
+        // ia generate odom - actual movement
         std::cerr << "m";
         EdgeSE3Chord* e = new EdgeSE3Chord();
         e->vertices()[0] = prev_vertex;
-        e->vertices()[1] = vertex;
+        e->vertices()[1] = new_vertex;
         e->information().setIdentity();
         e->setMeasurementFromState();
         _edges->insert(e);
         
         // end
-        prev_vertex = vertex;
+        prev_vertex = new_vertex;
         if(count > _num_poses)
           continue_=false;
 
         count++;
+        // std::cin.get();
       }
       std::cerr << std::endl;
 
-      std::cerr << "Graph has " << std::endl;
+      std::cerr << "removed " << _world->numRemovedWalls() << " walls during motion" << std::endl;
+      std::cerr << "\nfinal graph has " << std::endl;
       std::cerr << "Point->Point \t" << point_point << " factors" << std::endl;
       std::cerr << "Line->Line   \t" << line_line << " factors" << std::endl;
       std::cerr << "Plane->Plane \t" << plane_plane << " factors" << std::endl;

@@ -68,6 +68,8 @@ namespace g2o {
     protected:
       //ia sense part
       void _senseMatchables(g2o::VertexSE3Chord* v_);
+      //ia moves the robot from prev_vertex, generates a new vertexSE3 and an edge between the two
+      VertexSE3Chord* _moveRobot(VertexSE3Chord* from_vertex_);
       g2o::HyperGraph::Edge* _computePointEdge(g2o::VertexSE3Chord* vfrom_,
                                                g2o::matchables::VertexMatchable* vto_);
       g2o::HyperGraph::Edge* _computeLineEdge(g2o::VertexSE3Chord* vfrom_,
