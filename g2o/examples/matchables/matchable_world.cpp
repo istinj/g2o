@@ -56,6 +56,7 @@ namespace g2o {
         
         Matchable* point_matchable = new Matchable(Matchable::Point, Vector3(x,y,z));
         _landmarks.insert(point_matchable);
+        ++cnt;
       }
 
       std::cerr << "generated " << cnt << " points" << std::endl;

@@ -26,10 +26,73 @@ namespace g2o {
       if (!_world->isValid()) {
         throw std::runtime_error("world is not valid");
       }        
+
+      if (!_params.factors_types.checkFactors()) {
+        throw std::runtime_error("no factors selected");
+      }
+
+      if (_params.sense_radius < 0.0)
+        throw std::runtime_error("invalid sense radius");
+
+      if (_params.num_poses < 1)
+        std::cerr << " warning: invalid simulation steps" << std::endl;
       
       _vertices->clear();
       _edges->clear();
     }
+
+    void WorldSimulator::compute() {
+      _params.simulator_stats.setZero();
+      uint64_t sim_steps = 0;
+      
+      bool continue_=true;
+      Vector6 minimal_estimate = Vector6::Zero();
+      // minimal_estimate.head(3) = Vector3((_world->width()/2-1) * _world->resolution(),
+      //                                    (_world->height()/2-1) * _world->resolution(),
+      //                                    0);
+
+
+      VertexSE3Chord* prev_vertex = new VertexSE3Chord();
+      prev_vertex->setId(_vertex_id);
+      prev_vertex->setFixed(true);
+      prev_vertex->setEstimate(internal::fromVectorET(minimal_estimate));
+      _vertices->insert(std::make_pair(_vertex_id++, prev_vertex));
+
+      std::cerr << "simulating robot motion in the world" << std::endl;
+      while(continue_){        
+        //ia attempt to move
+        VertexSE3Chord* new_vertex = _moveRobot(prev_vertex);
+        if (!new_vertex)
+          continue;
+        
+        //sense
+        std::cerr << "s"; 
+        _senseMatchables(prev_vertex);
+
+        // ia generate odom - actual movement
+        std::cerr << "m";
+        EdgeSE3Chord* e = new EdgeSE3Chord();
+        e->vertices()[0] = prev_vertex;
+        e->vertices()[1] = new_vertex;
+        e->information().setIdentity();
+        e->setMeasurementFromState();
+        _edges->insert(e);
+        
+        // end
+        prev_vertex = new_vertex;
+        if(sim_steps > _params.num_poses)
+          continue_=false;
+
+        ++sim_steps;
+        // std::cin.get();
+      }
+      std::cerr << std::endl;
+
+      std::cerr << "removed " << _world->numRemovedWalls() << " walls during motion" << std::endl;
+      std::cerr << "\nfinal graph has " << std::endl;
+      _params.simulator_stats.print();
+    }
+    
 
     void WorldSimulator::_senseMatchables(g2o::VertexSE3Chord* v_) {
 
@@ -37,7 +100,7 @@ namespace g2o {
       const Eigen::Isometry3d& robot_pose_inverse = robot_pose.inverse();
 
       for(Matchable* mptr : _world->landmarks()) {
-        if (mptr->applyTransform(robot_pose_inverse).point().norm() >= _sense_radius)
+        if (mptr->applyTransform(robot_pose_inverse).point().norm() >= _params.sense_radius)
           continue;
 
         VertexMatchable* v_m = new VertexMatchable();
@@ -48,54 +111,54 @@ namespace g2o {
         switch (mptr->type()) {
         case Matchable::Type::Point:
           {
-            if (_factors_types.point_factors) {
+            if (_params.factors_types.point_factors) {
               HyperGraph::Edge* e = _computePointEdge(v_, v_m);
               if (e) {
                 _edges->insert(e);
-                ++point_point;
+                ++_params.simulator_stats.point_point;
               }
             }
             break;
           }
         case Matchable::Type::Line:
           {
-            if (_factors_types.line_factors) {
+            if (_params.factors_types.line_factors) {
               HyperGraph::Edge* e = _computeLineEdge(v_, v_m);
               if (e){
                 _edges->insert(e);
-                ++line_line;
+                ++_params.simulator_stats.line_line;
               }
             }
-            if (_factors_types.line_point_factors) {
+            if (_params.factors_types.line_point_factors) {
               HyperGraph::Edge* e = _computeLinePointEdge(v_, v_m);
               if (e){
                 _edges->insert(e);
-                ++line_point;
+                ++_params.simulator_stats.line_point;
               }
             }
             break;
           }
         case Matchable::Type::Plane:
           {
-            if (_factors_types.plane_factors) {
+            if (_params.factors_types.plane_factors) {
               HyperGraph::Edge* e = _computePlaneEdge(v_, v_m);
               if (e){
                 _edges->insert(e);
-                ++plane_plane;
+                ++_params.simulator_stats.plane_plane;
               }
             }
-            if (_factors_types.plane_line_factors) {
+            if (_params.factors_types.plane_line_factors) {
               HyperGraph::Edge* e = _computePlaneLineEdge(v_, v_m);
               if (e){
                 _edges->insert(e);
-                ++plane_line;
+                ++_params.simulator_stats.plane_line;
               }
             }
-            if (_factors_types.plane_point_factors) {
+            if (_params.factors_types.plane_point_factors) {
               HyperGraph::Edge* e = _computePlanePointEdge(v_, v_m);
               if (e){
                 _edges->insert(e);
-                ++plane_point;
+                ++_params.simulator_stats.plane_point;
               }
             }
             break;
@@ -159,68 +222,6 @@ namespace g2o {
       _vertices->insert(std::make_pair(_vertex_id++, to_vertex));
       
       return to_vertex;      
-    }
-
-    void WorldSimulator::compute() {
-      int count=0;
-      point_point=0;
-      line_line=0;
-      plane_plane=0;
-      line_point=0;
-      plane_point=0;
-      plane_line=0;
-
-      bool continue_=true;
-      Vector6 minimal_estimate = Vector6::Zero();
-      // minimal_estimate.head(3) = Vector3((_world->width()/2-1) * _world->resolution(),
-      //                                    (_world->height()/2-1) * _world->resolution(),
-      //                                    0);
-
-
-      VertexSE3Chord* prev_vertex = new VertexSE3Chord();
-      prev_vertex->setId(_vertex_id);
-      prev_vertex->setFixed(true);
-      prev_vertex->setEstimate(internal::fromVectorET(minimal_estimate));
-      _vertices->insert(std::make_pair(_vertex_id++, prev_vertex));
-
-      std::cerr << "simulating robot motion in the world" << std::endl;
-      while(continue_){        
-        //ia attempt to move
-        VertexSE3Chord* new_vertex = _moveRobot(prev_vertex);
-        if (!new_vertex)
-          continue;
-        
-        //sense
-        std::cerr << "s"; 
-        _senseMatchables(prev_vertex);
-
-        // ia generate odom - actual movement
-        std::cerr << "m";
-        EdgeSE3Chord* e = new EdgeSE3Chord();
-        e->vertices()[0] = prev_vertex;
-        e->vertices()[1] = new_vertex;
-        e->information().setIdentity();
-        e->setMeasurementFromState();
-        _edges->insert(e);
-        
-        // end
-        prev_vertex = new_vertex;
-        if(count > _num_poses)
-          continue_=false;
-
-        count++;
-        // std::cin.get();
-      }
-      std::cerr << std::endl;
-
-      std::cerr << "removed " << _world->numRemovedWalls() << " walls during motion" << std::endl;
-      std::cerr << "\nfinal graph has " << std::endl;
-      std::cerr << "Point->Point \t" << point_point << " factors" << std::endl;
-      std::cerr << "Line->Line   \t" << line_line << " factors" << std::endl;
-      std::cerr << "Plane->Plane \t" << plane_plane << " factors" << std::endl;
-      std::cerr << "Line->Point  \t" << line_point << " factors" << std::endl;
-      std::cerr << "Plane->Point \t" << plane_point << " factors" << std::endl;
-      std::cerr << "Plane->Line  \t" << plane_line << " factors" << std::endl;
     }
     
     //ia private things

@@ -21,7 +21,14 @@ namespace g2o {
     class WorldSimulator {
     public:
 
-      struct MatchableSimulatorFactors {
+      struct MatchableSimulatorFactors {        
+        bool point_factors;
+        bool line_factors;
+        bool plane_factors;
+        bool line_point_factors;
+        bool plane_line_factors;
+        bool plane_point_factors;
+        
         MatchableSimulatorFactors() {
           point_factors = false;
           line_factors = false;
@@ -32,23 +39,81 @@ namespace g2o {
           plane_line_factors = false;
           plane_point_factors = false;
         }
-        bool point_factors;
-        bool line_factors;
-        bool plane_factors;
-        bool line_point_factors;
-        bool plane_line_factors;
-        bool plane_point_factors;
+
+        void clearFactors() {
+          point_factors = false;
+          line_factors = false;
+          plane_factors = false;
+
+          //ia mixed convenction: from_to
+          line_point_factors = false;
+          plane_line_factors = false;
+          plane_point_factors = false;
+        }
+
+        bool checkFactors() {
+          if (point_factors || line_factors || plane_factors ||
+              line_point_factors || plane_line_factors || plane_point_factors)
+            return true;
+          return false;
+        }
+      };
+
+      struct MatchableSimulatorStats {
+        size_t point_point;
+        size_t line_line;
+        size_t plane_plane;
+        size_t line_point;
+        size_t plane_point;
+        size_t plane_line;
+
+        MatchableSimulatorStats() {
+          point_point = 0;
+          line_line   = 0;
+          plane_plane = 0;
+          line_point  = 0;
+          plane_point = 0;
+          plane_line  = 0;
+        }
+
+        void setZero() {
+          point_point = 0;
+          line_line   = 0;
+          plane_plane = 0;
+          line_point  = 0;
+          plane_point = 0;
+          plane_line  = 0;
+        }
+
+        void print() {
+          std::cerr << "NUM PT-PT \t" << point_point << std::endl;
+          std::cerr << "NUM LN-LN \t" << line_line << std::endl;
+          std::cerr << "NUM PL-PL \t" << plane_plane << std::endl;
+          std::cerr << "NUM LN-PT \t" << line_point << std::endl;
+          std::cerr << "NUM PL-PT \t" << plane_point << std::endl;
+          std::cerr << "NUM PL-LN \t" << plane_line << std::endl;
+        }
+      };
+
+      struct Parameters {
+        size_t   num_poses;
+        number_t sense_radius;
+        
+        MatchableSimulatorFactors factors_types;
+        MatchableSimulatorStats   simulator_stats;
+        Parameters() {
+          num_poses    = 0;
+          sense_radius = 2.0;
+
+          factors_types.clearFactors();
+          simulator_stats.setZero();
+        }
       };
       
       WorldSimulator();
       virtual ~WorldSimulator();
 
-      inline const number_t& senseRadius() const {return _sense_radius;}
-      inline void setSenseRadius(const number_t& sense_radius_) {_sense_radius = sense_radius_;}
-
-      //ia non const return in order to set 
-      inline MatchableSimulatorFactors& factorTypes() {return _factors_types;}
-
+      //ia inline set get
       inline void setVertices(HyperGraph::VertexIDMap* vertices_) {_vertices = vertices_;}
       inline HyperGraph::VertexIDMap* vertices() const {return _vertices;}
       
@@ -58,8 +123,9 @@ namespace g2o {
       inline void setWorld(MatchableWorld* world_) {_world = world_;}
       inline MatchableWorld* world() const {return _world;}
 
-      inline void setNumPoses(const int num_poses_) {_num_poses = num_poses_;}
-
+      inline const Parameters& params() const {return _params;}
+      inline Parameters& mutableParams() {return _params;}
+      
       //ia checks that everything is ok
       void init();
 
@@ -92,16 +158,7 @@ namespace g2o {
       uint64_t _vertex_id;
 
       //ia parameters
-      number_t _sense_radius;
-      int _num_poses;
-      MatchableSimulatorFactors _factors_types;
-
-      size_t point_point;
-      size_t line_line;
-      size_t plane_plane;
-      size_t line_point;
-      size_t plane_point;
-      size_t plane_line;
+      Parameters _params;
     };
     
   }

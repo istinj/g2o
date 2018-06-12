@@ -69,14 +69,14 @@ int main(int argc, char** argv) {
   world->createGrid();
 
   WorldSimulator ws;
-  ws.factorTypes().point_factors = has_point_point_factor;
-  ws.factorTypes().line_factors = has_line_line_factor;
-  ws.factorTypes().plane_factors = has_plane_plane_factor;
-  ws.factorTypes().line_point_factors = has_line_point_factor;
-  ws.factorTypes().plane_line_factors = has_plane_line_factor;
-  ws.factorTypes().plane_point_factors = has_plane_point_factor;
-  ws.setNumPoses(num_poses);
-  ws.setSenseRadius(sense_radius);
+  ws.mutableParams().factors_types.point_factors = has_point_point_factor;
+  ws.mutableParams().factors_types.line_factors = has_line_line_factor;
+  ws.mutableParams().factors_types.plane_factors = has_plane_plane_factor;
+  ws.mutableParams().factors_types.line_point_factors = has_line_point_factor;
+  ws.mutableParams().factors_types.plane_line_factors = has_plane_line_factor;
+  ws.mutableParams().factors_types.plane_point_factors = has_plane_point_factor;
+  ws.mutableParams().num_poses = num_poses;
+  ws.mutableParams().sense_radius = sense_radius;
   ws.setVertices(&(opt.vertices()));
   ws.setEdges(&(opt.edges()));
   ws.setWorld(world);
