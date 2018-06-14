@@ -149,8 +149,8 @@ namespace g2o {
                                                    g2o::matchables::VertexMatchable* vto_);
       g2o::HyperGraph::Edge* _computePlanePointEdge(g2o::VertexSE3Chord* vfrom_,
                                                     g2o::matchables::VertexMatchable* vto_);
-      EdgeVector _computePlaneLineEdge(g2o::VertexSE3Chord* vfrom_,
-                                       g2o::matchables::VertexMatchable* vto_);
+      g2o::HyperGraph::Edge* _computePlaneLineEdge(g2o::VertexSE3Chord* vfrom_,
+                                                   g2o::matchables::VertexMatchable* vto_);
 
       
       //ia vertices and edges to be inzepped (not owned)

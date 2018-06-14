@@ -92,7 +92,6 @@ namespace g2o{
 
       const Vector3  ep = Rl.transpose()*(R*pz + t - pl);
       const Vector3  ed = R*Rz.col(0) - Rl.col(0);
-      // const Vector3  ed = (R*Rz - Rl).col(0);
       const number_t eo = (R*Rz).col(0).transpose() * Rl.col(0);
 
       _error.block<3,1>(0,0) = ep;
