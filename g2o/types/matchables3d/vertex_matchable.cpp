@@ -26,17 +26,17 @@ namespace g2o{
 
       Matchable::Type type;
       switch(t){
-        case 0:
-          type = Matchable::Type::Point;
-          break;
-        case 1:
-          type = Matchable::Type::Line;
-          break;
-        case 2:
-          type = Matchable::Type::Plane;
-          break;
-        default:
-          throw std::runtime_error("[VertexMatchable][Read] irrumati!!!");
+      case 0:
+        type = Matchable::Type::Point;
+        break;
+      case 1:
+        type = Matchable::Type::Line;
+        break;
+      case 2:
+        type = Matchable::Type::Plane;
+        break;
+      default:
+        throw std::runtime_error("[VertexMatchable][Read] unknown matchable type");
       }
 
       _estimate = Matchable(type,p,R);
@@ -75,48 +75,49 @@ namespace g2o{
       return true;
     }
     
-    HyperGraphElementAction* VertexMatchableDrawAction::operator()(HyperGraph::HyperGraphElement* element, HyperGraphElementAction::Parameters* params) {
+    HyperGraphElementAction* VertexMatchableDrawAction::operator()(HyperGraph::HyperGraphElement* element,
+                                                                   HyperGraphElementAction::Parameters* params) {
 
-    if (typeid(*element).name()!=_typeName)
-      return 0;
-    initializeDrawActionsCache();
-    refreshPropertyPtrs(params);
-    if (! _previousParams)
-      return this;
+      if (typeid(*element).name()!=_typeName)
+        return 0;
+      initializeDrawActionsCache();
+      refreshPropertyPtrs(params);
+      if (! _previousParams)
+        return this;
     
-    if (_show && !_show->value())
-      return this;
-    VertexMatchable* that = static_cast<VertexMatchable*>(element);
+      if (_show && !_show->value())
+        return this;
+      VertexMatchable* that = static_cast<VertexMatchable*>(element);
     
-    glPushMatrix();
-    glPushAttrib(GL_ENABLE_BIT | GL_POINT_BIT);
-    glDisable(GL_LIGHTING);
+      glPushMatrix();
+      glPushAttrib(GL_ENABLE_BIT | GL_POINT_BIT);
+      glDisable(GL_LIGHTING);
     
-    switch (that->estimate().type()) {
-    case Matchable::Type::Point:
-      glColor3f(LANDMARK_VERTEX_COLOR);
-      break;
-    case Matchable::Type::Line:
-      glColor3f(0.1,0.7,0.1);
-      break;
-    case Matchable::Type::Plane:
-      glColor3f(0.7,0.7,0.1);
-      break;
-    default:
-      throw std::runtime_error("[VertexMatchableDrawAction] unsupported matchable type");
-    }
+      switch (that->estimate().type()) {
+      case Matchable::Type::Point:
+        glColor3f(LANDMARK_VERTEX_COLOR);
+        break;
+      case Matchable::Type::Line:
+        glColor3f(0.1,0.7,0.1);
+        break;
+      case Matchable::Type::Plane:
+        glColor3f(0.7,0.7,0.1);
+        break;
+      default:
+        throw std::runtime_error("[VertexMatchableDrawAction] unknown matchable type");
+      }
 
-    const Vector3& point = that->estimate().point();
+      const Vector3& point = that->estimate().point();
     
-    float ps = _pointSize ? _pointSize->value() :  1.f;
-    glTranslatef((float)point(0),(float)point(1),(float)point(2));
-    opengl::drawPoint(ps);
-    glPopAttrib();
-    drawCache(that->cacheContainer(), params);
-    drawUserData(that->userData(), params);
-    glPopMatrix();
+      float ps = _pointSize ? _pointSize->value() :  1.f;
+      glTranslatef((float)point(0),(float)point(1),(float)point(2));
+      opengl::drawPoint(ps);
+      glPopAttrib();
+      drawCache(that->cacheContainer(), params);
+      drawUserData(that->userData(), params);
+      glPopMatrix();
     
-    return this;
+      return this;
     }    
 
   }

@@ -21,6 +21,9 @@ namespace g2o {
     class WorldSimulator {
     public:
 
+      typedef std::vector<g2o::HyperGraph::Edge*,
+        Eigen::aligned_allocator<g2o::HyperGraph::Edge*> > EdgeVector;
+      
       struct MatchableSimulatorFactors {        
         bool point_factors;
         bool line_factors;
@@ -144,10 +147,10 @@ namespace g2o {
                                                g2o::matchables::VertexMatchable* vto_);
       g2o::HyperGraph::Edge* _computeLinePointEdge(g2o::VertexSE3Chord* vfrom_,
                                                    g2o::matchables::VertexMatchable* vto_);
-      g2o::HyperGraph::Edge* _computePlaneLineEdge(g2o::VertexSE3Chord* vfrom_,
-                                                   g2o::matchables::VertexMatchable* vto_);
       g2o::HyperGraph::Edge* _computePlanePointEdge(g2o::VertexSE3Chord* vfrom_,
                                                     g2o::matchables::VertexMatchable* vto_);
+      EdgeVector _computePlaneLineEdge(g2o::VertexSE3Chord* vfrom_,
+                                       g2o::matchables::VertexMatchable* vto_);
 
       
       //ia vertices and edges to be inzepped (not owned)

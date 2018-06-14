@@ -148,10 +148,19 @@ namespace g2o {
               }
             }
             if (_params.factors_types.plane_line_factors) {
-              HyperGraph::Edge* e = _computePlaneLineEdge(v_, v_m);
-              if (e){
-                _edges->insert(e);
-                ++_params.simulator_stats.plane_line;
+              // HyperGraph::Edge* e = _computePlaneLineEdge(v_, v_m);
+              // if (e){
+              //   _edges->insert(e);
+              //   ++_params.simulator_stats.plane_line;
+              // }
+              EdgeVector e_vec = _computePlaneLineEdge(v_, v_m);
+              if (e_vec.size()) {
+                for (HyperGraph::Edge* e : e_vec) {
+                  std::cerr << "\nedge between " << e->vertices()[0]->id()
+                            << "->" << e->vertices()[1]->id() << std::endl;
+                  _edges->insert(e);
+                  ++_params.simulator_stats.plane_line;
+                }
               }
             }
             if (_params.factors_types.plane_point_factors) {
@@ -338,9 +347,10 @@ namespace g2o {
       return e;
     }
 
-
-    HyperGraph::Edge* WorldSimulator::_computePlaneLineEdge(VertexSE3Chord* vfrom_,
-                                                            VertexMatchable* vto_) {
+    //ia this is the cause of the evil
+    WorldSimulator::EdgeVector WorldSimulator::_computePlaneLineEdge(VertexSE3Chord* vfrom_,
+                                                                     VertexMatchable* vto_) {
+      EdgeVector e_container;
 
       const Isometry3& inv_pose = vfrom_->estimate().inverse();
       const Matchable& matchable = vto_->estimate();
@@ -352,23 +362,91 @@ namespace g2o {
       Vector3 nz = Vector3::UnitZ().cross(nl);
 
       //orthogonality check
-      if(nz.norm() < 1e-3)
-        return nullptr;
+      if (nz.norm() < 1e-3)
+        return e_container;
+        // return nullptr;
+        
       nz.normalize();
 
-      Matchable measurement(Matchable::Type::Line,pl);
-      measurement.computeRotationMatrixZXY(nz);
-      Matrix7 omega = Matrix7::Zero();
-      omega.block<3,3>(0,0) = matchable.omega();
-      omega(6,6) = 1;
+      //ia we rotate the normal of the landmark in order to get another measurement
+      size_t num_intervals = 1;
+      Matrix3 R = Matrix3::Identity();
+      for (size_t i = 0; i < num_intervals; ++i) {
+        // std::cerr << "\nangle: " << i*M_PI/num_intervals << std::endl;
+        R = AngleAxis(i*M_PI/num_intervals, nz);
+        // std::cerr << "R:\n" << R << std::endl;
 
-      EdgeSE3Matchable* e = new EdgeSE3Matchable();
-      e->vertices()[0] = vfrom_;
-      e->vertices()[1] = vto_;
-      e->setInformation(omega);
-      e->setMeasurement(measurement);
+        const Vector3 nz_rotated = R * nz;
 
-      return e;
+        Matchable measurement_rotated(Matchable::Type::Line,pl);
+        measurement_rotated.computeRotationMatrixZXY(nz_rotated);
+        Matrix7 omega_rotated = Matrix7::Zero();
+        omega_rotated.block<3,3>(0,0) = matchable.omega();
+        omega_rotated(6,6) = 1;
+
+        EdgeSE3Matchable* e_rotated = new EdgeSE3Matchable();
+        e_rotated->vertices()[0] = vfrom_;
+        e_rotated->vertices()[1] = vto_;
+        e_rotated->setInformation(omega_rotated);
+        e_rotated->setMeasurement(measurement_rotated);
+
+        e_container.push_back(e_rotated);
+      }
+      // std::cin.get();
+
+      // //ia no rotation
+      // Matchable measurement(Matchable::Type::Line,pl);
+      // measurement.computeRotationMatrixZXY(nz);
+      // Matrix7 omega = Matrix7::Zero();
+      // omega.block<3,3>(0,0) = matchable.omega();
+      // omega(6,6) = 1;
+
+      // EdgeSE3Matchable* e = new EdgeSE3Matchable();
+      // e->vertices()[0] = vfrom_;
+      // e->vertices()[1] = vto_;
+      // e->setInformation(omega);
+      // e->setMeasurement(measurement);
+      
+      // //ia pi/3
+      // Matrix3 R0 = Matrix3::Identity();
+      // R0 = AngleAxis(M_PI/3, nl);
+      
+      // const Vector3 nz_rotated_0 = R0 * nz;
+      
+      // Matchable measurement_rotated_0(Matchable::Type::Line,pl);
+      // measurement_rotated_0.computeRotationMatrixZXY(nz_rotated_0);
+      // Matrix7 omega_rotated_0 = Matrix7::Zero();
+      // omega_rotated_0.block<3,3>(0,0) = matchable.omega();
+      // omega_rotated_0(6,6) = 1;
+
+      // EdgeSE3Matchable* e_rotated_0 = new EdgeSE3Matchable();
+      // e_rotated_0->vertices()[0] = vfrom_;
+      // e_rotated_0->vertices()[1] = vto_;
+      // e_rotated_0->setInformation(omega_rotated_0);
+      // e_rotated_0->setMeasurement(measurement_rotated_0);
+
+      // //ia 2/3 pi
+      // Matrix3 R1 = Matrix3::Identity();
+      // R1 = AngleAxis(2*M_PI/3, nl);
+      
+      // const Vector3 nz_rotated_1 = R1 * nz;
+      // Matchable measurement_rotated_1(Matchable::Type::Line,pl);
+      // measurement_rotated_1.computeRotationMatrixZXY(nz_rotated_1);
+      // Matrix7 omega_rotated_1 = Matrix7::Zero();
+      // omega_rotated_1.block<3,3>(0,0) = matchable.omega();
+      // omega_rotated_1(6,6) = 1;
+
+      // EdgeSE3Matchable* e_rotated_1 = new EdgeSE3Matchable();
+      // e_rotated_1->vertices()[0] = vfrom_;
+      // e_rotated_1->vertices()[1] = vto_;
+      // e_rotated_1->setInformation(omega_rotated_1);
+      // e_rotated_1->setMeasurement(measurement_rotated_1);
+
+      // e_container.push_back(e);
+      // e_container.push_back(e_rotated_0);
+      // e_container.push_back(e_rotated_1);
+
+      return e_container;
     }
   } //ia end namespace matchable
 } //ia end namespace g2o
