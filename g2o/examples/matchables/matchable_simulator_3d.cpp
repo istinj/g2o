@@ -33,6 +33,10 @@ int main(int argc, char** argv) {
   bool has_plane_line_factor;
   bool has_plane_point_factor;
 
+  bool simulator_has_noise;
+  std::vector<int> normal_noise;
+  std::vector<int> translational_noise;
+
   arg.param("numPoses", num_poses, 0, "number of robot poses");
   arg.param("worldSize", world_size, std::vector<int>(), "world height and width separated by a semicolumn, e.g. \"7;5\". Default is \"10;10\"");
   arg.param("numPoints", num_points, 0, "number of point landmarks in the world");
@@ -46,6 +50,8 @@ int main(int argc, char** argv) {
   arg.param("hasLnPt", has_line_point_factor, false, "line-point factors enabled");
   arg.param("hasPlLn", has_plane_line_factor, false, "plane-line factors enabled");
   arg.param("hasPlPt", has_plane_point_factor, false, "plane-point factors enabled");
+  arg.param("normalNoise", normal_noise, std::vector<int>(), "matchable normal noise as <ny,nz>. default is \"0;0\"");
+  arg.param("translationalNoise", translational_noise, std::vector<int>(), "translational noise as <nx,ny,nz>. default is \"0;0;0\"");
   arg.paramLeftOver("graph-output", output_filename, "", "output of the generator", true);
   arg.parseArgs(argc, argv);
 
@@ -55,6 +61,18 @@ int main(int argc, char** argv) {
   if (!world_size.size()) {
     world_size.push_back(10);
     world_size.push_back(10);
+  }
+
+  Vector2 n_noise_param = Vector2::Zero();
+  Vector3 t_noise_param = Vector3::Zero();
+  if (!normal_noise.size() && !translational_noise.size()) {
+    simulator_has_noise = false;
+  } else {
+    simulator_has_noise = true;
+    for (int i = 0; i < !translational_noise.size(); ++i)
+      t_noise_param[i] = translational_noise[i];
+    for (int i = 0; i < !normal_noise.size(); ++i)
+      n_noise_param[i] = normal_noise[i];
   }
 
   g2o::SparseOptimizer opt;
@@ -75,8 +93,14 @@ int main(int argc, char** argv) {
   ws.mutableParams().factors_types.line_point_factors = has_line_point_factor;
   ws.mutableParams().factors_types.plane_line_factors = has_plane_line_factor;
   ws.mutableParams().factors_types.plane_point_factors = has_plane_point_factor;
+  
   ws.mutableParams().num_poses = num_poses;
   ws.mutableParams().sense_radius = sense_radius;
+
+  ws.mutableParams().has_noise = simulator_has_noise;
+  ws.mutableParams().point_noise_stats = t_noise_param;
+  ws.mutableParams().normal_noise_stats = n_noise_param;
+  
   ws.setVertices(&(opt.vertices()));
   ws.setEdges(&(opt.edges()));
   ws.setWorld(world);

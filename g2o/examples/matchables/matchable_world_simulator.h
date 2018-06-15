@@ -6,17 +6,17 @@
 //ia EXTRA encodes gaussian noise in the measurement (TODO)
 
 #pragma once
+
+#include "g2o/stuff/sampler.h"
 #include "matchable_world.h"
 
 namespace g2o {
   namespace matchables {
 
     //!TODO
-    //1 removeWalls may be performed here (has more sense)
-    //2 PLANE TO LINE EDGES
     //3 viewer application?
     //4 add noise components to the edges
-    //5 initialGuess to the edges
+    //5 initialGuess to the edges (not useful)
     
     class WorldSimulator {
     public:
@@ -101,12 +101,20 @@ namespace g2o {
       struct Parameters {
         size_t   num_poses;
         number_t sense_radius;
+
+        bool has_noise;
+        Vector2 normal_noise_stats;
+        Vector3 point_noise_stats;
         
         MatchableSimulatorFactors factors_types;
         MatchableSimulatorStats   simulator_stats;
         Parameters() {
           num_poses    = 0;
           sense_radius = 2.0;
+
+          has_noise = false;
+          point_noise_stats = Vector3::Zero();
+          normal_noise_stats = Vector2::Zero();
 
           factors_types.clearFactors();
           simulator_stats.setZero();
@@ -135,10 +143,11 @@ namespace g2o {
       void compute();
 
     protected:
-      //ia sense part
-      void _senseMatchables(g2o::VertexSE3Chord* v_);
       //ia moves the robot from prev_vertex, generates a new vertexSE3 and an edge between the two
       VertexSE3Chord* _moveRobot(VertexSE3Chord* from_vertex_);
+      
+      //ia sense part
+      void _senseMatchables(g2o::VertexSE3Chord* v_);
       g2o::HyperGraph::Edge* _computePointEdge(g2o::VertexSE3Chord* vfrom_,
                                                g2o::matchables::VertexMatchable* vto_);
       g2o::HyperGraph::Edge* _computeLineEdge(g2o::VertexSE3Chord* vfrom_,
@@ -152,14 +161,21 @@ namespace g2o {
       g2o::HyperGraph::Edge* _computePlaneLineEdge(g2o::VertexSE3Chord* vfrom_,
                                                    g2o::matchables::VertexMatchable* vto_);
 
+      //ia noise adder
+      void _addMatchableNoise(EdgeSE3Matchable* edge_);
+
       
       //ia vertices and edges to be inzepped (not owned)
       HyperGraph::VertexIDMap* _vertices = 0;
       HyperGraph::EdgeSet*     _edges = 0;
       MatchableWorld*          _world = 0;
-
+      
       uint64_t _vertex_id;
 
+      //ia generate noise
+      GaussianSampler<Vector3, Matrix3> _p_sampler;
+      GaussianSampler<Vector2, Matrix2> _n_sampler;
+      
       //ia parameters
       Parameters _params;
     };

@@ -49,7 +49,7 @@ namespace g2o {
 
     Matchable Matchable::applyMinimalPert(const Vector5& dm_) const  {
       Matrix3 dR;
-      dR = AngleAxis(dm_[3],Vector3::UnitY())*AngleAxis(dm_[4],Vector3::UnitZ());
+      dR = AngleAxis(dm_[3],Vector3::UnitY()) * AngleAxis(dm_[4],Vector3::UnitZ());
 
       Vector3 point = _point + dm_.head(3);
       Matrix3 R  = _rotation * dR;

@@ -113,7 +113,8 @@ namespace g2o {
     return true;
   }
 
-  void EdgeSE3Chord::initialEstimate(const OptimizableGraph::VertexSet& from_, OptimizableGraph::Vertex* /*to_*/) {
+  void EdgeSE3Chord::initialEstimate(const OptimizableGraph::VertexSet& from_,
+                                     OptimizableGraph::Vertex* /*to_*/) {
     VertexSE3Chord* from = static_cast<VertexSE3Chord*>(_vertices[0]);
     VertexSE3Chord* to = static_cast<VertexSE3Chord*>(_vertices[1]);
     if (from_.count(from) > 0) {

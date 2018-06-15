@@ -36,6 +36,19 @@ namespace g2o {
 
       if (_params.num_poses < 1)
         std::cerr << " warning: invalid simulation steps" << std::endl;
+
+      //ia generate noise distrubuions
+      Matrix3 point_noise_sigma = Matrix3::Zero();
+      Matrix2 normal_noise_sigma = Matrix2::Zero();
+
+      for (int i = 0; i < _params.point_noise_stats.size(); ++i)
+        point_noise_sigma(i, i) = std::pow(_params.point_noise_stats[i], 2);
+
+      for (int i = 0; i < _params.normal_noise_stats.size(); ++i)
+        point_noise_sigma(i, i) = std::pow(_params.normal_noise_stats[i], 2);
+      
+      _p_sampler.setDistribution(point_noise_sigma);
+      _n_sampler.setDistribution(normal_noise_sigma);
       
       _vertices->clear();
       _edges->clear();
@@ -242,6 +255,11 @@ namespace g2o {
       e->vertices()[1] = vto_;
       e->setInformation(omega);
       e->setMeasurement(measurement);
+
+      if (_params.has_noise) {
+        _addMatchableNoise(e);
+      }
+        
       return e;
     }
 
@@ -263,6 +281,11 @@ namespace g2o {
       e->vertices()[1] = vto_;
       e->setInformation(omega);
       e->setMeasurement(measurement);
+
+      if (_params.has_noise) {
+        _addMatchableNoise(e);
+      }
+      
       return e;
     }
 
@@ -285,6 +308,11 @@ namespace g2o {
       e->vertices()[1] = vto_;
       e->setInformation(omega);
       e->setMeasurement(measurement);
+
+      if (_params.has_noise) {
+        _addMatchableNoise(e);
+      }
+      
       return e;
     }
 
@@ -314,6 +342,11 @@ namespace g2o {
       e->vertices()[1] = vto_;
       e->setInformation(omega);
       e->setMeasurement(measurement);
+
+      if (_params.has_noise) {
+        _addMatchableNoise(e);
+      }
+      
       return e;
     }
 
@@ -334,6 +367,10 @@ namespace g2o {
       e->vertices()[1] = vto_;
       e->setInformation(omega);
       e->setMeasurement(measurement);
+
+      if (_params.has_noise) {
+        _addMatchableNoise(e);
+      }
       
       return e;
     }
@@ -343,11 +380,6 @@ namespace g2o {
                                                             VertexMatchable* vto_) {
       const Isometry3& inv_pose = vfrom_->estimate().inverse();
       const Matchable& matchable = vto_->estimate();
-
-      const Isometry3 pose = Isometry3::Identity();
-      const Vector3 pr = pose.translation();
-      const Vector3 nr = pose.linear().col(2);
-      const float dr = pr.transpose()*nr;
 
       Matchable trans_match = matchable.applyTransform(inv_pose);
       const Vector3& pl = trans_match.point();
@@ -374,7 +406,28 @@ namespace g2o {
       e->setInformation(omega);
       e->setMeasurement(measurement);
 
+      if (_params.has_noise) {
+        _addMatchableNoise(e);
+      }
+      
       return e;
+    }
+
+    void WorldSimulator::_addMatchableNoise(EdgeSE3Matchable* edge_) {
+      const Matchable& matchable = edge_->measurement();
+
+      // Vector3 point_noise = _p_sampler.generateSample();
+      // Vector2 normal_noise = _n_sampler.generateSample();
+
+      Vector5 noise_pertubation;
+      noise_pertubation.head(3) = _p_sampler.generateSample();
+      noise_pertubation.tail(2) = _n_sampler.generateSample();
+
+      std::cerr << "noise_pertubation: " << noise_pertubation.transpose() << std::endl;
+
+      Matchable pert_matchable = matchable.applyMinimalPert(noise_pertubation);
+      edge_->setMeasurement(pert_matchable);
+      //ia modify the information matrix according to the noise
     }
   } //ia end namespace matchable
 } //ia end namespace g2o
