@@ -11,7 +11,7 @@ namespace g2o{
     
     class Matchable{
     public:
-      EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+      EIGEN_MAKE_ALIGNED_OPERATOR_NEW
 
       enum Type {Point=0, Line=1, Plane=2};
 
@@ -32,7 +32,7 @@ namespace g2o{
       }
 
       inline Matchable applyTransform(const Isometry3& T) const {
-        Matchable m(_type,T*_point);
+        Matchable m(_type, T*_point);
 
         if(_type != Type::Point)
           m.setRotation(T.linear()*_rotation);
@@ -67,12 +67,7 @@ namespace g2o{
       static const number_t _epsilon;
     };
 
-    typedef std::vector<Matchable> MatchableVector;
-    typedef std::set<Matchable> MatchableSet;
-    typedef std::pair<Matchable, Matrix7> MatchableMatrix7Pair;
-    typedef std::vector<MatchableMatrix7Pair> MatchableMatrix7PairVector;
-    typedef std::shared_ptr<Matchable> MatchablePtr;
-    typedef std::set<MatchablePtr> MatchablePtrSet;
-
+    typedef std::set<Matchable*> MatchableSet;
+    typedef std::vector<Matchable*> MatchableVector;
   }
 }

@@ -44,6 +44,7 @@ namespace g2o {
 
   HyperGraph::Vertex::Vertex(int id) : _id(id)
   {
+    _num_stars = 0;
   }
 
   HyperGraph::Vertex::~Vertex()

@@ -59,7 +59,7 @@ struct G2O_HIERARCHICAL_API EdgeCreator{
 
   //! Adds an association to the association map
   //! @param vertexTypes: a string containing the tags of the vertices separated by a ";".
-  //! For instance an edge between a VertexSE2 and and EdgeSE2 is identified by the string "VERTEX_SE2;EDGE_SE2;".
+  //! For instance an edge between a VertexSE2 and VertexPointXY is identified by the string "VERTEX_SE2;VertexPointXY;".
   //! The order matters.
   //! @param edgeType: the tag of edge to create
   //! @returns false on failure (incompatible types). Currently returns always true because i did not have time to implement checks

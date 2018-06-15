@@ -10,38 +10,113 @@
 
 namespace g2o {
   namespace matchables {
+
+    //!TODO
+    //1 removeWalls may be performed here (has more sense)
+    //2 PLANE TO LINE EDGES
+    //3 viewer application?
+    //4 add noise components to the edges
+    //5 initialGuess to the edges
     
     class WorldSimulator {
     public:
 
-      struct MatchableSimulatorFactors {
-        MatchableSimulatorFactors() {
-          point_factors = false;
-          line_factors = false;
-          plane_factors = true;
-
-          //ia mixed convenction: from_to
-          line_point_factor = false;
-          plane_line_factor = true;
-          plane_point_factor = false;
-        }
+      typedef std::vector<g2o::HyperGraph::Edge*,
+        Eigen::aligned_allocator<g2o::HyperGraph::Edge*> > EdgeVector;
+      
+      struct MatchableSimulatorFactors {        
         bool point_factors;
         bool line_factors;
         bool plane_factors;
-        bool line_point_factor;
-        bool plane_line_factor;
-        bool plane_point_factor;
+        bool line_point_factors;
+        bool plane_line_factors;
+        bool plane_point_factors;
+        
+        MatchableSimulatorFactors() {
+          point_factors = false;
+          line_factors = false;
+          plane_factors = false;
+
+          //ia mixed convenction: from_to
+          line_point_factors = false;
+          plane_line_factors = false;
+          plane_point_factors = false;
+        }
+
+        void clearFactors() {
+          point_factors = false;
+          line_factors = false;
+          plane_factors = false;
+
+          //ia mixed convenction: from_to
+          line_point_factors = false;
+          plane_line_factors = false;
+          plane_point_factors = false;
+        }
+
+        bool checkFactors() {
+          if (point_factors || line_factors || plane_factors ||
+              line_point_factors || plane_line_factors || plane_point_factors)
+            return true;
+          return false;
+        }
+      };
+
+      struct MatchableSimulatorStats {
+        size_t point_point;
+        size_t line_line;
+        size_t plane_plane;
+        size_t line_point;
+        size_t plane_point;
+        size_t plane_line;
+
+        MatchableSimulatorStats() {
+          point_point = 0;
+          line_line   = 0;
+          plane_plane = 0;
+          line_point  = 0;
+          plane_point = 0;
+          plane_line  = 0;
+        }
+
+        void setZero() {
+          point_point = 0;
+          line_line   = 0;
+          plane_plane = 0;
+          line_point  = 0;
+          plane_point = 0;
+          plane_line  = 0;
+        }
+
+        void print() {
+          std::cerr << "NUM PT-PT \t" << point_point << std::endl;
+          std::cerr << "NUM LN-LN \t" << line_line << std::endl;
+          std::cerr << "NUM PL-PL \t" << plane_plane << std::endl;
+          std::cerr << "NUM LN-PT \t" << line_point << std::endl;
+          std::cerr << "NUM PL-PT \t" << plane_point << std::endl;
+          std::cerr << "NUM PL-LN \t" << plane_line << std::endl;
+        }
+      };
+
+      struct Parameters {
+        size_t   num_poses;
+        number_t sense_radius;
+        
+        MatchableSimulatorFactors factors_types;
+        MatchableSimulatorStats   simulator_stats;
+        Parameters() {
+          num_poses    = 0;
+          sense_radius = 2.0;
+
+          factors_types.clearFactors();
+          simulator_stats.setZero();
+        }
       };
       
       WorldSimulator();
       virtual ~WorldSimulator();
 
-      inline const number_t& senseRadius() const {return _sense_radius;}
-      inline void setSenseRadius(const number_t& sense_radius_) {_sense_radius = sense_radius_;}
-
-      //ia non const return in order to set 
-      inline MatchableSimulatorFactors& factorTypes() {return _factors_types;}
-
+      //ia inline set get
       inline void setVertices(HyperGraph::VertexIDMap* vertices_) {_vertices = vertices_;}
       inline HyperGraph::VertexIDMap* vertices() const {return _vertices;}
       
@@ -51,29 +126,19 @@ namespace g2o {
       inline void setWorld(MatchableWorld* world_) {_world = world_;}
       inline MatchableWorld* world() const {return _world;}
 
-      inline void setNumPoses(const int num_poses_) {_num_poses = num_poses_;}
-
+      inline const Parameters& params() const {return _params;}
+      inline Parameters& mutableParams() {return _params;}
+      
       //ia checks that everything is ok
       void init();
 
       void compute();
 
     protected:
-      //ia vertices and edges to be inzepped (not owned)
-      HyperGraph::VertexIDMap* _vertices = 0;
-      HyperGraph::EdgeSet*     _edges = 0;
-      MatchableWorld*          _world = 0;
-
-      uint64_t _vertex_id;
-
-      //ia parameters
-      number_t _sense_radius;
-      int _num_poses;
-      MatchableSimulatorFactors _factors_types;
-
-    private:
-      void senseMatchables(g2o::VertexSE3Chord* v_);
-
+      //ia sense part
+      void _senseMatchables(g2o::VertexSE3Chord* v_);
+      //ia moves the robot from prev_vertex, generates a new vertexSE3 and an edge between the two
+      VertexSE3Chord* _moveRobot(VertexSE3Chord* from_vertex_);
       g2o::HyperGraph::Edge* _computePointEdge(g2o::VertexSE3Chord* vfrom_,
                                                g2o::matchables::VertexMatchable* vto_);
       g2o::HyperGraph::Edge* _computeLineEdge(g2o::VertexSE3Chord* vfrom_,
@@ -82,17 +147,21 @@ namespace g2o {
                                                g2o::matchables::VertexMatchable* vto_);
       g2o::HyperGraph::Edge* _computeLinePointEdge(g2o::VertexSE3Chord* vfrom_,
                                                    g2o::matchables::VertexMatchable* vto_);
-      g2o::HyperGraph::Edge* _computePlaneLineEdge(g2o::VertexSE3Chord* vfrom_,
-                                                   g2o::matchables::VertexMatchable* vto_);
       g2o::HyperGraph::Edge* _computePlanePointEdge(g2o::VertexSE3Chord* vfrom_,
                                                     g2o::matchables::VertexMatchable* vto_);
+      g2o::HyperGraph::Edge* _computePlaneLineEdge(g2o::VertexSE3Chord* vfrom_,
+                                                   g2o::matchables::VertexMatchable* vto_);
 
-      size_t point_point;
-      size_t line_line;
-      size_t plane_plane;
-      size_t line_point;
-      size_t plane_point;
-      size_t plane_line;
+      
+      //ia vertices and edges to be inzepped (not owned)
+      HyperGraph::VertexIDMap* _vertices = 0;
+      HyperGraph::EdgeSet*     _edges = 0;
+      MatchableWorld*          _world = 0;
+
+      uint64_t _vertex_id;
+
+      //ia parameters
+      Parameters _params;
     };
     
   }

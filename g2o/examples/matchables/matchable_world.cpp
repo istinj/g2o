@@ -1,192 +1,206 @@
 #include "matchable_world.h"
+#include "g2o/stuff/sampler.h"
 
 namespace g2o {
   namespace matchables {
 
-    MatchableWorld::MatchableWorld() {}
-    MatchableWorld::~MatchableWorld() {}
-
-    void MatchableWorld::createGrid() {
-
-      int points=0,lines=0,planes=0;
-
-      //insert points
-      for(size_t j=0; j<_height; ++j) {
-        for(size_t i=0; i<_width; ++i) {
-          const Vector3 p(i*_resolution, j*_resolution, 0.0f);
-          MatchablePtr point_matchable(new Matchable(Matchable::Point,p));
-          _landmarks.insert(point_matchable);
-          points++;
-        }
+    MatchableWorld::MatchableWorld() {
+      _params = Parameters();
+      _removed_walls = 0;
+      _is_valid = false;
+    }
+    MatchableWorld::~MatchableWorld() {
+      for (Matchable* m : _landmarks) {
+        delete m;
       }
-
-      //insert lines along x axes
-      for(size_t j=0; j<_height; ++j) {
-        for(size_t i=0; i<_width-1; ++i){
-          const Vector3 p(i*_resolution, j*_resolution, 0.5f);
-          MatchablePtr line_matchable(new Matchable(Matchable::Line,p));
-          line_matchable->computeRotationMatrixZXY(Vector3::UnitX());
-          _landmarks.insert(line_matchable);
-          lines++;
-        }
-      }
-
-      //insert lines along y axes
-      for(size_t i=0; i<_width; ++i) {
-        for(size_t j=0; j<_height-1; ++j){
-          const Vector3 p(i*_resolution, j*_resolution, 0.5f);
-          MatchablePtr line_matchable(new Matchable(Matchable::Line,p));
-          line_matchable->computeRotationMatrixZXY(Vector3::UnitY());
-          _landmarks.insert(line_matchable);
-          lines++;
-        }
-      }
-
-      //insert lines along z axes
-      for(size_t j=0; j<_height; ++j) {
-        for(size_t i=0; i<_width; ++i){
-          const Vector3 p(i*_resolution, j*_resolution, 0.0f);
-          MatchablePtr line_matchable(new Matchable(Matchable::Line,p));
-          line_matchable->computeRotationMatrixZXY(Vector3::UnitZ());
-          _landmarks.insert(line_matchable);
-          lines++;
-        }
-      }
-
-      //insert planes along x axes
-      for(size_t j=0; j<_height-1; ++j) {
-        for(size_t i=0; i<_width; ++i){
-          const Eigen::Vector2i cell(i,j);
-          const Vector3 p(cell.x()*_resolution, cell.y()*_resolution+_resolution/2.0f, _resolution/2.0f);
-          MatchablePtr plane_matchable(new Matchable(Matchable::Plane,p));
-          plane_matchable->computeRotationMatrixZXY(Vector3::UnitX());
-          _landmarks.insert(plane_matchable);
-          planes++;
-
-          if(i > 0 && i < _width-1){
-            const Eigen::Vector2i left_cell(i-1,j);
-            CellPair left_pair(left_cell,cell);
-            _walls[left_pair] = plane_matchable;
-            CellPair right_pair(cell,left_cell);
-            _walls[right_pair] = plane_matchable;
-          }
-        }
-      }
-
-      //insert planes along y axes
-      for(size_t i=0; i<_width-1; ++i) {
-        for(size_t j=0; j<_height; ++j){
-          const Eigen::Vector2i cell(i,j);
-          const Vector3 p(cell.x()*_resolution+_resolution/2.0f, cell.y()*_resolution, _resolution/2.0f);
-          MatchablePtr plane_matchable(new Matchable(Matchable::Plane,p));
-          plane_matchable->computeRotationMatrixZXY(Vector3::UnitY());
-          _landmarks.insert(plane_matchable);
-          planes++;
-
-          if(j > 0 && j < _height-1){
-            const Eigen::Vector2i down_cell(i,j-1);
-            CellPair down_pair(down_cell,cell);
-            _walls[down_pair] = plane_matchable;
-            CellPair up_pair(cell,down_cell);
-            _walls[up_pair] = plane_matchable;
-          }
-        }
-      }
-
-      //insert planes along z axes
-      for(size_t j=0; j<_height-1; ++j) {
-        for(size_t i=0; i<_width-1; ++i){
-          const Vector3 p(i*_resolution+_resolution/2.0f, j*_resolution+_resolution/2.0f, 0.0f);
-          MatchablePtr plane_matchable(new Matchable(Matchable::Plane,p));
-          plane_matchable->computeRotationMatrixZXY(Vector3::UnitZ());
-          _landmarks.insert(plane_matchable);
-          planes++;
-        }
-      }
-
-      std::cerr << "World has " << _landmarks.size() << " matchables before sbraco" << std::endl;
-      std::cerr << "Points: " << points << std::endl;
-      std::cerr << "Lines : " << lines  << std::endl;
-      std::cerr << "Planes: " << planes << std::endl;
     }
 
-    void MatchableWorld::removeWalls(int num_hits){
+    //ia I think we can reduce the number of lines and planes
+    void MatchableWorld::createGrid() {
+      if (_params.num_points == 0 &&
+          _params.num_lines == 0 &&
+          _params.num_planes == 0) {
+        std::cerr << "no landmarks selected" << std::endl;
+        return;
+      }
 
-      std::cerr << "sbraco...";
-      int count=0;
-      int sbrachi=0;
-      bool continue_=true;
+      if (_landmarks.size())
+        throw std::runtime_error("world alredy initialized");
+
+      _removed_walls = 0;
+
+      std::cerr << "\ncreate a grid world with the selected parameters" << std::endl;
+
       std::random_device rd;
-      std::mt19937 gen(rd());
-      std::uniform_real_distribution<> dis(0, 1);
+      std::mt19937 generator(rd()); //ia not required until you need a lot of numbers
 
-      number_t n = 0;
-      Vector3 increment = Vector3::Zero();
+      //ia starting with points...
+      _generateScatteredPoints(generator);
+      //ia ...now lines...
+      _generateScatteredLines(generator);
+      //ia ..finally planes
+      _generateScatteredPlanes(generator);
 
-      Vector3 new_position = Vector3::Zero();
-      Vector3 new_cell_pos = Vector3::Zero();
+      std::cerr << "done" << std::endl << std::endl;
+      
+      _is_valid = true;
+    }
 
-      Vector3 position((_width/2-1)*_resolution,(_height/2-1)*_resolution,0.0f);
-      Vector3 cell_pos(_width/2-1, _height/2-1, 0);
+    void MatchableWorld::_generateScatteredPoints(std::mt19937& random_generator_) {
+      uint32_t cnt = 0;
+      std::uniform_real_distribution<> uniform_distribution(0, 1);
+      for (size_t i = 0; i < _params.num_points; ++i) {
+        number_t x = uniform_distribution(random_generator_)*_params.width;
+        number_t y = uniform_distribution(random_generator_)*_params.height;
+        number_t z = uniform_distribution(random_generator_);
+        
+        Matchable* point_matchable = new Matchable(Matchable::Point, Vector3(x,y,z));
+        _landmarks.insert(point_matchable);
+        ++cnt;
+      }
 
-      while(continue_){
-        //sample new position
-        n = dis(gen);
+      std::cerr << "generated " << cnt << " points" << std::endl;
+    }
 
-        //go forward
-        if(n < 0.5f){
-          increment.x() = round(cos(position.z()));
-          increment.y() = round(sin(position.z()));
+    void MatchableWorld::_generateScatteredLines(std::mt19937& random_generator_) {
+      std::uniform_real_distribution<> uniform_distribution(0, 1);
+
+      // uint32_t xcnt = 0;
+      // uint32_t ycnt = 0;
+      // uint32_t zcnt = 0;
+      uint32_t cnt = 0;
+      
+      for (size_t i = 0; i < _params.num_lines; ++i) {
+        number_t x = uniform_distribution(random_generator_)*_params.width;
+        number_t y = uniform_distribution(random_generator_)*_params.height;
+        number_t z = uniform_distribution(random_generator_);
+        
+        Vector3 axis = Vector3::Zero();
+        const double axis_selector = uniform_distribution(random_generator_);
+        if (axis_selector < _params.line_axis_probabilities.x_axis_prob) {
+          axis = Vector3::UnitX();
+          // ++ xcnt;
+        } else if ((axis_selector <
+                   _params.line_axis_probabilities.x_axis_prob+
+                   _params.line_axis_probabilities.y_axis_prob) &&
+                   _params.line_axis_probabilities.x_axis_prob < axis_selector) {
+          axis = Vector3::UnitY();
+          // ++ ycnt;
+        } else {
+          axis = Vector3::UnitZ();
+          // ++ zcnt;
         }
-        //go left
-        if(n >= 0.5f && n < 0.75f){
-          increment.x() = round(-sin(position.z()));
-          increment.y() = round(cos(position.z()));
-          increment.z() = M_PI/2.0f;
-        }
-        //go right
-        if(n >= 0.75f){
-          increment.x() = round(sin(position.z()));
-          increment.y() = round(-cos(position.z()));
-          increment.z() = -M_PI/2.0f;
+        
+        Matchable* line_matchable = new Matchable(Matchable::Line, Vector3(x,y,z));
+        line_matchable->computeRotationMatrixZXY(axis);
+        _landmarks.insert(line_matchable);
+        ++cnt;
+      }
+
+      // std::cerr << "lines ->\tx: " << xcnt << "\ty: " << ycnt << "\tz: " << zcnt << std::endl;
+      std::cerr << "generated " << cnt << " lines" << std::endl;
+    }
+
+    void MatchableWorld::_generateScatteredPlanes(std::mt19937& random_generator_) {
+      std::uniform_real_distribution<> uniform_distribution(0, 1);
+      
+      size_t i = 0;
+      // uint32_t xcnt = 0;
+      // uint32_t ycnt = 0;
+      // uint32_t zcnt = 0;
+      
+      while (i < _params.num_planes) {
+        //ia world coords
+        number_t x = 0;
+        number_t y = 0;
+        number_t z = 0;
+
+        //ia grid coords
+        int r = 0, c = 0;
+        Vector2I prev_cell = Vector2I::Zero();
+        Vector2I curr_cell = Vector2I::Zero();
+
+        //ia normals
+        Vector3 n = Vector3::Zero();
+        Matchable* plane_matchable = 0;
+
+
+        const double selector = uniform_distribution(random_generator_);
+        if (selector < _params.plane_axis_probabilities.x_axis_prob) {
+          n = Vector3::UnitX();
+          r = round(uniform_distribution(random_generator_)*_params.width);
+          c = round(uniform_distribution(random_generator_)*_params.height);
+
+          x = r * _params.resolution;
+          y = c * _params.resolution + _params.resolution/2.0;
+          
+          z = uniform_distribution(random_generator_);
+
+          plane_matchable = new Matchable(Matchable::Plane, Vector3(x,y,z));
+          plane_matchable->computeRotationMatrixZXY(Vector3::UnitX());
+
+          prev_cell.x() = r - 1;
+          prev_cell.y() = c;
+          curr_cell.x() = r;
+          curr_cell.y() = c;
+          // ++xcnt;
+        } else if ((selector <
+                   _params.plane_axis_probabilities.x_axis_prob+
+                   _params.plane_axis_probabilities.y_axis_prob) &&
+                   _params.plane_axis_probabilities.x_axis_prob < selector) {
+          //ia y axis
+          n = Vector3::UnitY();
+          r = round(uniform_distribution(random_generator_)*_params.width);
+          c = round(uniform_distribution(random_generator_)*_params.height);
+
+          x = r * _params.resolution + _params.resolution/2.0;
+          y = c * _params.resolution;
+          
+          z = uniform_distribution(random_generator_);
+
+          plane_matchable = new Matchable(Matchable::Plane, Vector3(x,y,z));
+          plane_matchable->computeRotationMatrixZXY(Vector3::UnitY());
+
+          prev_cell.x() = r;
+          prev_cell.y() = c - 1;
+          curr_cell.x() = r;
+          curr_cell.y() = c;
+          // ++ycnt;
+        } else {
+          // z axis (floor)
+          n = Vector3::UnitZ();
+          x = round(uniform_distribution(random_generator_)*_params.width) + _params.resolution/2.0f;
+          y = round(uniform_distribution(random_generator_)*_params.height) + _params.resolution/2.0f;
+
+          plane_matchable = new Matchable(Matchable::Plane, Vector3(x,y,z));
+          plane_matchable->computeRotationMatrixZXY(Vector3::UnitZ());
+          // ++zcnt;
         }
 
-        new_cell_pos = cell_pos+increment;
-
-        //check if new position is out of grid
-        if(new_cell_pos.x() < 0.0f || new_cell_pos.x() > (number_t)(_width-1) ||
-           new_cell_pos.y() < 0.0f || new_cell_pos.y() > (number_t)(_height-1)) {
+        if (x - _params.resolution/2 < 0 || x + _params.resolution/2 >= _params.width ||
+            y - _params.resolution/2 < 0 || y + _params.resolution/2 >= _params.height ||
+            (z - _params.resolution/2 < 0 && selector<_params.plane_axis_probabilities.z_axis_prob)) {
           continue;
         }
+      
+        if (!plane_matchable)
+          throw std::runtime_error("no plane matchble");
+        
+        _landmarks.insert(plane_matchable);
 
-        new_position.head(2) = new_cell_pos.head(2)*_resolution;
-        new_position.z() = new_cell_pos.z();
-
-        //sbraco
-        const Eigen::Vector2i p = cell_pos.head(2).cast<int>();
-        const Eigen::Vector2i np = new_cell_pos.head(2).cast<int>();
-
-        CellPair pair(p,np);
-        CellPairPlaneMap::iterator it = _walls.find(pair);
-
-        if(it != _walls.end()) {
-          MatchablePtr m = it->second;
-          MatchablePtrSet::iterator jt = _landmarks.find(m);
-          if(jt != _landmarks.end()){
-            _landmarks.erase(jt);
-            sbrachi++;
-          }
+        //ia wall
+        if (selector < _params.plane_axis_probabilities.z_axis_prob) {
+          CellPair pair0(prev_cell,curr_cell);
+          CellPair pair1(curr_cell,prev_cell);
+          _walls.insert(std::make_pair(pair0, plane_matchable));
+          _walls.insert(std::make_pair(pair1, plane_matchable));
         }
-
-        position = new_position;
-        cell_pos = new_cell_pos;
-        count++;
-
-        if(count == num_hits)
-          continue_=false;
-
+        ++i;
       }
-      std::cerr << sbrachi << " planes!" << std::endl;
+
+      // std::cerr << "planes ->\tx: " << xcnt << "\ty: " << ycnt << "\tz: " << zcnt << std::endl;
+      std::cerr << "generated " << i << " planes" << std::endl;
     }
-  }
-}
+
+  } //ia end namespace matchables
+} //ia end namespace g2o
