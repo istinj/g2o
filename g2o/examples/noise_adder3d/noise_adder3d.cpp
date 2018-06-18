@@ -103,6 +103,7 @@ int main(int argc, char *argv[]) {
   rotSampler.setDistribution(rotNoise);
 
   if (randomSeed) {
+    std::cerr << "random seed" << std::endl;
     std::random_device r;
     std::seed_seq seedSeq{r(), r(), r(), r(), r()};
     std::vector<int> seeds(2);

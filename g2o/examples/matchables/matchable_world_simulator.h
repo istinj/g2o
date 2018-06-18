@@ -34,24 +34,33 @@ namespace g2o {
         
         MatchableSimulatorFactors() {
           point_factors = false;
-          line_factors = false;
+          line_factors  = false;
           plane_factors = false;
 
           //ia mixed convenction: from_to
-          line_point_factors = false;
-          plane_line_factors = false;
+          line_point_factors  = false;
+          plane_line_factors  = false;
           plane_point_factors = false;
         }
 
         void clearFactors() {
           point_factors = false;
-          line_factors = false;
+          line_factors  = false;
           plane_factors = false;
 
           //ia mixed convenction: from_to
-          line_point_factors = false;
-          plane_line_factors = false;
+          line_point_factors  = false;
+          plane_line_factors  = false;
           plane_point_factors = false;
+        }
+
+        void enableAll() {
+          point_factors       = true;
+          line_factors        = true;
+          plane_factors       = true;
+          line_point_factors  = true;
+          plane_line_factors  = true;
+          plane_point_factors = true;
         }
 
         bool checkFactors() {
@@ -102,9 +111,14 @@ namespace g2o {
         size_t   num_poses;
         number_t sense_radius;
 
-        bool has_noise;
+        bool has_noise_matchables;
         Vector2 normal_noise_stats;
         Vector3 point_noise_stats;
+
+        //ia matchables noise
+        bool has_noise_poses;
+        Vector3 rotation_noise_stats;
+        Vector3 translation_noise_stats;
         
         MatchableSimulatorFactors factors_types;
         MatchableSimulatorStats   simulator_stats;
@@ -112,9 +126,13 @@ namespace g2o {
           num_poses    = 0;
           sense_radius = 2.0;
 
-          has_noise = false;
+          has_noise_matchables = false;
           point_noise_stats = Vector3::Zero();
           normal_noise_stats = Vector2::Zero();
+
+          has_noise_poses = false;
+          translation_noise_stats = Vector3::Zero();
+          rotation_noise_stats = Vector3::Zero();
 
           factors_types.clearFactors();
           simulator_stats.setZero();
@@ -172,9 +190,11 @@ namespace g2o {
       
       uint64_t _vertex_id;
 
-      //ia generate noise
+      //ia generate noise 
       GaussianSampler<Vector3, Matrix3> _p_sampler;
       GaussianSampler<Vector2, Matrix2> _n_sampler;
+      GaussianSampler<Vector3, Matrix3> _t_sampler;
+      GaussianSampler<Vector3, Matrix3> _r_sampler;
       
       //ia parameters
       Parameters _params;
