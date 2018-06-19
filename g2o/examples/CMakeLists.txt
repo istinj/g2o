@@ -38,5 +38,3 @@ ENDIF()
 
 ADD_SUBDIRECTORY(data_convert)
 ADD_SUBDIRECTORY(interactive_slam)
-
-ADD_SUBDIRECTORY(matchables)

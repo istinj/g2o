@@ -1,5 +1,6 @@
 ADD_SUBDIRECTORY(g2o_cli)
 ADD_SUBDIRECTORY(g2o_hierarchical)
+ADD_SUBDIRECTORY(g2o_matchable_simulator)
 #ADD_SUBDIRECTORY(g2o_hierarchical_online)
 
 IF (G2O_HAVE_OPENGL)

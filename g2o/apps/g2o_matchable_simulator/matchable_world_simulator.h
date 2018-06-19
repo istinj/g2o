@@ -181,6 +181,7 @@ namespace g2o {
 
       //ia noise adder
       void _addMatchableNoise(EdgeSE3Matchable* edge_);
+      void _addPoseNoise(EdgeSE3Chord* edge_);
 
       
       //ia vertices and edges to be inzepped (not owned)

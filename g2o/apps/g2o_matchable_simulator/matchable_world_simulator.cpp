@@ -126,28 +126,7 @@ namespace g2o {
 
         //ia add noise to the poses
         if (_params.has_noise_poses) {
-          const Isometry3& z_gt = e->measurement();
-          Vector3 t_noise = _t_sampler.generateSample();
-          Vector3 r_noise = _r_sampler.generateSample();
-          Isometry3 pose_noise = Isometry3::Identity();
-          pose_noise.linear() = internal::fromEuler(r_noise);
-          pose_noise.translation() = t_noise;
-          Isometry3 noisy_meas = Isometry3::Identity();
-          noisy_meas = z_gt * pose_noise;
-
-          Matrix12 noisy_information = Matrix12::Identity();
-          //ia the information matrix is a mess,
-          //ia it should be sampled in the chordal distance error space
-          // noisy_information.block<3,3>(0,0) =
-          //   _params.translation_noise_stats.asDiagonal().inverse();
-          // noisy_information.block<3,3>(0,0) =
-          //   _params.rotation_noise_stats.asDiagonal().inverse();
-          noisy_information.block<9,9>(0,0) *= 1000;
-          noisy_information.block<3,3>(9,9) =
-            _params.translation_noise_stats.asDiagonal().inverse();
-
-          e->setMeasurement(noisy_meas);
-          e->setInformation(noisy_information);
+          _addPoseNoise(e);
         }
         
         // end
@@ -482,9 +461,45 @@ namespace g2o {
       noise_pertubation.head(3) = _p_sampler.generateSample();
       noise_pertubation.tail(2) = _n_sampler.generateSample();
 
-      Matchable pert_matchable = matchable.applyMinimalPert(noise_pertubation);
-      edge_->setMeasurement(pert_matchable);
-      //ia modify the information matrix according to the noise
+      //ia TODO check this information matrix if it is good or not
+      Matchable noisy_matchable = matchable.applyMinimalPert(noise_pertubation);
+      Matrix7 noisy_information = edge_->information();
+      noisy_information.block<3,3>(0,0) *=  _params.point_noise_stats.asDiagonal().inverse();
+      noisy_information.block<2,2>(4,4) *=  _params.normal_noise_stats.asDiagonal().inverse();
+
+      edge_->setMeasurement(noisy_matchable);
+      edge_->setInformation(noisy_information);
+      
+      // std::cerr << "new information\n" << noisy_information << std::endl;
+      // std::cin.get();
     }
+
+    void WorldSimulator::_addPoseNoise(EdgeSE3Chord* edge_) {
+      const Isometry3& z_gt = edge_->measurement();
+      
+      Vector3 t_noise = _t_sampler.generateSample();
+      Vector3 r_noise = _r_sampler.generateSample();
+      
+      Isometry3 pose_noise = Isometry3::Identity();
+      pose_noise.linear() = internal::fromEuler(r_noise);
+      pose_noise.translation() = t_noise;
+      Isometry3 noisy_meas = Isometry3::Identity();
+      noisy_meas = z_gt * pose_noise;
+
+      Matrix12 noisy_information = Matrix12::Identity();
+      //ia the information matrix is a mess,
+      //ia it should be sampled in the chordal distance error space
+      // noisy_information.block<3,3>(0,0) =
+      //   _params.translation_noise_stats.asDiagonal().inverse();
+      // noisy_information.block<3,3>(0,0) =
+      //   _params.rotation_noise_stats.asDiagonal().inverse();
+      noisy_information.block<9,9>(0,0) *= 100;
+      noisy_information.block<3,3>(9,9) =
+        _params.translation_noise_stats.asDiagonal().inverse();
+
+      edge_->setMeasurement(noisy_meas);
+      edge_->setInformation(noisy_information);
+    }
+    
   } //ia end namespace matchable
 } //ia end namespace g2o

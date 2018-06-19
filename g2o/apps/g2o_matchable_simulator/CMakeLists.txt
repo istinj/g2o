@@ -3,23 +3,21 @@ ADD_LIBRARY(matchable_world_simulator_library ${G2O_LIB_TYPE}
   matchable_world.h
   matchable_world.cpp
   matchable_world_simulator.h
-  matchable_world_simulator.cpp
-  )
+  matchable_world_simulator.cpp)
+
 SET_TARGET_PROPERTIES(matchable_world_simulator_library PROPERTIES OUTPUT_NAME ${LIB_PREFIX}matchable_world_simulator)
 
 TARGET_LINK_LIBRARIES(matchable_world_simulator_library
   types_matchables_library
   types_slam3d
-  core 
-  )
+  core)
 
-ADD_EXECUTABLE(matchable_simulator_3d matchable_simulator_3d.cpp)
+ADD_EXECUTABLE(g2o_matchable_simulator3d matchable_simulator_3d.cpp)
 
-SET_TARGET_PROPERTIES(matchable_simulator_3d PROPERTIES OUTPUT_NAME matchable_simulator_3d${EXE_POSTFIX})
+SET_TARGET_PROPERTIES(g2o_matchable_simulator3d PROPERTIES OUTPUT_NAME g2o_matchable_simulator3d${EXE_POSTFIX})
 
-TARGET_LINK_LIBRARIES(matchable_simulator_3d
+TARGET_LINK_LIBRARIES(g2o_matchable_simulator3d
   matchable_world_simulator_library
   types_matchables_library
   types_slam3d
-  g2o_cli_library 
-  )
+  g2o_cli_library)
