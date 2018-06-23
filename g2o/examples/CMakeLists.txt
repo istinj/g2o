@@ -2,7 +2,6 @@ ADD_SUBDIRECTORY(data_fitting)
 
 ADD_SUBDIRECTORY(sphere)
 ADD_SUBDIRECTORY(torus3d)
-ADD_SUBDIRECTORY(grid3d)
 ADD_SUBDIRECTORY(noise_adder3d)
 
 # The condition on cholmod is required here because the cholmod solver

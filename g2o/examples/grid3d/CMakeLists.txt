@@ -1,3 +1,0 @@
-ADD_EXECUTABLE(create_grid3d create_grid3d.cpp)
-SET_TARGET_PROPERTIES(create_grid3d PROPERTIES OUTPUT_NAME create_grid3d${EXE_POSTFIX})
-TARGET_LINK_LIBRARIES(create_grid3d core types_slam3d)
