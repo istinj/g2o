@@ -74,9 +74,9 @@ namespace g2o {
     }
     for ( int i=0; i<information().rows() && is.good(); i++)
       for (int j=i; j<information().cols() && is.good(); j++){
-  is >> information()(i,j);
-  if (i!=j)
-    information()(j,i)=information()(i,j);
+        is >> information()(i,j);
+        if (i!=j)
+          information()(j,i)=information()(i,j);
       }
     if (is.bad()) {
       //  we overwrite the information matrix
@@ -176,7 +176,7 @@ namespace g2o {
   EdgeSE3PointXYZDrawAction::EdgeSE3PointXYZDrawAction(): DrawAction(typeid(EdgeSE3PointXYZ).name()){}
 
   HyperGraphElementAction* EdgeSE3PointXYZDrawAction::operator()(HyperGraph::HyperGraphElement* element,
-               HyperGraphElementAction::Parameters* params_){
+                                                                 HyperGraphElementAction::Parameters* params_){
     if (typeid(*element).name()!=_typeName)
       return 0;
     refreshPropertyPtrs(params_);

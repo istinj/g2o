@@ -25,11 +25,21 @@ namespace g2o {
       void computeError();
 
       //! @brief computes the jacobian
-      /* void linearizeOplus(); */
+      void linearizeOplus();
 
-      inline void setMeasurement(const Matchable &m){
+      inline void setMeasurement(const Matchable &m) {
         _measurement = m;
       }
+
+      //! @brief states that the first element will set the initial estimate of the second element
+      virtual number_t initialEstimatePossible(const OptimizableGraph::VertexSet& /*from*/,
+                                               OptimizableGraph::Vertex* /*to*/) {
+        return 1.0; //ia is this good? this will set the matchable from the pose.
+      }
+
+      //! @brief actually computes the initial guess
+      virtual void initialEstimate(const OptimizableGraph::VertexSet& /*from*/,
+                                   OptimizableGraph::Vertex* /*to*/);
     };
 
 

@@ -34,7 +34,7 @@ namespace g2o {
     };
 
 
-    #ifdef G2O_HAVE_OPENGL
+#ifdef G2O_HAVE_OPENGL
     class G2O_TYPES_MATCHABLE_API VertexMatchableDrawAction: public DrawAction {
     public:
       VertexMatchableDrawAction();
@@ -44,6 +44,6 @@ namespace g2o {
       FloatProperty *_pointSize;
       virtual bool refreshPropertyPtrs(HyperGraphElementAction::Parameters* params_);
     };
-    #endif
+#endif
   }
 }
