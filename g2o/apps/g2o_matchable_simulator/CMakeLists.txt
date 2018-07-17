@@ -21,3 +21,15 @@ TARGET_LINK_LIBRARIES(g2o_matchable_simulator3d
   types_matchables_library
   types_slam3d
   g2o_cli_library)
+
+
+
+ADD_EXECUTABLE(g2o_matchable_noise_adder g2o_matchable_noise_adder.cpp)
+
+SET_TARGET_PROPERTIES(g2o_matchable_noise_adder PROPERTIES OUTPUT_NAME g2o_matchable_noise_adder${EXE_POSTFIX})
+
+TARGET_LINK_LIBRARIES(g2o_matchable_noise_adder
+  matchable_world_simulator_library
+  types_matchables_library
+  types_slam3d
+  g2o_cli_library)

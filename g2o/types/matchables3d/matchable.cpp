@@ -66,13 +66,13 @@ namespace g2o {
 
       if(d > std::numeric_limits<number_t>::min()) {
         _rotation <<
-                     dirx, diry/d,  dirx*dirz/d,
-            diry, -dirx/d, diry*dirz/d,
-            dirz, 0,       -d;
+          dirx, diry/d,  dirx*dirz/d,
+          diry, -dirx/d, diry*dirz/d,
+          dirz, 0,       -d;
       } else {
         _rotation << 0,1,0,
-            0,0,1,
-            1,0,0;
+          0,0,1,
+          1,0,0;
       }
     }
     

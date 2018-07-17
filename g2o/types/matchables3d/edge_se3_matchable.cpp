@@ -121,10 +121,10 @@ namespace g2o{
       Matrix3 dep_dt = Rl.transpose();
       Matrix3 dep_dR = -Rl.transpose() * skew(R*pz + t);
 
-      Matrix3 ded_dt = Matrix3::Zero();
+      // Matrix3 ded_dt = Matrix3::Zero();
       Matrix3 ded_dR = -skew((R*Rz).col(0));
 
-      Vector3 deo_dt = Vector3::Zero();
+      // Vector3 deo_dt = Vector3::Zero();
       Matrix3 deo_dR_matrix = Rz.transpose() * R.transpose() * skew(Rl.row(0));
       Vector3 deo_dR = deo_dR_matrix.row(0);
 
@@ -137,10 +137,10 @@ namespace g2o{
       Matrix3 dep_dpl = -Rl.transpose();
       Eigen::Matrix<number_t, 3, 2> dep_dRl = skew(Rl.transpose() * (R*pz + t - pl)).block<3,2>(0,1);
 
-      Matrix3 ded_dpl = Matrix3::Zero();
+      // Matrix3 ded_dpl = Matrix3::Zero();
       Eigen::Matrix<number_t, 3, 2> ded_dRl = Rl*skew(Vector3::UnitX()).block<3,2>(0,1);
 
-      Vector3 deo_dpl = Vector3::Zero();
+      // Vector3 deo_dpl = Vector3::Zero();
       Eigen::Matrix<number_t, 3, 2> deo_dRl_matrix =
         Rz.transpose() * R.transpose() * skew(Vector3::UnitX()).block<3,2>(0,1);
       Vector2 deo_dRl = deo_dRl_matrix.row(0);
