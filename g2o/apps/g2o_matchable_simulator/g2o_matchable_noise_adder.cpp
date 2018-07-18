@@ -35,7 +35,7 @@ void addPoseNoise(EdgeSE3Chord* edge_,
                   const Matrix3& rotational_sigma_);
 
 int main(int argc, char** argv) {
-  std::cerr << "graph must be in a OPMIMUM STATE" << std::endl << std::endl;
+  std::cerr << "graph must be in a OPTMIMUM STATE" << std::endl << std::endl;
 
   //ia for the factory
   VertexSE3Chord v_se3;
@@ -72,47 +72,41 @@ int main(int argc, char** argv) {
   arg.paramLeftOver("graph-input", input_filename, "", "input file (already at the optimum)", true);
   arg.parseArgs(argc, argv);
 
-  
-  //ia some prints
-  std::cerr << "Noise for the odometry translation:";
-  for (size_t i = 0; i < translational_noise.size(); ++i)
-    std::cerr << " " << translational_noise[i];
-  std::cerr << std::endl;
-  
-  std::cerr << "Noise for the odometry rotation:";
-  for (size_t i = 0; i < rotational_noise.size(); ++i)
-    std::cerr << " " << rotational_noise[i];
-  std::cerr << std::endl;
-
-  std::cerr << "Noise for the matchable point:";
-  for (size_t i = 0; i < rotational_noise.size(); ++i)
-    std::cerr << " " << rotational_noise[i];
-  std::cerr << std::endl;
-  
-  std::cerr << "Noise for the matchable normal:";
-  for (size_t i = 0; i < translational_noise.size(); ++i)
-    std::cerr << " " << translational_noise[i];
-  std::cerr << std::endl;
-
   //ia generate noise distrubuions for the matchables
   Matrix3 translation_noise_sigma = Matrix3::Zero();
   Matrix3 rotation_noise_sigma = Matrix3::Zero();
 
-  for (int i = 0; i < translation_noise_sigma.size(); ++i)
+  std::cerr << "Noise for the odometry translation:";
+  for (size_t i = 0; i < translational_noise.size(); ++i) {
+    std::cerr << " " << translational_noise[i];
     translation_noise_sigma(i, i) = std::pow(translational_noise[i], 2);
+  }
+  std::cerr << std::endl;
 
-  for (int i = 0; i < rotation_noise_sigma.size(); ++i)
+  std::cerr << "Noise for the odometry rotation:";
+  for (size_t i = 0; i < rotational_noise.size(); ++i) {
+    std::cerr << " " << rotational_noise[i];
     rotation_noise_sigma(i, i) = std::pow(rotational_noise[i], 2);
+  }
+  std::cerr << std::endl;
 
   //ia generate noise distrubuions for the matchables
   Matrix3 point_noise_sigma = Matrix3::Zero();
   Matrix2 normal_noise_sigma = Matrix2::Zero();
 
-  for (int i = 0; i < point_noise_sigma.size(); ++i)
+  std::cerr << "Noise for the matchable point:";
+  for (size_t i = 0; i < point_noise.size(); ++i) {
+    std::cerr << " " << point_noise[i];
     point_noise_sigma(i, i) = std::pow(point_noise[i], 2);
+  }
+  std::cerr << std::endl;
 
-  for (int i = 0; i < normal_noise_sigma.size(); ++i)
+  std::cerr << "Noise for the matchable normal:";
+  for (size_t i = 0; i < normal_noise.size(); ++i) {
+    std::cerr << " " << normal_noise[i];
     normal_noise_sigma(i, i) = std::pow(normal_noise[i], 2);
+  }
+  std::cerr << std::endl;
 
   //ia gaussian samplers setup
   GaussianSampler<Vector3, Matrix3> p_sampler; //ia matchable point
@@ -131,26 +125,36 @@ int main(int argc, char** argv) {
   std::ifstream ifs(input_filename.c_str());
   optimizer.load(ifs);
 
-  std::cerr << "applying noise to the edges" << std::endl;
-  
   g2o::HyperGraph::EdgeSet& edges = optimizer.edges();
+  const size_t num_vertices = optimizer.vertices().size();
+  const size_t num_edges = optimizer.edges().size();
+  std::cerr << "read " << num_vertices << " vertices and "
+            << num_edges << " edges" << std::endl << std::endl;
+
+  size_t cnt = 0;
+  std::cerr << "applying noise to the edges" << std::endl;
   for (g2o::HyperGraph::Edge* e : edges) {
+    float percentage = std::ceil((float)cnt++ / (float)num_edges * 100);
+    if ((int)percentage % 5 == 0)
+      std::cerr << "\rcompleted " << percentage << "%" << std::flush;
+    
     if (e_matchable_tag == Factory::instance()->tag(e)) {
       EdgeSE3Matchable* e_matchable = dynamic_cast<EdgeSE3Matchable*>(e);
-      // addMatchableNoise(e_matchable,
-      //                   p_sampler, n_sampler,
-      //                   point_noise_sigma, normal_noise_sigma);
+      addMatchableNoise(e_matchable,
+                        p_sampler, n_sampler,
+                        point_noise_sigma, normal_noise_sigma);
       continue;
     }
     
     if (e_se3_tag == Factory::instance()->tag(e)) {
       EdgeSE3Chord* e_se3_chordal = dynamic_cast<EdgeSE3Chord*>(e);
-      // addPoseNoise(e_se3_chordal,
-      //              t_sampler, r_sampler,
-      //              translation_noise_sigma, rotation_noise_sigma);
+      addPoseNoise(e_se3_chordal,
+                   t_sampler, r_sampler,
+                   translation_noise_sigma, rotation_noise_sigma);
       continue;
     }
-    std::cerr << "x";
+
+    std::cerr << "unrecognized edge type: " << Factory::instance()->tag(e) << std::endl;
   }
 
   std::cerr << std::endl;
@@ -169,11 +173,8 @@ void addMatchableNoise(EdgeSE3Matchable* edge_,
                        GaussianSampler<Vector2, Matrix2>& n_sampler_,
                        const Matrix3& point_sigma_,
                        const Matrix2& normal_sigma_) {
-  //ia compute gt
-  VertexSE3Chord* v_from = dynamic_cast<VertexSE3Chord*>(edge_->vertices()[0]);
-  VertexMatchable* v_to = dynamic_cast<VertexMatchable*>(edge_->vertices()[1]);  
-  
-  const Matchable Z_gt = v_to->estimate().applyTransform(v_from->estimate());
+  //ia here gt is just the measurement since there is no noise encoded here yet
+  const Matchable Z_gt = edge_->measurement();
 
   Vector5 noise_pertubation = Vector5::Zero();
   noise_pertubation.head(3) = p_sampler_.generateSample();
@@ -197,14 +198,8 @@ void addPoseNoise(EdgeSE3Chord* edge_,
                   GaussianSampler<Vector3, Matrix3>& r_sampler_,
                   const Matrix3& translational_sigma_,
                   const Matrix3& /*rotational_sigma_*/) {
-  //ia compute gt
-  VertexSE3Chord* v_from = dynamic_cast<VertexSE3Chord*>(edge_->vertices()[0]);
-  VertexSE3Chord* v_to = dynamic_cast<VertexSE3Chord*>(edge_->vertices()[1]);
-
-  const Isometry3& T_from = v_from->estimate();
-  const Isometry3& T_to = v_to->estimate();
-  
-  const Isometry3& z_gt =  T_from.inverse() * T_to;
+  //ia here gt is just the measurement since there is no noise encoded here yet
+  const Isometry3& z_gt =  edge_->measurement();
       
   Vector3 t_noise = t_sampler_.generateSample();
   Vector3 r_noise = r_sampler_.generateSample();
@@ -222,7 +217,7 @@ void addPoseNoise(EdgeSE3Chord* edge_,
   //   _params.translation_noise_stats.asDiagonal().inverse();
   // noisy_information.block<3,3>(0,0) =
   //   _params.rotation_noise_stats.asDiagonal().inverse();
-  noisy_information.block<9,9>(0,0) *= 100;
+  noisy_information.block<9,9>(0,0) *= 1000;
   noisy_information.block<3,3>(9,9) =
     translational_sigma_.inverse();
 

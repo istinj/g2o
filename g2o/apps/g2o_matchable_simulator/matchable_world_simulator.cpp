@@ -36,52 +36,6 @@ namespace g2o {
 
       if (_params.num_poses < 1)
         std::cerr << " warning: invalid simulation steps" << std::endl;
-
-      //ia generate noise distrubuions for the matchables
-      Matrix3 point_noise_sigma = Matrix3::Zero();
-      Matrix2 normal_noise_sigma = Matrix2::Zero();
-
-      for (int i = 0; i < _params.point_noise_stats.size(); ++i)
-        point_noise_sigma(i, i) = std::pow(_params.point_noise_stats[i], 2);
-
-      for (int i = 0; i < _params.normal_noise_stats.size(); ++i)
-        normal_noise_sigma(i, i) = std::pow(_params.normal_noise_stats[i], 2);
-
-      if (_params.has_noise_matchables) {
-        std::cerr << "matchable noise" << std::endl;
-        std::cerr << "point component" << std::endl;
-        std::cerr << point_noise_sigma << std::endl;
-
-        std::cerr << "normal component" << std::endl;
-        std::cerr << normal_noise_sigma << std::endl << std::endl;
-      }
-      
-      _p_sampler.setDistribution(point_noise_sigma);
-      _n_sampler.setDistribution(normal_noise_sigma);
-
-
-      //ia generate noise distrubuions for the odometry
-      Matrix3 translation_noise_sigma = Matrix3::Zero();
-      Matrix3 rotation_noise_sigma = Matrix3::Zero();
-
-      for (int i = 0; i < _params.translation_noise_stats.size(); ++i)
-        translation_noise_sigma(i, i) = std::pow(_params.translation_noise_stats[i], 2);
-
-      for (int i = 0; i < _params.rotation_noise_stats.size(); ++i)
-        rotation_noise_sigma(i, i) = std::pow(_params.rotation_noise_stats[i], 2);
-
-      if (_params.has_noise_poses) {
-        std::cerr << "pose noise" << std::endl;
-        std::cerr << "translation component" << std::endl;
-        std::cerr << translation_noise_sigma << std::endl;
-
-        std::cerr << "rotation component" << std::endl;
-        std::cerr << rotation_noise_sigma << std::endl << std::endl;
-      }
-      
-      _t_sampler.setDistribution(translation_noise_sigma);
-      _r_sampler.setDistribution(rotation_noise_sigma);
-
       
       _vertices->clear();
       _edges->clear();
@@ -123,11 +77,6 @@ namespace g2o {
         e->information().setIdentity();
         e->setMeasurementFromState();
         _edges->insert(e);
-
-        //ia add noise to the poses
-        if (_params.has_noise_poses) {
-          _addPoseNoise(e);
-        }
         
         // end
         prev_vertex = new_vertex;
@@ -293,10 +242,6 @@ namespace g2o {
       e->vertices()[1] = vto_;
       e->setInformation(omega);
       e->setMeasurement(measurement);
-
-      if (_params.has_noise_matchables) {
-        _addMatchableNoise(e);
-      }
         
       return e;
     }
@@ -319,10 +264,6 @@ namespace g2o {
       e->vertices()[1] = vto_;
       e->setInformation(omega);
       e->setMeasurement(measurement);
-
-      if (_params.has_noise_matchables) {
-        _addMatchableNoise(e);
-      }
       
       return e;
     }
@@ -346,10 +287,6 @@ namespace g2o {
       e->vertices()[1] = vto_;
       e->setInformation(omega);
       e->setMeasurement(measurement);
-
-      if (_params.has_noise_matchables) {
-        _addMatchableNoise(e);
-      }
       
       return e;
     }
@@ -380,10 +317,6 @@ namespace g2o {
       e->vertices()[1] = vto_;
       e->setInformation(omega);
       e->setMeasurement(measurement);
-
-      if (_params.has_noise_matchables) {
-        _addMatchableNoise(e);
-      }
       
       return e;
     }
@@ -405,10 +338,6 @@ namespace g2o {
       e->vertices()[1] = vto_;
       e->setInformation(omega);
       e->setMeasurement(measurement);
-
-      if (_params.has_noise_matchables) {
-        _addMatchableNoise(e);
-      }
       
       return e;
     }
@@ -443,62 +372,8 @@ namespace g2o {
       e->vertices()[1] = vto_;
       e->setInformation(omega);
       e->setMeasurement(measurement);
-
-      if (_params.has_noise_matchables) {
-        _addMatchableNoise(e);
-      }
       
       return e;
-    }
-
-    void WorldSimulator::_addMatchableNoise(EdgeSE3Matchable* edge_) {
-      const Matchable& matchable = edge_->measurement();
-
-      // Vector3 point_noise = _p_sampler.generateSample();
-      // Vector2 normal_noise = _n_sampler.generateSample();
-
-      Vector5 noise_pertubation;
-      noise_pertubation.head(3) = _p_sampler.generateSample();
-      noise_pertubation.tail(2) = _n_sampler.generateSample();
-
-      //ia TODO check this information matrix if it is good or not
-      Matchable noisy_matchable = matchable.applyMinimalPert(noise_pertubation);
-      Matrix7 noisy_information = edge_->information();
-      noisy_information.block<3,3>(0,0) *=  _params.point_noise_stats.asDiagonal().inverse();
-      noisy_information.block<2,2>(4,4) *=  _params.normal_noise_stats.asDiagonal().inverse();
-
-      edge_->setMeasurement(noisy_matchable);
-      edge_->setInformation(noisy_information);
-      
-      // std::cerr << "new information\n" << noisy_information << std::endl;
-      // std::cin.get();
-    }
-
-    void WorldSimulator::_addPoseNoise(EdgeSE3Chord* edge_) {
-      const Isometry3& z_gt = edge_->measurement();
-      
-      Vector3 t_noise = _t_sampler.generateSample();
-      Vector3 r_noise = _r_sampler.generateSample();
-      
-      Isometry3 pose_noise = Isometry3::Identity();
-      pose_noise.linear() = internal::fromEuler(r_noise);
-      pose_noise.translation() = t_noise;
-      Isometry3 noisy_meas = Isometry3::Identity();
-      noisy_meas = z_gt * pose_noise;
-
-      Matrix12 noisy_information = Matrix12::Identity();
-      //ia the information matrix is a mess,
-      //ia it should be sampled in the chordal distance error space
-      // noisy_information.block<3,3>(0,0) =
-      //   _params.translation_noise_stats.asDiagonal().inverse();
-      // noisy_information.block<3,3>(0,0) =
-      //   _params.rotation_noise_stats.asDiagonal().inverse();
-      noisy_information.block<9,9>(0,0) *= 100;
-      noisy_information.block<3,3>(9,9) =
-        _params.translation_noise_stats.asDiagonal().inverse();
-
-      edge_->setMeasurement(noisy_meas);
-      edge_->setInformation(noisy_information);
     }
     
   } //ia end namespace matchable

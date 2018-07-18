@@ -99,6 +99,7 @@ namespace g2o{
       _error[6] = eo;
     }
 
+    /*
     void EdgeSE3Matchable::linearizeOplus() {
 
       VertexSE3Chord* v_from = static_cast<VertexSE3Chord*>(_vertices[0]);
@@ -162,6 +163,7 @@ namespace g2o{
       //           << _jacobianOplusXj << std::endl;
       // std::cin.get();
     }
+    /**/
 
 
     void EdgeSE3Matchable::initialEstimate(const OptimizableGraph::VertexSet& /*from*/,

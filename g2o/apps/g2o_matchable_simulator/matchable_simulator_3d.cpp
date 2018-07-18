@@ -15,6 +15,8 @@ using namespace matchables;
 
 int main(int argc, char** argv) {
 
+  std::cerr << "this app will produce a clean graph, i.e. with 0 noise encoded in the edges.\nif you want to add noise, you can use the *g2o_matchable_noise_adder* application." << std::endl << std::endl;
+
   //ia simulator paramers
   CommandArgs arg;
   int num_poses;
@@ -34,16 +36,6 @@ int main(int argc, char** argv) {
   bool has_plane_point_factor;
   bool has_all_factors;
 
-  //ia matchable noise
-  bool simulator_has_matchable_noise;
-  std::vector<number_t> normal_noise;
-  std::vector<number_t> point_noise;
-
-  //ia odometry noise
-  bool simulator_has_odometry_noise;
-  std::vector<number_t> translational_noise;
-  std::vector<number_t> rotational_noise;
-
   arg.param("numPoses", num_poses, 0, "number of robot poses");
   arg.param("worldSize", world_size, std::vector<int>(), "world height and width separated by a semicolumn, e.g. \"7;5\". Default is \"10;10\"");
   arg.param("numPoints", num_points, 0, "number of point landmarks in the world");
@@ -58,10 +50,7 @@ int main(int argc, char** argv) {
   arg.param("hasPlLn", has_plane_line_factor, false, "plane-line factors enabled");
   arg.param("hasPlPt", has_plane_point_factor, false, "plane-point factors enabled");
   arg.param("hasAllFactors", has_all_factors, false, "overrides the factors enabling all of them");
-  arg.param("normalNoise", normal_noise, std::vector<number_t>(), "matchable normal noise as <ny,nz>. default is \"0;0\"");
-  arg.param("pointNoise", point_noise, std::vector<number_t>(), "translational noise as <nx,ny,nz>. default is \"0;0;0\"");
-  arg.param("translationNoise", translational_noise, std::vector<number_t>(), "odometry noise for translation as <nx,ny,nz>. default is \"0;0;0\"");
-  arg.param("rotationNoise", rotational_noise, std::vector<number_t>(), "odometry noise for rotation as <nr,np,ny>. default is \"0;0;0\"");
+
   arg.paramLeftOver("graph-output", output_filename, "", "output of the generator", true);
   arg.parseArgs(argc, argv);
 
@@ -72,40 +61,6 @@ int main(int argc, char** argv) {
     world_size.push_back(10);
     world_size.push_back(10);
   }
-
-  //ia matchable noise
-  Vector2 n_matchable_noise_param = Vector2::Zero();
-  Vector3 p_matchable_noise_param = Vector3::Zero();
-  if (!normal_noise.size() && !point_noise.size()) {
-    simulator_has_matchable_noise = false;
-  } else {
-    simulator_has_matchable_noise = true;
-    for (size_t i = 0; i < point_noise.size(); ++i) {
-      p_matchable_noise_param[i] = point_noise[i];
-    }
-    
-    for (size_t i = 0; i < normal_noise.size(); ++i) {
-      n_matchable_noise_param[i] = normal_noise[i];
-    }
-  }
-
-  
-  //ia odometry noise
-  Vector3 t_odom_noise_param = Vector3::Zero();
-  Vector3 r_odom_noise_param = Vector3::Zero();
-  if (!rotational_noise.size() && !translational_noise.size()) {
-    simulator_has_odometry_noise = false;
-  } else {
-    simulator_has_odometry_noise = true;
-    for (size_t i = 0; i < translational_noise.size(); ++i) {
-      t_odom_noise_param[i] = translational_noise[i];
-    }
-    
-    for (size_t i = 0; i < rotational_noise.size(); ++i) {
-      r_odom_noise_param[i] = rotational_noise[i];
-    }
-  }
-
 
   g2o::SparseOptimizer opt;
 
@@ -135,16 +90,6 @@ int main(int argc, char** argv) {
 
   ws.mutableParams().num_poses = num_poses;
   ws.mutableParams().sense_radius = sense_radius;
-
-  //ia set up the simulator noise for the matchables
-  ws.mutableParams().has_noise_matchables = simulator_has_matchable_noise;
-  ws.mutableParams().point_noise_stats = p_matchable_noise_param;
-  ws.mutableParams().normal_noise_stats = n_matchable_noise_param;
-
-  //ia set up the simulator noise for the odometry
-  ws.mutableParams().has_noise_poses = simulator_has_odometry_noise;
-  ws.mutableParams().translation_noise_stats = t_odom_noise_param;
-  ws.mutableParams().rotation_noise_stats = r_odom_noise_param;
   
   ws.setVertices(&(opt.vertices()));
   ws.setEdges(&(opt.edges()));

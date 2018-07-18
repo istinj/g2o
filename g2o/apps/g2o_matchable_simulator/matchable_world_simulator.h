@@ -6,8 +6,6 @@
 //ia EXTRA encodes gaussian noise in the measurement (TODO)
 
 #pragma once
-
-#include "g2o/stuff/sampler.h"
 #include "matchable_world.h"
 
 namespace g2o {
@@ -110,29 +108,12 @@ namespace g2o {
       struct Parameters {
         size_t   num_poses;
         number_t sense_radius;
-
-        bool has_noise_matchables;
-        Vector2 normal_noise_stats;
-        Vector3 point_noise_stats;
-
-        //ia matchables noise
-        bool has_noise_poses;
-        Vector3 rotation_noise_stats;
-        Vector3 translation_noise_stats;
         
         MatchableSimulatorFactors factors_types;
         MatchableSimulatorStats   simulator_stats;
         Parameters() {
           num_poses    = 0;
           sense_radius = 2.0;
-
-          has_noise_matchables = false;
-          point_noise_stats = Vector3::Zero();
-          normal_noise_stats = Vector2::Zero();
-
-          has_noise_poses = false;
-          translation_noise_stats = Vector3::Zero();
-          rotation_noise_stats = Vector3::Zero();
 
           factors_types.clearFactors();
           simulator_stats.setZero();
@@ -178,11 +159,6 @@ namespace g2o {
                                                     g2o::matchables::VertexMatchable* vto_);
       g2o::HyperGraph::Edge* _computePlaneLineEdge(g2o::VertexSE3Chord* vfrom_,
                                                    g2o::matchables::VertexMatchable* vto_);
-
-      //ia noise adder
-      void _addMatchableNoise(EdgeSE3Matchable* edge_);
-      void _addPoseNoise(EdgeSE3Chord* edge_);
-
       
       //ia vertices and edges to be inzepped (not owned)
       HyperGraph::VertexIDMap* _vertices = 0;
@@ -190,12 +166,6 @@ namespace g2o {
       MatchableWorld*          _world = 0;
       
       uint64_t _vertex_id;
-
-      //ia generate noise 
-      GaussianSampler<Vector3, Matrix3> _p_sampler;
-      GaussianSampler<Vector2, Matrix2> _n_sampler;
-      GaussianSampler<Vector3, Matrix3> _t_sampler;
-      GaussianSampler<Vector3, Matrix3> _r_sampler;
       
       //ia parameters
       Parameters _params;
