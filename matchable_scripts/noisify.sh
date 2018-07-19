@@ -33,10 +33,9 @@ pwd=`pwd`
 
 echo -e G2O_ROOT: ${UCYAN}${G2O_ROOT}${NC}
 echo -e current directory: ${UCYAN}$pwd${NC}
-echo -e output directory : ${UCYAN}${target_dir}${NC}
+echo -e working directory : ${UCYAN}${target_dir}${NC}
 cd ${target_dir}
 echo $'\n'
-
 
 # ia generate low noise graphs
 echo -e ${BCYAN}low noise${NC}
@@ -53,7 +52,7 @@ for f in "${files[@]}"; do
   # get the damn name without extension
   f_base=${f##*/}
   f_prefix=${f_base%.*}
-  echo output graph low_noise/${f_prefix}_N.g2o
+  echo output graph low_noise/${f_prefix}.g2o
   
   ${G2O_ROOT}/bin/g2o_matchable_noise_adder -pointNoise "0.005;0.005;0.005" -normalNoise "0.001;0.001" -translationNoise "0.005;0.005;0.005" -rotationNoise "0.001;0.001;0.001" -o low_noise/${f_prefix}_N.g2o ${f}
   echo $'\n'
@@ -75,7 +74,7 @@ for f in "${files[@]}"; do
   # get the damn name without extension
   f_base=${f##*/}
   f_prefix=${f_base%.*}
-  echo output graph mid_noise/${f_prefix}_N.g2o
+  echo output graph mid_noise/${f_prefix}.g2o
   
   ${G2O_ROOT}/bin/g2o_matchable_noise_adder -pointNoise "0.01;0.01;0.01" -normalNoise "0.005;0.005" -translationNoise "0.01;0.01;0.01" -rotationNoise "0.005;0.005;0.005" -o mid_noise/${f_prefix}_N.g2o ${f}
   echo $'\n'
@@ -98,7 +97,7 @@ for f in "${files[@]}"; do
   # get the damn name without extension
   f_base=${f##*/}
   f_prefix=${f_base%.*}
-  echo output graph high_noise/${f_prefix}_N.g2o
+  echo output graph high_noise/${f_prefix}.g2o
   
   ${G2O_ROOT}/bin/g2o_matchable_noise_adder -pointNoise "0.1;0.1;0.1" -normalNoise "0.05;0.05" -translationNoise "0.1;0.1;0.1" -rotationNoise "0.05;0.05;0.05" -o high_noise/${f_prefix}_N.g2o ${f}
   echo $'\n'

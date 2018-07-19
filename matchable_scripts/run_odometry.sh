@@ -34,17 +34,18 @@ pwd=`pwd`
 
 echo -e G2O_ROOT: ${UCYAN}${G2O_ROOT}${NC}
 echo -e current directory: ${UCYAN}$pwd${NC}
-echo -e output directory : ${UCYAN}${target_dir}${NC}
+echo -e working directory : ${UCYAN}${target_dir}${NC}
 cd ${target_dir}
 echo $'\n'
 
 
 # ia generate stats directory
-if [ -d output ]; then
+output_directory=output_odometry
+if [ -d ${output_directory} ]; then
   echo -e ${BRED}cleaning ouput directory${NC}
-  rm -rf output/
+  rm -rf ${output_directory}
 fi
-mkdir output
+mkdir ${output_directory}
 for f in "${files[@]}"; do
   #ia skip directories
   if [ -d ${f} ]; then
@@ -56,8 +57,8 @@ for f in "${files[@]}"; do
   # get the damn name without extension
   f_base=${f##*/}
   f_prefix=${f_base%.*}
-  output_file=output/${f_prefix}_odometry_output.g2o
-  stats_file=output/${f_prefix}_odometry.stats
+  output_file=${output_directory}/${f_prefix}_output.g2o
+  stats_file=${output_directory}/${f_prefix}.stats
   echo -e output graph: ${UYELLOW}${output_file}${NC}
   echo -e stats file: ${UYELLOW}${stats_file}${NC}
 
