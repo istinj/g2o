@@ -5,13 +5,34 @@ if test "$#" -ne 1; then
     exit 1
 fi
 
-target_dir=$1
 
+# COLORSSSS
+RED='\033[0;31m'
+CYAN='\033[0;36m'
+YELLOW='\033[0;33m'
+BLUE='\033[0;34m'
+GREEN='\033[0;32m'
+
+BRED='\033[1;31m'
+BCYAN='\033[1;36m'
+BYELLOW='\033[1;33m'
+BBLUE='\033[1;34m'
+BGREEN='\033[1;32m'
+
+URED='\033[4;31m'
+UCYAN='\033[4;36m'
+UYELLOW='\033[4;33m'
+UBLUE='\033[4;34m'
+UGREEN='\033[4;32m'
+
+NC='\033[0m' # No Color
+
+target_dir=$1
 pwd=`pwd`
 
-echo G2O_ROOT: ${G2O_ROOT}
-echo current directory: $pwd
-echo output directory : ${target_dir}
+echo -e G2O_ROOT: ${UCYAN}${G2O_ROOT}${NC}
+echo -e current directory: ${UCYAN}$pwd${NC}
+echo -e output directory : ${UCYAN}${target_dir}${NC}
 
 cd ${G2O_ROOT}/bin
 
@@ -30,9 +51,9 @@ cd ${G2O_ROOT}/bin
 # all factors
 ./g2o_matchable_simulator3d -numPoses 100 -numPoints 500 -numLines 100 -numPlanes 50 -hasAllFactors ${target_dir}/graph_0_all.g2o
 
-cd $pwd
+echo $'\n'
+echo -e ${BGREEN}done${NC}
 
-echo $'\n'
-echo $'\n'
-echo done
+cd $pwd
+echo exit
 
