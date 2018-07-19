@@ -172,14 +172,13 @@ namespace g2o{
       //ia moreover, this initial guess will produce a non zero chi2
       //ia also when there is no error encoded in the measurement.
       //ia this happens only in using the non-homogeneous factors
-      
-      // VertexSE3Chord* v_from = static_cast<VertexSE3Chord*>(_vertices[0]);
-      // VertexMatchable* v_to  = static_cast<VertexMatchable*>(_vertices[1]);
+      VertexSE3Chord* v_from = static_cast<VertexSE3Chord*>(_vertices[0]);
+      VertexMatchable* v_to  = static_cast<VertexMatchable*>(_vertices[1]);
 
-      // Matchable new_estimate =
-      //   _measurement.applyTransform(v_from->estimate());
+      Matchable new_estimate =
+        _measurement.applyTransform(v_from->estimate());
       
-      // v_to->setEstimate(new_estimate);
+      v_to->setEstimate(new_estimate);
     }
 
 
