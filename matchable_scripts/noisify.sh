@@ -52,9 +52,10 @@ for f in "${files[@]}"; do
   # get the damn name without extension
   f_base=${f##*/}
   f_prefix=${f_base%.*}
+  output_file=low_noise/${f_prefix}.g2o
   echo output graph low_noise/${f_prefix}.g2o
   
-  ${G2O_ROOT}/bin/g2o_matchable_noise_adder -pointNoise "0.005;0.005;0.005" -normalNoise "0.001;0.001" -translationNoise "0.005;0.005;0.005" -rotationNoise "0.001;0.001;0.001" -o low_noise/${f_prefix}_N.g2o ${f}
+  ${G2O_ROOT}/bin/g2o_matchable_noise_adder -pointNoise "0.005;0.005;0.005" -normalNoise "0.001;0.001" -translationNoise "0.005;0.005;0.005" -rotationNoise "0.001;0.001;0.001" -o ${output_file} ${f}
   echo $'\n'
 done
 echo $'\n'
@@ -74,9 +75,10 @@ for f in "${files[@]}"; do
   # get the damn name without extension
   f_base=${f##*/}
   f_prefix=${f_base%.*}
-  echo output graph mid_noise/${f_prefix}.g2o
+  output_file=mid_noise/${f_prefix}.g2o
+  echo output graph: ${output_file}
   
-  ${G2O_ROOT}/bin/g2o_matchable_noise_adder -pointNoise "0.01;0.01;0.01" -normalNoise "0.005;0.005" -translationNoise "0.01;0.01;0.01" -rotationNoise "0.005;0.005;0.005" -o mid_noise/${f_prefix}_N.g2o ${f}
+  ${G2O_ROOT}/bin/g2o_matchable_noise_adder -pointNoise "0.01;0.01;0.01" -normalNoise "0.005;0.005" -translationNoise "0.01;0.01;0.01" -rotationNoise "0.005;0.005;0.005" -o ${output_file} ${f}
   echo $'\n'
 done
 echo $'\n'
@@ -97,9 +99,10 @@ for f in "${files[@]}"; do
   # get the damn name without extension
   f_base=${f##*/}
   f_prefix=${f_base%.*}
-  echo output graph high_noise/${f_prefix}.g2o
+  output_file=high_noise/${f_prefix}.g2o
+  echo output graph: ${output_file}
   
-  ${G2O_ROOT}/bin/g2o_matchable_noise_adder -pointNoise "0.1;0.1;0.1" -normalNoise "0.05;0.05" -translationNoise "0.1;0.1;0.1" -rotationNoise "0.05;0.05;0.05" -o high_noise/${f_prefix}_N.g2o ${f}
+  ${G2O_ROOT}/bin/g2o_matchable_noise_adder -pointNoise "0.1;0.1;0.1" -normalNoise "0.05;0.05" -translationNoise "0.1;0.1;0.1" -rotationNoise "0.05;0.05;0.05" -o ${output_file} ${f}
   echo $'\n'
 done
 echo done
