@@ -230,6 +230,22 @@ void BaseBinaryEdge<D, E, VertexXiType, VertexXjType>::linearizeOplus()
   } // end dimension
 
   _error = errorBeforeNumeric;
+
+  //ia debug
+  // std::cerr << "[numeric linearization] of edge #"
+  //           << vi->id() << "->"
+  //           << vj->id() << std::endl;
+  // std::cerr << "_jacobianOplusXi size: "
+  //           << _jacobianOplusXi.rows() << "x"
+  //           << _jacobianOplusXi.cols() << std::endl
+  //           << _jacobianOplusXi << std::endl;
+      
+  // std::cerr << "_jacobianOplusXj size: "
+  //           << _jacobianOplusXj.rows() << "x"
+  //           << _jacobianOplusXj.cols() << std::endl
+  //           << _jacobianOplusXj << std::endl;
+  // std::cerr << std::endl;
+  // std::cin.get();
 }
 
 template <int D, typename E, typename VertexXiType, typename VertexXjType>

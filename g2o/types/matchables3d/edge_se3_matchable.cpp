@@ -289,16 +289,19 @@ namespace g2o{
       _jacobianOplusXj.block<3,2>(3,3) = ded_dRl;
       _jacobianOplusXj.block<1,2>(6,3) = deo_dRl.transpose();
 
-
-      // std::cerr << "_jacobianOplusXi size: "
-      //           << _jacobianOplusXi.rows() << "x"
-      //           << _jacobianOplusXi.cols() << std::endl
-      //           << _jacobianOplusXi << std::endl;
+      std::cerr << "[analytic linearization] of edge #" 
+                << v_from->id() << "->" 
+                << v_to->id() << std::endl;
+      std::cerr << "_jacobianOplusXi size: "
+                << _jacobianOplusXi.rows() << "x"
+                << _jacobianOplusXi.cols() << std::endl
+                << _jacobianOplusXi << std::endl;
       
-      // std::cerr << "_jacobianOplusXj size: "
-      //           << _jacobianOplusXj.rows() << "x"
-      //           << _jacobianOplusXj.cols() << std::endl
-      //           << _jacobianOplusXj << std::endl;
+      std::cerr << "_jacobianOplusXj size: "
+                << _jacobianOplusXj.rows() << "x"
+                << _jacobianOplusXj.cols() << std::endl
+                << _jacobianOplusXj << std::endl;
+      std::cerr << std::endl;
       // std::cin.get();
     }/**/
 

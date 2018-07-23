@@ -44,7 +44,14 @@ namespace g2o {
       dR = AngleAxis(dm_[3],Vector3::UnitY())*AngleAxis(dm_[4],Vector3::UnitZ());
 
       _point += dm_.head(3);
-      _rotation *= dR;
+      _rotation = _rotation * dR;
+
+      //ia enforcing orthonormality
+      const Matrix3 R_backup = _rotation;
+      Matrix3 E = R_backup.transpose() * R_backup;
+      E.diagonal().array() -= 1;
+
+      _rotation -= 0.5*R_backup*E;
     }
 
     Matchable Matchable::applyMinimalPert(const Vector5& dm_) const  {
@@ -53,6 +60,13 @@ namespace g2o {
 
       Vector3 point = _point + dm_.head(3);
       Matrix3 R  = _rotation * dR;
+
+      //ia enforcing orthonormality
+      const Matrix3 R_backup = R;
+      Matrix3 E = R_backup.transpose() * R_backup;
+      E.diagonal().array() -= 1;
+
+      R -= 0.5*R_backup*E;
 
       return Matchable(_type,point,R);
     }
