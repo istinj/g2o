@@ -27,6 +27,11 @@ namespace g2o {
       //! @brief computes the jacobian
       // void linearizeOplus();
 
+      void numericalJacobians(Eigen::Matrix<number_t, 7, 6>& Ji_,
+                              Eigen::Matrix<number_t, 7, 5>& Jj_);
+      void analyticalJacobians(Eigen::Matrix<number_t, 7, 6>& Ji_,
+                               Eigen::Matrix<number_t, 7, 5>& Jj_);
+
       inline void setMeasurement(const Matchable &m) {
         _measurement = m;
       }

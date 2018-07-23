@@ -30,3 +30,19 @@ TARGET_LINK_LIBRARIES(g2o_matchable_noise_adder
 
 
 #ia test analytic jacobians
+#ia ma porca madonna perche' devo fare sta merda diocane come cazzo fa a funzionare sta merda
+#ia di accrocco porco dio
+# find_package(Cholmod REQUIRED)
+# include_directories(${CHOLMOD_INCLUDE_DIR})
+# include_directories(${CSPARSE_INCLUDE_DIR})
+
+ADD_EXECUTABLE(test_jacobians test_jacobians.cpp)
+SET_TARGET_PROPERTIES(test_jacobians PROPERTIES OUTPUT_NAME test_jacobians${EXE_POSTFIX})
+TARGET_LINK_LIBRARIES(test_jacobians
+  core
+  solver_cholmod
+  solver_csparse
+  matchable_world_simulator_library
+  types_matchables_library
+  types_slam3d
+  g2o_cli_library)
