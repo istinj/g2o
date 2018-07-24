@@ -36,7 +36,7 @@ set style line 8 linetype 1 linecolor rgb "#007F3F" linewidth linethickness #gre
 set style line 9 linetype 1 linecolor rgb "#003F1F" linewidth linethickness #green_2
 
 set title 'Guess Comparisons - All Factors'
-plot '../output/graph_0_all.stats' using 2:8 with lines linestyle 1 title 'no-guess', \
+plot '../output/graph_0_all.stats' using 2:8 with linespoints linestyle 1 title 'no-guess', \
 '../output_spanning/graph_0_all.stats' using 2:8 with lines linestyle 2 title 'spanning', \
 '../output_odometry/graph_0_all.stats' using 2:8 with lines linestyle 4 title 'odometry'
 
