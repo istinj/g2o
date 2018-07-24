@@ -1,13 +1,13 @@
 reset
 # set term pngcairo dashed
-# set out 'plots.png'
+# set out 'plot_non_homogeneous.png'
 
 # set terminal epslatex color
-# set out 'plots.tex'
+# set out 'plot_non_homogeneous.tex'
 
 #set terminal postscript eps enhanced color font 'Helvetica,10'
 set terminal postscript eps enhanced color
-set output 'plots.eps'
+set output 'plot_non_homogeneous.eps'
 
 
 set logscale y 10
@@ -35,9 +35,9 @@ set style line 7 linetype 1 linecolor rgb "#00CB64" linewidth linethickness #gre
 set style line 8 linetype 1 linecolor rgb "#007F3F" linewidth linethickness #green_1
 set style line 9 linetype 1 linecolor rgb "#003F1F" linewidth linethickness #green_2
 
-set title 'Guess Comparisons'
-plot '../graph_0_all.stats' using 2:8 with lines linestyle 1 title 'all', \
-'../graph_0_homogeneous.stats' using 2:8 with lines linestyle 2 title 'hom', \
-'../graph_0_inhomogenous.stats' using 2:8 with lines linestyle 3 title 'non-hom'
+set title 'Guess Comparisons - Non-Homogeneous Factors'
+plot '../output/graph_0_inhomogenous.stats' using 2:8 with lines linestyle 1 title 'no-guess', \
+'../output_spanning/graph_0_inhomogenous.stats' using 2:8 with lines linestyle 2 title 'spanning', \
+'../output_odometry/graph_0_inhomogenous.stats' using 2:8 with lines linestyle 4 title 'odometry'
 
 set term x11
