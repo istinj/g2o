@@ -32,7 +32,7 @@ pwd=`pwd`
 
 echo -e G2O_ROOT: ${UCYAN}${G2O_ROOT}${NC}
 echo -e current directory: ${UCYAN}$pwd${NC}
-echo -e output directory : ${UCYAN}${target_dir}${NC}
+echo -e working directory : ${UCYAN}${target_dir}${NC}
 
 cd ${G2O_ROOT}/bin
 
