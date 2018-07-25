@@ -149,7 +149,7 @@ namespace g2o{
       _jacobianOplusXj.block<3,2>(3,3) = ded_dRl;
       _jacobianOplusXj.block<1,2>(6,3) = deo_dRl.transpose();
 
-      std::cerr << "error in linearize: " << _error.transpose() << std::endl;
+      // std::cerr << "error in linearize: " << _error.transpose() << std::endl;
 
       /*
       Eigen::Matrix<number_t, 7, 6> Jxi_backup = _jacobianOplusXi;
