@@ -165,7 +165,8 @@ namespace g2o {
       HyperGraph::EdgeSet*     _edges = 0;
       MatchableWorld*          _world = 0;
       
-      uint64_t _vertex_id;
+      uint64_t _matchable_vertex_id = 1000000;
+      uint64_t _pose_vertex_id = 0;
       
       //ia parameters
       Parameters _params;

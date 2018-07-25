@@ -183,6 +183,12 @@ void addMatchableNoise(EdgeSE3Matchable* edge_,
   //ia TODO check this information matrix if it is good or not
   Matchable noisy_matchable = Z_gt.applyMinimalPert(noise_pertubation);
   Matrix7 noisy_information = edge_->information();
+
+  VertexMatchable* vm = dynamic_cast<VertexMatchable*>(edge_->vertices()[1]);
+  // std::cerr << "vertex type:" << vm->estimate().type() << std::endl;
+  // std::cerr << "measurement type:" << edge_->measurement().type() << std::endl;
+
+  // std::cerr << "information\n" << edge_->information() << std::endl;
   noisy_information.block<3,3>(0,0) *=  point_sigma_.inverse();
   noisy_information.block<2,2>(4,4) *=  normal_sigma_.inverse();
 

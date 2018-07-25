@@ -81,23 +81,23 @@ int main (int argc, char** argv) {
       JacobianJType j_j_analytical = JacobianJType::Zero();
 
       //ia analytical
-      // edge->linearizeOplus();
-      edge->analyticalJacobians(j_i_analytical, j_j_analytical);
+      // // edge->linearizeOplus();
+      // edge->analyticalJacobians(j_i_analytical, j_j_analytical);
 
-      //ia numerical
-      edge->numericalJacobians(j_i_numerical, j_j_numerical);
+      // //ia numerical
+      // edge->numericalJacobians(j_i_numerical, j_j_numerical);
 
-      std::cerr << "**************** analical jacobians *****************" << std::endl;
-      std::cerr << "Ji:\n" << j_i_analytical << std::endl;
-      std::cerr << "Jj:\n" << j_j_analytical << std::endl;
+      // std::cerr << "**************** analical jacobians *****************" << std::endl;
+      // std::cerr << "Ji:\n" << j_i_analytical << std::endl;
+      // std::cerr << "Jj:\n" << j_j_analytical << std::endl;
 
-      std::cerr << "**************** numerical jacobians *****************" << std::endl;
-      std::cerr << "Ji:\n" << j_i_numerical << std::endl;
-      std::cerr << "Jj:\n" << j_j_numerical << std::endl;
+      // std::cerr << "**************** numerical jacobians *****************" << std::endl;
+      // std::cerr << "Ji:\n" << j_i_numerical << std::endl;
+      // std::cerr << "Jj:\n" << j_j_numerical << std::endl;
 
-      std::cerr << "**************** difference *****************" << std::endl;
-      std::cerr << "Ji:\n" << j_i_analytical - j_i_numerical << std::endl;
-      std::cerr << "Jj:\n" << j_j_analytical - j_j_numerical << std::endl;
+      // std::cerr << "**************** difference *****************" << std::endl;
+      // std::cerr << "Ji:\n" << j_i_analytical - j_i_numerical << std::endl;
+      // std::cerr << "Jj:\n" << j_j_analytical - j_j_numerical << std::endl;
       
       
     }

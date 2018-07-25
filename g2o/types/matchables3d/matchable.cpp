@@ -15,6 +15,7 @@ namespace g2o {
       switch(type_){
         case Point:
           _omega.setIdentity();
+          break;
         case Line:
           _omega.diagonal()[0]=_epsilon;
           _omega.diagonal()[1]=1;

@@ -4,7 +4,6 @@
 namespace g2o {
   namespace matchables {
     WorldSimulator::WorldSimulator() {
-      _vertex_id = 0;
     }
 
     WorldSimulator::~WorldSimulator() {
@@ -53,10 +52,10 @@ namespace g2o {
 
 
       VertexSE3Chord* prev_vertex = new VertexSE3Chord();
-      prev_vertex->setId(_vertex_id);
+      prev_vertex->setId(_pose_vertex_id);
       prev_vertex->setFixed(true);
       prev_vertex->setEstimate(internal::fromVectorET(minimal_estimate));
-      _vertices->insert(std::make_pair(_vertex_id++, prev_vertex));
+      _vertices->insert(std::make_pair(_pose_vertex_id++, prev_vertex));
 
       std::cerr << "simulating robot motion in the world" << std::endl;
       while(continue_){        
@@ -93,7 +92,7 @@ namespace g2o {
       _params.simulator_stats.print();
     }
     
-
+    static std::map<Matchable*, VertexMatchable*> _visti;
     void WorldSimulator::_senseMatchables(g2o::VertexSE3Chord* v_) {
 
       const Eigen::Isometry3d& robot_pose = v_->estimate();
@@ -102,11 +101,18 @@ namespace g2o {
       for(Matchable* mptr : _world->landmarks()) {
         if (mptr->applyTransform(robot_pose_inverse).point().norm() >= _params.sense_radius)
           continue;
-
-        VertexMatchable* v_m = new VertexMatchable();
-        v_m->setId(_vertex_id);
-        v_m->setEstimate(*mptr);
-        _vertices->insert(std::make_pair(_vertex_id++, v_m));
+        auto it = _visti.find(mptr);
+        VertexMatchable* v_m = 0;
+        if (it == _visti.end()) {
+          v_m = new VertexMatchable();
+          v_m->setId(_matchable_vertex_id);
+          v_m->setEstimate(*mptr);
+          _vertices->insert(std::make_pair(_matchable_vertex_id++, v_m));
+          _visti.insert(std::make_pair(mptr, v_m));
+        } else  {
+          v_m = it->second;
+        }
+        
 
         switch (mptr->type()) {
         case Matchable::Type::Point:
@@ -217,9 +223,9 @@ namespace g2o {
 
       //ia create the new vertex
       VertexSE3Chord* to_vertex = new VertexSE3Chord();
-      to_vertex->setId(_vertex_id);
+      to_vertex->setId(_pose_vertex_id);
       to_vertex->setEstimate(internal::fromVectorET(next_estimate));
-      _vertices->insert(std::make_pair(_vertex_id++, to_vertex));
+      _vertices->insert(std::make_pair(_pose_vertex_id++, to_vertex));
       
       return to_vertex;      
     }
