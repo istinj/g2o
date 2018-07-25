@@ -35,7 +35,10 @@ namespace g2o {
 
       if (_params.num_poses < 1)
         std::cerr << " warning: invalid simulation steps" << std::endl;
+
+      _matchable_vertex_id = _params.num_poses + 1000;
       
+      _seen_map.clear();
       _vertices->clear();
       _edges->clear();
     }
@@ -79,7 +82,7 @@ namespace g2o {
         
         // end
         prev_vertex = new_vertex;
-        if(sim_steps > _params.num_poses)
+        if(sim_steps >= _params.num_poses)
           continue_=false;
 
         ++sim_steps;
@@ -92,7 +95,7 @@ namespace g2o {
       _params.simulator_stats.print();
     }
     
-    static std::map<Matchable*, VertexMatchable*> _visti;
+    // static std::map<Matchable*, VertexMatchable*> _visti;
     void WorldSimulator::_senseMatchables(g2o::VertexSE3Chord* v_) {
 
       const Eigen::Isometry3d& robot_pose = v_->estimate();
@@ -101,14 +104,16 @@ namespace g2o {
       for(Matchable* mptr : _world->landmarks()) {
         if (mptr->applyTransform(robot_pose_inverse).point().norm() >= _params.sense_radius)
           continue;
-        auto it = _visti.find(mptr);
+
+        //ia if a matchable has been already seen, then I do not have to create a new vertex
         VertexMatchable* v_m = 0;
-        if (it == _visti.end()) {
+        auto it = _seen_map.find(mptr);
+        if (it == _seen_map.end()) {
           v_m = new VertexMatchable();
           v_m->setId(_matchable_vertex_id);
           v_m->setEstimate(*mptr);
           _vertices->insert(std::make_pair(_matchable_vertex_id++, v_m));
-          _visti.insert(std::make_pair(mptr, v_m));
+          _seen_map.insert(std::make_pair(mptr, v_m));
         } else  {
           v_m = it->second;
         }

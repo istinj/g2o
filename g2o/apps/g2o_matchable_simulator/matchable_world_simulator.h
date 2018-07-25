@@ -164,6 +164,8 @@ namespace g2o {
       HyperGraph::VertexIDMap* _vertices = 0;
       HyperGraph::EdgeSet*     _edges = 0;
       MatchableWorld*          _world = 0;
+
+      std::map<Matchable*, VertexMatchable*> _seen_map;
       
       uint64_t _matchable_vertex_id = 1000000;
       uint64_t _pose_vertex_id = 0;
