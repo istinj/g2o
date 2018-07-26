@@ -29,12 +29,14 @@ NC='\033[0m' # No Color
 
 target_dir=$1
 files=($(ls ${target_dir}))
-
 pwd=`pwd`
+
+iterations=100
 
 echo -e G2O_ROOT: ${UCYAN}${G2O_ROOT}${NC}
 echo -e current directory: ${UCYAN}$pwd${NC}
-echo -e working directory : ${UCYAN}${target_dir}${NC}
+echo -e working directory: ${UCYAN}${target_dir}${NC}
+echo -e num iterations: ${UCYAN}${iterations}${NC}
 cd ${target_dir}
 echo $'\n'
 
@@ -64,7 +66,7 @@ for f in "${files[@]}"; do
   echo -e stats file: ${UYELLOW}${stats_file}${NC}
 
 
-  ${G2O_ROOT}/bin/g2o -v -i 500 -guess -solver lm_var_cholmod -stats ${stats_file} -o ${output_file} ${f}
+  ${G2O_ROOT}/bin/g2o -v -i ${iterations} -guess -solver lm_var_cholmod -stats ${stats_file} -o ${output_file} ${f}
   echo $'\n'
 done
 
