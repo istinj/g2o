@@ -62,7 +62,7 @@ int main(int argc, char** argv) {
             "translational noise as <nx,ny,nz>.");
   arg.param("normalNoise", normal_noise,
             std::vector<number_t>(2,0.001),
-            "matchable normal noise as <ny,nz>.");
+            "matchable normal noise as <nx,ny>.");
   arg.param("translationNoise", translational_noise,
             std::vector<number_t>(3,0.005),
             "odometry noise for translation as <nx,ny,nz>.");
@@ -184,7 +184,7 @@ void addMatchableNoise(EdgeSE3Matchable* edge_,
   Matchable noisy_matchable = Z_gt.applyMinimalPert(noise_pertubation);
   Matrix7 noisy_information = edge_->information();
 
-  VertexMatchable* vm = dynamic_cast<VertexMatchable*>(edge_->vertices()[1]);
+  // VertexMatchable* vm = dynamic_cast<VertexMatchable*>(edge_->vertices()[1]);
   // std::cerr << "vertex type:" << vm->estimate().type() << std::endl;
   // std::cerr << "measurement type:" << edge_->measurement().type() << std::endl;
 
