@@ -37,14 +37,14 @@ echo -e working directory : ${UCYAN}${target_dir}${NC}
 cd ${target_dir}
 echo $'\n'
 
-output_directory=output_gn_noguess
+output_directory=output_gn_spanning
 if [ -d ${output_directory} ]; then
     echo -e ${BRED}cleaning standard output directory${NC}
     rm -rf ${output_directory}
 fi
 mkdir ${output_directory}
 
-output_directory_chordal=chordal/output_gn_noguess
+output_directory_chordal=chordal/output_gn_spanning
 if [ -d ${output_directory_chordal} ]; then
     echo -e ${BRED}cleaning chordal output directory${NC}
     rm -rf ${output_directory_chordal}
@@ -84,38 +84,20 @@ for f in "${files[@]}"; do
 
   #ia process the standard and the chordal one
   echo -e ${YELLOW}standard${NC}
-  ${G2O_ROOT}/bin/g2o -v -i 100 -solver gn_fix6_3_cholmod -stats ${stats_file_standard} -o ${output_file_standard} ${f}
+  ${G2O_ROOT}/bin/g2o -v -i 100 -guess -solver gn_fix6_3_cholmod -guess -stats ${stats_file_standard} -o ${output_file_standard} ${f}
   
   # echo $'\n'
   # echo -e ${YELLOW}chordal${NC}
-  # ${G2O_ROOT}/bin/g2o -v -i 100 -solver gn_fix6_3_cholmod -stats ${stats_file_chordal} -o ${output_file_chordal} chordal/${f}
+  # ${G2O_ROOT}/bin/g2o -v -i 100 -guess -solver gn_fix6_3_cholmod -stats ${stats_file_chordal} -o ${output_file_chordal} chordal/${f}
   # echo $'\n'
   # echo -e ${YELLOW}compare${NC}
   # ${G2O_ROOT}/bin/chordal_comparator -i 100 -compareStats ${stats_file_compare} -otherGraph ${f} chordal/${f}
   
   echo $'\n'
   echo -e ${YELLOW}chordal${NC}
-  ${G2O_ROOT}/bin/chordal_comparator -i 100 -solver gn_fix6_3_cholmod -o ${output_file_chordal} -compareStats ${stats_file_chordal} -otherGraph ${f} chordal/${f}
+  ${G2O_ROOT}/bin/chordal_comparator -i 100 -solver gn_fix6_3_cholmod -guess -o ${output_file_chordal} -compareStats ${stats_file_chordal} -otherGraph ${f} chordal/${f}
   
 done
-
-
-#ia stamo a caga fori dal vaso
-# #ia generate plots
-# echo $'\n'
-# echo $'\n'
-# echo -e ${BCYAN}generate plots${NC}
-
-# plot_directory=plots
-# if [ -d ${plot_directory} ]; then
-#     echo -e ${BRED}cleaning plot directory${NC}
-#     rm -rf ${plot_directory}
-# fi
-# mkdir -p ${plot_directory}
-# cd ${plot_directory}
-# cp ${G2O_ROOT}/chordal_scripts/plot_no_guess .
-# cd plot_no_guess
-# ./generate_plot
 
 echo -e ${BGREEN}finish${NC}
 cd $pwd

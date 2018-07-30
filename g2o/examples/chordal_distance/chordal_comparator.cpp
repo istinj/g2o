@@ -6,27 +6,43 @@
 #include "g2o/types/slam3d/isometry3d_mappings.h"
 
 //ia include g2o core stuff
-#include "g2o/stuff/command_args.h"
-#include "g2o/core/sparse_optimizer.h"
+#include "g2o/config.h"
 #include "g2o/core/block_solver.h"
+#include "g2o/core/estimate_propagator.h"
+#include "g2o/core/sparse_optimizer.h"
 #include "g2o/core/factory.h"
 #include "g2o/core/optimization_algorithm_factory.h"
-#include "g2o/core/optimization_algorithm_gauss_newton.h"
-#include "g2o/solvers/cholmod/linear_solver_cholmod.h"
-#include "g2o/solvers/csparse/linear_solver_csparse.h"
+#include "g2o/core/hyper_dijkstra.h"
+#include "g2o/core/hyper_graph_action.h"
 #include "g2o/core/batch_stats.h"
 #include "g2o/core/robust_kernel.h"
 #include "g2o/core/robust_kernel_factory.h"
+#include "g2o/core/optimization_algorithm.h"
+#include "g2o/core/sparse_optimizer_terminate_action.h"
+#include "g2o/solvers/cholmod/linear_solver_cholmod.h"
+#include "g2o/solvers/csparse/linear_solver_csparse.h"
+
+#include "g2o/apps/g2o_cli/dl_wrapper.h"
+#include "g2o/apps/g2o_cli/output_helper.h"
+#include "g2o/apps/g2o_cli/g2o_common.h"
+
+#include "g2o/stuff/macros.h"
+#include "g2o/stuff/color_macros.h"
+#include "g2o/stuff/command_args.h"
+#include "g2o/stuff/filesys_tools.h"
+#include "g2o/stuff/string_tools.h"
+#include "g2o/stuff/timeutil.h"
 
 using namespace std;
 using namespace g2o;
 
 int main(int argc, char *argv[]) {
-  // required for type factory
-  VertexSE3* v_quat = new VertexSE3();
-  EdgeSE3* e_quat = new EdgeSE3();
-  VertexSE3Chord* v_chord = new VertexSE3Chord();
-  EdgeSE3Chord* e_chord = new EdgeSE3Chord();
+  // registering all the types from the libraries
+  DlWrapper dlTypesWrapper;
+  loadStandardTypes(dlTypesWrapper, argc, argv);
+  // register all the solvers
+  DlWrapper dlSolverWrapper;
+  loadStandardSolver(dlSolverWrapper, argc, argv);
 
   // Command line parsing
   int maxIterations;
@@ -37,12 +53,18 @@ int main(int argc, char *argv[]) {
   string compareStatsFile;
   double huberWidth; 
   string otherGraph;
+  bool initial_guess;
+  bool initial_guess_odometry;
+  string solver_type;
 
   g2o::CommandArgs arg;
   arg.param("i", maxIterations, 10, "perform n iterations, if negative consider the gain");
   arg.param("o", outputFilename, "", "output final version of the graph");
+  arg.param("guess", initial_guess, false, "initial guess based on spanning tree");
+  arg.param("guessOdometry", initial_guess_odometry, false, "initial guess based on odometry");
   arg.param("robustKernel", robustKernel, "", "use this robust error function");
   arg.param("robustKernelWidth", huberWidth, -1., "width for the robust Kernel (only if robustKernel)");
+  arg.param("solver", solver_type, "gn_fix6_3_cholmod", "specify which solver to use underneat\n\t {gn_var, lm_fix3_2, gn_fix6_3, lm_fix7_3}");
   arg.param("compareStats", compareStatsFile, "", "specify a file for comparison stats");
   arg.param("stats", statsFile, "", "specify a file for the statistics");
   arg.param("otherGraph", otherGraph, "", "standard graph to compare");
@@ -59,22 +81,20 @@ int main(int argc, char *argv[]) {
     return 0;
   }
 
-  cerr << "gn_fix6_3_cholmod" << endl;
-  typedef g2o::BlockSolver< g2o::BlockSolverTraits<6, 3> >  SlamBlockSolver;
-  typedef g2o::LinearSolverCholmod<SlamBlockSolver::PoseMatrixType> SlamLinearSolver;
-  // typedef LinearSolverCSparse<SlamBlockSolver::PoseMatrixType> SlamLinearSolver;
-
   g2o::SparseOptimizer optimizer;
 
-  auto linear_solver = g2o::make_unique<SlamLinearSolver>();
-  linear_solver->setBlockOrdering(true);
+  //ia create a solver
+  OptimizationAlgorithmFactory* solver_factory = OptimizationAlgorithmFactory::instance();
+  OptimizationAlgorithmProperty solver_property;
+  optimizer.setAlgorithm(solver_factory->construct(solver_type, solver_property));
+  if (! optimizer.solver()) {
+    cerr << "Error allocating solver. Allocating \"" << solver_type << "\" failed!" << endl;
+    return 0;
+  }
 
-  g2o::OptimizationAlgorithmGaussNewton* solver = new g2o::OptimizationAlgorithmGaussNewton(
-    g2o::make_unique<SlamBlockSolver>(move(linear_solver)));
   
   //ia set optimizer things
   optimizer.setVerbose(true);
-  optimizer.setAlgorithm(solver);
   if (statsFile!=""){
     // allocate buffer for statistics;
     optimizer.setComputeBatchStatistics(true);
@@ -112,13 +132,13 @@ int main(int argc, char *argv[]) {
   // ---------------------------------------------------------------------------------- //
   // ---------------------------------------------------------------------------------- //
   g2o::SparseOptimizer other_optimizer;
-  auto other_linear_solver = g2o::make_unique<SlamLinearSolver>();
-  other_linear_solver->setBlockOrdering(true);
-
-  g2o::OptimizationAlgorithmGaussNewton* other_solver = new g2o::OptimizationAlgorithmGaussNewton(
-    g2o::make_unique<SlamBlockSolver>(move(other_linear_solver)));
-  other_optimizer.setVerbose(true);
-  other_optimizer.setAlgorithm(other_solver);
+  OptimizationAlgorithmProperty other_solver_property;
+  other_optimizer.setAlgorithm(solver_factory->construct(solver_type, other_solver_property));
+  if (!other_optimizer.solver()) {
+    cerr << "Error allocating solver. Allocating \"" << solver_type << "\" failed!" << endl;
+    return 0;
+  }
+  
   if (statsFile!=""){
     other_optimizer.setComputeBatchStatistics(true);
   }
@@ -162,6 +182,13 @@ int main(int argc, char *argv[]) {
   other_optimizer.initializeOptimization();
   other_optimizer.computeActiveErrors();
 
+  if (initial_guess) {
+    optimizer.computeInitialGuess();
+  } else if (initial_guess_odometry) {
+    EstimatePropagatorCostOdometry cost_function(&optimizer);
+    optimizer.computeInitialGuess(cost_function);
+  }
+  
   double chordal_loadChi = optimizer.chi2();
   double standard_loadChi = other_optimizer.chi2();
   cerr << "Chordal initial chi2  = " << FIXED(chordal_loadChi) << endl;
@@ -204,10 +231,5 @@ int main(int argc, char *argv[]) {
   comp_stats_file.close();
   cerr << "done!" << endl;
 
-  // checkout things
-  delete v_quat;
-  delete e_quat;
-  delete v_chord;
-  delete e_chord;
   return 0;
 }

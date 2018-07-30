@@ -1,13 +1,13 @@
 reset
 # set term pngcairo dashed
-# set out 'plot_no_guess_rot.png'
+# set out 'plot_gn_noguess_rot.png'
 
 # set terminal epslatex color
-# set out 'plot_no_guess_rot.tex'
+# set out 'plot_gn_noguess_rot.tex'
 
 #set terminal postscript eps enhanced color font 'Helvetica,10'
 set terminal postscript eps enhanced color
-set output 'plot_no_guess_rot.eps'
+set output 'plot_gn_noguess_rot.eps'
 
 
 set logscale y 10
@@ -36,9 +36,9 @@ set style line 8 linetype 1 linecolor rgb "#007F3F" linewidth linethickness #gre
 set style line 9 linetype 1 linecolor rgb "#003F1F" linewidth linethickness #green_2
 
 set title 'Comparison Between Chordal and Geodesic - High Rotational Noise'
-plot '../output/garage_rot.stats' using 2:8 with linespoints linestyle 1 title 'standard', \
-'../compare/garage_rot.stats' using 1:3 with lines linestyle 2 title 'chordal reprojected', \
-'../chordal/output/garage_rot.stats' using 2:8 with lines linestyle 4 title 'chordal'
+plot '../output_gn_noguess/garage_rot.stats' using 2:8 with linespoints linestyle 1 title 'standard', \
+'../chordal/output_gn_noguess/garage_rot.stats' using 1:3 with lines linestyle 2 title 'chordal reprojected', \
+'../chordal/output_gn_noguess/garage_rot.stats' using 1:2 with lines linestyle 4 title 'chordal'
 
 set term x11
 
