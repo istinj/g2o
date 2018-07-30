@@ -45,8 +45,8 @@ int main(int argc, char *argv[]) {
   arg.param("robustKernelWidth", huberWidth, -1., "width for the robust Kernel (only if robustKernel)");
   arg.param("compareStats", compareStatsFile, "", "specify a file for comparison stats");
   arg.param("stats", statsFile, "", "specify a file for the statistics");
-  arg.param("otherGraph", otherGraph, "", "graph to compare");
-  arg.paramLeftOver("graph-input", inputFilename, "", "graph file which will be processed");
+  arg.param("otherGraph", otherGraph, "", "standard graph to compare");
+  arg.paramLeftOver("graph-input", inputFilename, "", "chordal graph file which will be processed");
   arg.parseArgs(argc, argv);
 
   if (otherGraph == "") {
@@ -59,6 +59,7 @@ int main(int argc, char *argv[]) {
     return 0;
   }
 
+  cerr << "gn_fix6_3_cholmod" << endl;
   typedef g2o::BlockSolver< g2o::BlockSolverTraits<6, 3> >  SlamBlockSolver;
   typedef g2o::LinearSolverCholmod<SlamBlockSolver::PoseMatrixType> SlamLinearSolver;
   // typedef LinearSolverCSparse<SlamBlockSolver::PoseMatrixType> SlamLinearSolver;
@@ -70,7 +71,7 @@ int main(int argc, char *argv[]) {
 
   g2o::OptimizationAlgorithmGaussNewton* solver = new g2o::OptimizationAlgorithmGaussNewton(
     g2o::make_unique<SlamBlockSolver>(move(linear_solver)));
-
+  
   //ia set optimizer things
   optimizer.setVerbose(true);
   optimizer.setAlgorithm(solver);

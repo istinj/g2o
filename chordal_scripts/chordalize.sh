@@ -89,7 +89,7 @@ done
 
 
 echo -e ${BGREEN}finish${NC}
-
+cd $pwd
 
 echo exit
 echo $'\n'
