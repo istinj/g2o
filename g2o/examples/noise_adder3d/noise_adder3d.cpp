@@ -117,7 +117,12 @@ int main(int argc, char *argv[]) {
   }
 
   //! NOISE on the measurements
+  size_t cnt = 0;
   for (HyperGraph::Edge* eptr : edges) {
+    float percentage = std::ceil((float)cnt++ / (float)edges.size() * 100);
+    if ((int)percentage % 5 == 0)
+      std::cerr << "\rcompleted " << percentage << "%" << std::flush;
+    
     EdgeSE3* e = dynamic_cast<EdgeSE3*>(eptr);
     
     //! estimate gt
@@ -136,7 +141,6 @@ int main(int argc, char *argv[]) {
     double noise_qw = 1.0 - noise_quatXYZ.norm();
     if (noise_qw < 0) {
       noise_qw = 0.;
-      cerr << "x";
     }
 
     Eigen::Quaterniond rot_noise(noise_qw, noise_quatXYZ.x(), noise_quatXYZ.y(), noise_quatXYZ.z());
