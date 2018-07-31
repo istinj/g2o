@@ -32,9 +32,15 @@ namespace g2o {
       }
 
       //! @brief states that the first element will set the initial estimate of the second element
-      virtual number_t initialEstimatePossible(const OptimizableGraph::VertexSet& /*from*/,
-                                               OptimizableGraph::Vertex* /*to*/) {
-        VertexMatchable* v_to = dynamic_cast<VertexMatchable*>(_vertices[1]);
+      number_t initialEstimatePossible(const OptimizableGraph::VertexSet& /*from*/,
+                                       OptimizableGraph::Vertex* to) override {
+
+        VertexMatchable* v_to = dynamic_cast<VertexMatchable*>(to);
+
+        if (!v_to) {
+          return -1.0;
+        }
+
         if (v_to->estimate().type() == _measurement.type())
           return 1.0; //ia is this good? this will set the matchable from the pose.
         else

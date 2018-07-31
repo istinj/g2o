@@ -55,7 +55,7 @@ for f in "${files[@]}"; do
   output_file=low_noise/${f_prefix}.g2o
   echo output graph low_noise/${f_prefix}.g2o
   
-  ${G2O_ROOT}/bin/g2o_matchable_noise_adder -pointNoise "0.005;0.005;0.05" -normalNoise "0.001;0.001" -translationNoise "0.01;0.01;0.001" -rotationNoise "0.001;0.001;0.005" -o ${output_file} ${f}
+  ${G2O_ROOT}/bin/g2o_matchable_noise_adder -pointNoise "0.005;0.005;0.005" -normalNoise "0.001;0.001" -translationNoise "0.01;0.01;0.001" -rotationNoise "0.001;0.001;0.005" -o ${output_file} ${f}
   echo $'\n'
 done
 echo $'\n'
@@ -78,7 +78,7 @@ for f in "${files[@]}"; do
   output_file=mid_noise/${f_prefix}.g2o
   echo output graph: ${output_file}
   
-  ${G2O_ROOT}/bin/g2o_matchable_noise_adder -pointNoise "0.05;0.05;0.1" -normalNoise "0.01;0.01" -translationNoise "0.1;0.1;0.01" -rotationNoise "0.01;0.01;0.05" -o ${output_file} ${f}
+  ${G2O_ROOT}/bin/g2o_matchable_noise_adder -pointNoise "0.05;0.05;0.05" -normalNoise "0.01;0.01" -translationNoise "0.1;0.1;0.01" -rotationNoise "0.01;0.01;0.05" -o ${output_file} ${f}
   echo $'\n'
 done
 echo $'\n'
@@ -102,7 +102,7 @@ for f in "${files[@]}"; do
   output_file=high_noise/${f_prefix}.g2o
   echo output graph: ${output_file}
   
-  ${G2O_ROOT}/bin/g2o_matchable_noise_adder -pointNoise "0.5;0.5;0.1" -normalNoise "0.1;0.1" -translationNoise "1.0;1.0;0.01" -rotationNoise "0.01;0.01;0.1" -o ${output_file} ${f}
+  ${G2O_ROOT}/bin/g2o_matchable_noise_adder -pointNoise "0.5;0.5;0.5" -normalNoise "0.1;0.1" -translationNoise "1.0;1.0;0.01" -rotationNoise "0.01;0.01;0.1" -o ${output_file} ${f}
   echo $'\n'
 done
 echo done
