@@ -34,6 +34,7 @@ pwd=`pwd`
 echo -e G2O_ROOT: ${UCYAN}${G2O_ROOT}${NC}
 echo -e current directory: ${UCYAN}$pwd${NC}
 echo -e working directory : ${UCYAN}${target_dir}${NC}
+echo -e ${UCYAN}gn spanning${NC}
 cd ${target_dir}
 echo $'\n'
 

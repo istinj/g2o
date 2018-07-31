@@ -33,13 +33,14 @@ REVGREEN='\033[7;32m'
 NC='\033[0m' # No Color
 
 target_dir=$1
-directories=($(ls -d ${target_dir}/*/))
+directories=($(ls ${target_dir}))
 
 pwd=`pwd`
 
 echo -e G2O_ROOT: ${UCYAN}${G2O_ROOT}${NC}
 echo -e current directory: ${UCYAN}$pwd${NC}
 echo -e working directory : ${UCYAN}${target_dir}${NC}
+cd ${target_dir}
 echo $'\n'
 
 #ia for each directory - aka each dataset
@@ -49,21 +50,25 @@ for d in "${directories[@]}"; do
       continue
   fi
 
-  if [ "${d}" = "chordal_optimum/" ]; then
+  if [ "${d}" = "chordal_optimum" ]; then
       echo -e ${REVRED}skip folder ${d}${NC}
       echo $'\n'
       continue
   fi
 
   echo -e processing folder: ${REVCYAN}${d}${NC}
+
+  ${pwd}/run_gn_no_guess.sh ${d}
+  # read -p "press any key to continue"
   
-  ./run_gn_noguess.sh ${d}
-  ./run_gn_spanning.sh ${d}
-  ./run_gn_odom.sh ${d}
+  ${pwd}/run_gn_spanning.sh ${d}
+  # read -p "press any key to continue"
+  
+  ${pwd}/run_gn_odom.sh ${d}
+  # read -p "press any key to continue"
 
   echo -e ${REVGREEN}finished this folder${NC}
   echo $'\n'
-  cd ${pwd}
 done
 
 echo $'\n'
