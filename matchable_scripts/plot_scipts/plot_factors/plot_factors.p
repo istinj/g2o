@@ -15,7 +15,7 @@ set grid x y
 
 set xlabel "Iteration"
 set ylabel "chi2" offset 1,0
-# set xrange [0:25]
+set xrange [0:100]
 
 linethickness = 1.5
 # linetype 2 -> dashed
