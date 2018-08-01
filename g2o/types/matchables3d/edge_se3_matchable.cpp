@@ -148,72 +148,7 @@ namespace g2o{
       _jacobianOplusXj.block<3,2>(0,3) = dep_dRl;
       _jacobianOplusXj.block<3,2>(3,3) = ded_dRl;
       _jacobianOplusXj.block<1,2>(6,3) = deo_dRl.transpose();
-
-      // std::cerr << "error in linearize: " << _error.transpose() << std::endl;
-
-      /*
-      Eigen::Matrix<number_t, 7, 6> Jxi_backup = _jacobianOplusXi;
-      Eigen::Matrix<number_t, 7, 5> Jxj_backup = _jacobianOplusXj;
-
-      _jacobianOplusXi.setZero();
-      _jacobianOplusXj.setZero();
-
-      BaseBinaryEdge<7, Matchable, VertexSE3Chord, VertexMatchable>::linearizeOplus();
-      if (1 || (_jacobianOplusXi - Jxi_backup).norm() > 1e-3 && !v_from->fixed()
-          || (_jacobianOplusXj - Jxj_backup).norm() > 1e-3) {
-        std::cerr << "edge #" 
-                  << v_from->id() << "->" 
-                  << v_to->id() << std::endl;
-
-        std::cerr << "[ANALytic linearization]" << std::endl;
-        std::cerr << "Jxi_backup size: "
-                  << Jxi_backup.rows() << "x"
-                  << Jxi_backup.cols() << std::endl
-                  << Jxi_backup << std::endl;
-      
-        std::cerr << "Jxj_backup size: "
-                  << Jxj_backup.rows() << "x"
-                  << Jxj_backup.cols() << std::endl
-                  << Jxj_backup << std::endl;
-        std::cerr << std::endl;
-
-        std::cerr << "[numeric linearization]" << std::endl;
-        std::cerr << "_jacobianOplusXi size: "
-                  << _jacobianOplusXi.rows() << "x"
-                  << _jacobianOplusXi.cols() << std::endl
-                  << _jacobianOplusXi << std::endl;
-      
-        std::cerr << "_jacobianOplusXj size: "
-                  << _jacobianOplusXj.rows() << "x"
-                  << _jacobianOplusXj.cols() << std::endl
-                  << _jacobianOplusXj << std::endl;
-        std::cerr << std::endl;
-        
-        std::cerr << "[difference]" << std::endl;
-        std::cerr << "_jacobianOplusXi\n" << _jacobianOplusXi - Jxi_backup << std::endl;
-        std::cerr << "_jacobianOplusXj\n" << _jacobianOplusXj - Jxj_backup << std::endl;
-        std::cerr << std::endl;
-
-        std::cerr << "pose estimate:\n" << pose.matrix() << std::endl;
-        std::cerr << "matchable estimate:\n" 
-                  << "point: " << pl.transpose() << std::endl
-                  << "rotation:\n" << Rl << std::endl;
-
-        std::cerr << "measurement:\n"
-                  << "point: " << pz.transpose() << std::endl 
-                  << "rotation:\n" << Rz << std::endl;
-
-        std::cerr << std::endl;
-        std::cerr << std::endl;
-        
-        if ((_jacobianOplusXi - Jxi_backup).norm() > 1e-3 && !v_from->fixed()
-          || (_jacobianOplusXj - Jxj_backup).norm() > 1e-3) 
-          throw std::runtime_error("DIO E' PORCO");
-      }
-      /**/
-
-      // std::cin.get();
-    }/**/
+    }
 
 
     void EdgeSE3Matchable::initialEstimate(const OptimizableGraph::VertexSet& /*from*/,
