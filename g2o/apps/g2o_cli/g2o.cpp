@@ -300,7 +300,7 @@ int main(int argc, char** argv)
     cerr << endl;
     gaugeFreedom = false;
   } else {
-      gauge=optimizer.findGauge();
+    gauge=optimizer.findGauge();
   }
   if (gaugeFreedom) {
     if (! gauge) {
@@ -458,35 +458,35 @@ int main(int argc, char** argv)
           OptimizableGraph::Vertex* from = static_cast<OptimizableGraph::Vertex*>(e->vertices()[0]);
           OptimizableGraph::Vertex* to   = static_cast<OptimizableGraph::Vertex*>(e->vertices()[1]);
           switch (doInit){
-            case 1: // initialize v1 from v2
-              {
-                HyperGraph::VertexSet toSet;
-                toSet.insert(to);
-                if (e->initialEstimatePossible(toSet, from) > 0.) {
-                  //cerr << "init: " 
-                    //<< to->id() << "(" << to->dimension() << ") -> " 
-                    //<< from->id() << "(" << from->dimension() << ") " << endl;
-                   e->initialEstimate(toSet, from);
-                } else {
-                  assert(0 && "Added unitialized variable to the graph");
-                }
-                break;
+          case 1: // initialize v1 from v2
+            {
+              HyperGraph::VertexSet toSet;
+              toSet.insert(to);
+              if (e->initialEstimatePossible(toSet, from) > 0.) {
+                //cerr << "init: " 
+                //<< to->id() << "(" << to->dimension() << ") -> " 
+                //<< from->id() << "(" << from->dimension() << ") " << endl;
+                e->initialEstimate(toSet, from);
+              } else {
+                assert(0 && "Added unitialized variable to the graph");
               }
-            case 2: 
-              {
-                HyperGraph::VertexSet fromSet;
-                fromSet.insert(from);
-                if (e->initialEstimatePossible(fromSet, to) > 0.) {
-                  //cerr << "init: " 
-                    //<< from->id() << "(" << from->dimension() << ") -> " 
-                    //<< to->id() << "(" << to->dimension() << ") " << endl;
-                  e->initialEstimate(fromSet, to);  
-                } else {
-                  assert(0 && "Added unitialized variable to the graph");
-                }
-                break;
+              break;
+            }
+          case 2: 
+            {
+              HyperGraph::VertexSet fromSet;
+              fromSet.insert(from);
+              if (e->initialEstimatePossible(fromSet, to) > 0.) {
+                //cerr << "init: " 
+                //<< from->id() << "(" << from->dimension() << ") -> " 
+                //<< to->id() << "(" << to->dimension() << ") " << endl;
+                e->initialEstimate(fromSet, to);  
+              } else {
+                assert(0 && "Added unitialized variable to the graph");
               }
-            default: cerr << "doInit wrong value\n"; 
+              break;
+            }
+          default: cerr << "doInit wrong value\n"; 
           }
 
         }
@@ -519,7 +519,7 @@ int main(int argc, char** argv)
           if (verbose) {
             double chi2 = optimizer.chi2();
             cerr << "nodes= " << optimizer.vertices().size() << "\t edges= " << optimizer.edges().size() << "\t chi2= " << chi2
-              << "\t time= " << dts << "\t iterations= " << currentIt <<  "\t cumTime= " << cumTime << endl;
+                 << "\t time= " << dts << "\t iterations= " << currentIt <<  "\t cumTime= " << cumTime << endl;
           }
           lastOptimizedVertexCount = vertexCount;
           freshlyOptimized = true;
@@ -548,7 +548,7 @@ int main(int argc, char** argv)
       if (verbose) {
         double chi2 = optimizer.chi2();
         cerr << "nodes= " << optimizer.vertices().size() << "\t edges= " << optimizer.edges().size() << "\t chi2= " << chi2
-          << "\t time= " << dts << "\t iterations= " << currentIt <<  "\t cumTime= " << cumTime << endl;
+             << "\t time= " << dts << "\t iterations= " << currentIt <<  "\t cumTime= " << cumTime << endl;
       }
 
     }
@@ -578,7 +578,7 @@ int main(int argc, char** argv)
     int result=optimizer.optimize(maxIterations);
     if (maxIterations > 0 && result==OptimizationAlgorithm::Fail){
       cerr << "Cholesky failed, result might be invalid" << endl;
-    } else if (computeMarginals){
+    } else if (computeMarginals) {
       std::vector<std::pair<int, int> > blockIndices;
       for (size_t i=0; i<optimizer.activeVertices().size(); i++){
         OptimizableGraph::Vertex* v=optimizer.activeVertices()[i];
@@ -621,19 +621,19 @@ int main(int argc, char** argv)
       int nPoses=0;
       int maxDim = *vertexDimensions.rbegin();
       for (HyperGraph::VertexIDMap::iterator it=optimizer.vertices().begin(); it!=optimizer.vertices().end(); it++){
-	OptimizableGraph::Vertex* v=static_cast<OptimizableGraph::Vertex*>(it->second);
-	if (v->dimension() != maxDim) {
-	  nLandmarks++;
-	} else
-	  nPoses++;
+        OptimizableGraph::Vertex* v=static_cast<OptimizableGraph::Vertex*>(it->second);
+        if (v->dimension() != maxDim) {
+          nLandmarks++;
+        } else
+          nPoses++;
       }
       set<string> edgeTypes;
       for (HyperGraph::EdgeSet::iterator it=optimizer.edges().begin(); it!=optimizer.edges().end(); it++){
-	edgeTypes.insert(Factory::instance()->tag(*it));
+        edgeTypes.insert(Factory::instance()->tag(*it));
       }
       stringstream edgeTypesString;
       for (std::set<string>::iterator it=edgeTypes.begin(); it!=edgeTypes.end(); it++){
-	edgeTypesString << *it << " ";
+        edgeTypesString << *it << " ";
       }
 
       summary.makeProperty<IntProperty>("n_poses", nPoses);
