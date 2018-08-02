@@ -89,11 +89,11 @@ for f in "${files[@]}"; do
   
   # echo $'\n'
   # echo -e ${YELLOW}chordal${NC}
-  ${G2O_ROOT}/bin/g2o -v -i 100 -solver gn_fix6_3_cholmod -stats ${stats_file_chordal} -o ${output_file_chordal} chordal/${f}
+  # ${G2O_ROOT}/bin/g2o -v -i 100 -solver gn_fix6_3_cholmod -stats ${stats_file_chordal} -o ${output_file_chordal} chordal/${f}
   
   # echo $'\n'
   # echo -e ${YELLOW}compare${NC}
-  ${G2O_ROOT}/bin/chordal_comparator -i 100 -compareStats ${stats_file_compare} -otherGraph ${f} chordal/${f}
+  # ${G2O_ROOT}/bin/chordal_comparator -i 100 -compareStats ${stats_file_compare} -otherGraph ${f} chordal/${f}
   
   echo $'\n'
   echo -e ${YELLOW}chordal${NC}
