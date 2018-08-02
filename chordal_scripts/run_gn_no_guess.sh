@@ -52,7 +52,7 @@ if [ -d ${output_directory_chordal} ]; then
 fi
 mkdir -p ${output_directory_chordal}
 
-output_directory_compare=compare
+output_directory_compare=compare_gn_noguess
 if [ -d ${output_directory_compare} ]; then
     echo -e ${BRED}cleaning compare stats directory${NC}
     rm -rf ${output_directory_compare}
