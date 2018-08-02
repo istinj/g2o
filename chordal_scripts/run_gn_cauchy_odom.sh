@@ -52,12 +52,12 @@ if [ -d ${output_directory_chordal} ]; then
 fi
 mkdir -p ${output_directory_chordal}
 
-output_directory_compare=compare_gn_odom
-if [ -d ${output_directory_compare} ]; then
-    echo -e ${BRED}cleaning compare stats directory${NC}
-    rm -rf ${output_directory_compare}
-fi
-mkdir -p ${output_directory_compare}
+# output_directory_compare=compare_gn_odom
+# if [ -d ${output_directory_compare} ]; then
+#     echo -e ${BRED}cleaning compare stats directory${NC}
+#     rm -rf ${output_directory_compare}
+# fi
+# mkdir -p ${output_directory_compare}
 
 #ia for each damn file in the directory 
 for f in "${files[@]}"; do
@@ -77,26 +77,27 @@ for f in "${files[@]}"; do
 
   stats_file_standard=${output_directory}/${f_prefix}.stats
   stats_file_chordal=${output_directory_chordal}/${f_prefix}.stats
-  stats_file_compare=${output_directory_compare}/${f_prefix}.stats
+  # stats_file_compare=${output_directory_compare}/${f_prefix}.stats
 
-  echo -e stats files: ${UYELLOW}${stats_file_standard}${NC} and ${UYELLOW}${stats_file_chordal}${NC} and ${UYELLOW}${stats_file_compare}${NC}
-  # echo -e stats files: ${UYELLOW}${stats_file_standard}${NC} and ${UYELLOW}${stats_file_chordal}${NC}
+  # echo -e stats files: ${UYELLOW}${stats_file_standard}${NC} and ${UYELLOW}${stats_file_chordal}${NC} and ${UYELLOW}${stats_file_compare}${NC}
+  echo -e stats files: ${UYELLOW}${stats_file_standard}${NC} and ${UYELLOW}${stats_file_chordal}${NC}
   echo -e output files: ${UYELLOW}${output_file_standard}${NC} and ${UYELLOW}${output_file_chordal}${NC}
 
   #ia process the standard and the chordal one
   echo -e ${YELLOW}standard${NC}
   ${G2O_ROOT}/bin/g2o -v -i 100 -guessOdometry -solver gn_fix6_3_cholmod -robustKernel Cauchy -robustKernelWidth 1.0 -guessOdometry -stats ${stats_file_standard} -o ${output_file_standard} ${f}
   
-  echo $'\n'
-  echo -e ${YELLOW}chordal${NC}
-  ${G2O_ROOT}/bin/g2o -v -i 100 -guessOdometry -solver gn_fix6_3_cholmod -robustKernel Cauchy -robustKernelWidth 1.0 -stats ${stats_file_chordal} -o ${output_file_chordal} chordal/${f}
-  echo $'\n'
-  echo -e ${YELLOW}compare${NC}
-  ${G2O_ROOT}/bin/chordal_comparator -i 100 -guessOdometry -solver gn_fix6_3_cholmod -robustKernel Cauchy -robustKernelWidth 1.0 -compareStats ${stats_file_compare} -otherGraph ${f} chordal/${f}
-  
   # echo $'\n'
   # echo -e ${YELLOW}chordal${NC}
-  # ${G2O_ROOT}/bin/chordal_comparator -i 100 -solver gn_fix6_3_cholmod -guessOdometry -o ${output_file_chordal} -compareStats ${stats_file_chordal} -otherGraph ${f} chordal/${f}
+  # ${G2O_ROOT}/bin/g2o -v -i 100 -guessOdometry -solver gn_fix6_3_cholmod -robustKernel Cauchy -robustKernelWidth 1.0 -stats ${stats_file_chordal} -o ${output_file_chordal} chordal/${f}
+
+  # echo $'\n'
+  # echo -e ${YELLOW}compare${NC}
+  # ${G2O_ROOT}/bin/chordal_comparator -i 100 -guessOdometry -solver gn_fix6_3_cholmod -robustKernel Cauchy -robustKernelWidth 1.0 -compareStats ${stats_file_compare} -otherGraph ${f} chordal/${f}
+  
+  echo $'\n'
+  echo -e ${YELLOW}chordal${NC}
+  ${G2O_ROOT}/bin/chordal_comparator -i 100 -guessOdometry -solver gn_fix6_3_cholmod -robustKernel Cauchy -robustKernelWidth 1.0 -o ${output_file_chordal} -compareStats ${stats_file_chordal} -otherGraph ${f} chordal/${f}
   
 done
 

@@ -80,19 +80,6 @@ int main(int argc, char *argv[]) {
   arg.paramLeftOver("graph-input", chordal_input_filename, "", "chordal graph file which will be processed");
   arg.parseArgs(argc, argv);
 
-  //ia checking that you are not dumb
-  if (geodesic_graph_filename == "") {
-    throw std::runtime_error("no comparison graph, exit");
-  }
-
-  if (comparison_stats_filename == "") {
-    throw std::runtime_error("no comparison stats filename, exit");
-  }
-
-  if (chordal_input_filename == "") {
-    throw std::runtime_error("no input man, exit");
-  }
-
   //ia factory things
   OptimizationAlgorithmFactory* solver_factory = OptimizationAlgorithmFactory::instance();
   if (list_solvers_flag) {
@@ -115,6 +102,21 @@ int main(int argc, char *argv[]) {
 
     return 0;
   }
+
+  
+  //ia checking that you are not dumb
+  if (geodesic_graph_filename == "") {
+    throw std::runtime_error("no comparison graph, exit");
+  }
+
+  if (comparison_stats_filename == "") {
+    throw std::runtime_error("no comparison stats filename, exit");
+  }
+
+  if (chordal_input_filename == "") {
+    throw std::runtime_error("no input man, exit");
+  }
+
 
 
   // ---------------------------------------------------------------------------------- //
@@ -192,7 +194,7 @@ int main(int argc, char *argv[]) {
 
   //ia create a solver for the chordal optimizer
   OptimizationAlgorithmProperty solver_property_geodesic;
-  chordal_optimizer.setAlgorithm(solver_factory->construct(solver_type, solver_property_geodesic));
+  geodesic_optimizer.setAlgorithm(solver_factory->construct(solver_type, solver_property_geodesic));
   if (!geodesic_optimizer.solver()) {
     throw std::runtime_error("error while allocating the solver for the standard graph, exit");
   }
@@ -266,14 +268,21 @@ int main(int argc, char *argv[]) {
   std::cerr << "chordal graph load chi2  : " << FIXED(chordal_load_chi2) << std::endl;
   std::cerr << "geodesic graph load chi2 : " << FIXED(geodesic_load_chi2) << std::endl;
 
+  if (initial_guess && initial_guess_odometry)
+    throw std::runtime_error("both initialization techniques selected, exit");
+  
   if (initial_guess) {
     std::cerr << "computing initial guess from spanning tree" << std::endl;
     chordal_optimizer.computeInitialGuess();
-    geodesic_optimizer.computeInitialGuess();
-  } else if (initial_guess_odometry) {
+    // geodesic_optimizer.computeInitialGuess();
+  }
+
+  if (initial_guess_odometry) {
     std::cerr << "computing initial guess from odometry" << std::endl;
     EstimatePropagatorCostOdometry chordal_odometry_cost_function(&chordal_optimizer);
     EstimatePropagatorCostOdometry geodesic_odometry_cost_function(&geodesic_optimizer);
+    chordal_optimizer.computeInitialGuess(chordal_odometry_cost_function);
+    // geodesic_optimizer.computeInitialGuess(geodesic_odometry_cost_function);
   }
 
   for (int i = 0; i < max_iterations; ++i) {
@@ -305,7 +314,7 @@ int main(int argc, char *argv[]) {
     geodesic_optimizer.computeActiveErrors();
     if (kernel_type == "") {
       std::cerr << "reprojected chi2: " << geodesic_optimizer.chi2() << std::endl;
-      std::cerr << "reprojected active chi2: " << geodesic_optimizer.activeChi2() << std::endl;
+      std::cerr << "reprojected active chi2: " << CL_GREEN(geodesic_optimizer.activeChi2()) << std::endl;
       //ia write to file
       comp_stats_stream << i << "; "
                         << chordal_optimizer.chi2() << "; "
@@ -313,12 +322,14 @@ int main(int argc, char *argv[]) {
     } else {
       //ia kernelized chi2
       std::cerr << "reprojected k-chi2: " << geodesic_optimizer.chi2() << std::endl;
-      std::cerr << "reprojected k-active chi2: " << geodesic_optimizer.activeRobustChi2() << std::endl;
+      std::cerr << "reprojected k-active chi2: " << CL_GREEN(geodesic_optimizer.activeRobustChi2()) << std::endl;
       //ia write to file
       comp_stats_stream << i << "; "
                         << chordal_optimizer.activeRobustChi2() << "; "
                         << geodesic_optimizer.activeRobustChi2();
     }
+
+    comp_stats_stream << std::endl;
       
   }
 
@@ -337,9 +348,11 @@ int main(int argc, char *argv[]) {
   }
 
   //ia save the output
-  cerr << "saving chordal output file : " << output_filename << endl;
-  chordal_optimizer.save(output_filename.c_str());
-  cerr << "done!" << endl;
+  if (output_filename != "") {
+    cerr << "saving chordal output file : " << output_filename << endl;
+    chordal_optimizer.save(output_filename.c_str());
+    cerr << "done!" << endl;
+  }
 
   return 0;
 }
