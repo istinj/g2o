@@ -9,3 +9,5 @@ bin
 .settings/*
 
 *.user
+g2o/config.h
+
