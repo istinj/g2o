@@ -1,10 +1,5 @@
 #!/bin/bash
 
-if test "$#" -ne 1; then
-  echo "Please specify the working directory"
-  exit 1
-fi
-
 # COLORSSSS
 RED='\033[0;31m'
 CYAN='\033[0;36m'
@@ -32,14 +27,22 @@ REVGREEN='\033[7;32m'
 
 NC='\033[0m' # No Color
 
+if test "$#" -ne 2; then
+  echo -e ${BYELLOW}"Please specify the working directory AND the output directory for the statics"
+  echo -e ${BYELLOW}"Usage: <run_experiments> <path_to_working_directory> <path_where_to_save_stats>"${NC}
+  exit 1
+fi
+
 target_dir=$1
+stats_dir=$2
 directories=($(ls ${target_dir}))
 
 pwd=`pwd`
 
-echo -e G2O_ROOT: ${UCYAN}${G2O_ROOT}${NC}
-echo -e current directory: ${UCYAN}$pwd${NC}
-echo -e working directory : ${UCYAN}${target_dir}${NC}
+echo -e G2O_ROOT: ${REVCYAN}${G2O_ROOT}${NC}
+echo -e current directory: ${REVCYAN}$pwd${NC}
+echo -e working directory : ${REVCYAN}${target_dir}${NC}
+echo -e statics base directory : ${REVCYAN}${stats_dir}${NC}
 cd ${target_dir}
 echo $'\n'
 
@@ -56,15 +59,26 @@ for d in "${directories[@]}"; do
       continue
   fi
 
-  echo -e processing folder: ${REVCYAN}${d}${NC}
+  #ia directories for the stats - in order to easy plot them with gnuplot
+  statics_directory_dataset=${stats_dir}/${d}
+  if [ -d ${statics_directory_dataset} ]; then
+      echo -e ${REVRED}cleaning statics directory${NC}
+      rm -rf ${statics_directory_dataset}
+  fi
+  mkdir ${statics_directory_dataset}
 
-  ${pwd}/run_gn_cauchy_no_guess.sh ${d}
+
+  echo -e processing folder : ${REVCYAN}${d}${NC}
+  echo -e saving statics in folder : ${REVCYAN}${statics_directory_dataset}${NC}
+  echo $'\n'
+
+  ${pwd}/run_gn_cauchy_no_guess.sh ${d}/ ${statics_directory_dataset}
   # read -p "press any key to continue"
   
-  ${pwd}/run_gn_cauchy_spanning.sh ${d}
+  ${pwd}/run_gn_cauchy_spanning.sh ${d}/ ${statics_directory_dataset}
   # read -p "press any key to continue"
   
-  ${pwd}/run_gn_cauchy_odom.sh ${d}
+  ${pwd}/run_gn_cauchy_odom.sh ${d}/ ${statics_directory_dataset}
   # read -p "press any key to continue"
 
   echo -e ${REVGREEN}finished this folder${NC}
@@ -76,3 +90,7 @@ echo $'\n'
 echo $'\n'
 echo -e ${REVGREEN}FINISHED EXPERIMENTS GAUSS-NEWTON CAUCHY${NC}
 cd $pwd
+
+
+
+
