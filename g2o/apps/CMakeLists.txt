@@ -1,7 +1,6 @@
 ADD_SUBDIRECTORY(g2o_cli)
 ADD_SUBDIRECTORY(g2o_hierarchical)
 ADD_SUBDIRECTORY(g2o_matchable_simulator)
-#ADD_SUBDIRECTORY(g2o_hierarchical_online)
 
 IF (G2O_HAVE_OPENGL)
   ADD_SUBDIRECTORY(g2o_simulator)
@@ -13,4 +12,8 @@ ENDIF()
 
 IF(G2O_BUILD_LINKED_APPS)
   ADD_SUBDIRECTORY(linked_binaries)
+ENDIF()
+
+IF(CSPARSE_FOUND AND CHOLMOD_FOUND)
+  ADD_SUBDIRECTORY(g2o_chordal)
 ENDIF()
