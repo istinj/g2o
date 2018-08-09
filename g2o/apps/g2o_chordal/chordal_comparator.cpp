@@ -36,6 +36,103 @@
 using namespace std;
 using namespace g2o;
 
+//! @brief this is called in the *preiteration* so
+//!        this lives one iteration in the past :)
+//!        If you make the stats from this guy, than
+//!        you have to give an extra iteration (101 iterations)
+struct ComparatorAction : public HyperGraphAction {
+
+  //! @brief ptr to the geodesic opt
+  SparseOptimizer* geo_opt_ptr = 0;
+  //! @brief ptr to the chordal opt - also for stats
+  SparseOptimizer* chord_opt_ptr = 0;
+  //! @brief ptr to the stream where I will write the stats
+  std::ofstream* stats = 0;
+  //! @brief robust kernel flag
+  bool kernel_flag = false;
+  
+  //! @breif ctor
+  ComparatorAction(SparseOptimizer* geodesic_opt_,
+                   SparseOptimizer* chordal_opt_,
+                   std::ofstream* stats_stream_,
+                   const bool kernel_flag_) :
+    geo_opt_ptr(geodesic_opt_),
+    chord_opt_ptr(chordal_opt_),
+    stats(stats_stream_),
+    kernel_flag(kernel_flag_) {
+    if (!geo_opt_ptr || !chord_opt_ptr)
+      throw std::runtime_error("[ComparatorAction] you set a null pointer genious");
+  }
+
+  //! @brief all the shit is here :)
+  HyperGraphAction* operator()(const HyperGraph* graph, Parameters* parameters) override {
+    std::cerr << std::endl;
+    int current_iteration = -10;
+    //ia if everything is still null than do nothing
+    if (!graph)
+      return 0;
+
+    //ia if there is an iteration number than print it in the stats
+    ParametersIteration* param_it = dynamic_cast<ParametersIteration*>(parameters);
+    if (param_it) {
+      if (param_it->iteration < 0)
+        return 0;
+
+      current_iteration = param_it->iteration-1;
+      std::cerr << "[ComparatorAction] iteration= " << current_iteration << std::endl;
+    }
+
+    //ia copy the damn vertices in the geodesic graph and compute the chi2
+    HyperGraph::VertexIDMap::iterator v_it = chord_opt_ptr->vertices().begin();
+    HyperGraph::VertexIDMap::iterator v_end = chord_opt_ptr->vertices().end();
+    while (v_it != v_end) {
+      //ia take the cordal vertex
+      VertexSE3Chord* chordal_v = dynamic_cast<VertexSE3Chord*>(v_it->second);
+      //ia take the corresponding geodesic vertex
+      VertexSE3* geodesic_v = dynamic_cast<VertexSE3*>(geo_opt_ptr->vertex(v_it->first));
+
+      if (!chordal_v || !geodesic_v)
+        throw std::runtime_error("[ComparatorAction] dynamic cast failed, exit");
+
+      //ia copy the damn estimate
+      geodesic_v->setEstimate(chordal_v->estimate());
+      
+      ++v_it;
+    }
+
+    //ia compute the damn chi2
+    geo_opt_ptr->computeActiveErrors();
+    chord_opt_ptr->computeActiveErrors();
+    
+    if (!kernel_flag) {
+      std::cerr << "[ComparatorAction] chordal active chi2= "
+                << CL_YELLOW(FIXED(chord_opt_ptr->activeChi2())) << std::endl;
+      std::cerr << "[ComparatorAction] reprojected active chi2: "
+                << CL_GREEN(FIXED(geo_opt_ptr->activeChi2())) << std::endl;
+      
+      //ia write to file
+      (*stats) << "it= "<< current_iteration << "; "
+               << "chordalChi2= " << FIXED(chord_opt_ptr->activeChi2()) << "; "
+               << "reprojectedChi2= " << FIXED(geo_opt_ptr->activeChi2());
+    } else {
+      //ia kernelized chi2
+      std::cerr << "[ComparatorAction] chordal k-active chi2= "
+                << CL_YELLOW(FIXED(chord_opt_ptr->activeRobustChi2())) << std::endl;
+      std::cerr << "[ComparatorAction] reprojected k-active chi2: "
+                << CL_GREEN(FIXED(geo_opt_ptr->activeRobustChi2())) << std::endl;
+      //ia write to file
+      (*stats) << "it= "<< current_iteration << "; "
+               << "chordalChi2= " << FIXED(chord_opt_ptr->activeRobustChi2()) << "; "
+               << "reprojectedChi2= " << FIXED(geo_opt_ptr->activeRobustChi2());
+    }
+
+    (*stats) << std::endl;
+    
+    return this;
+  }
+};
+
+
 int main(int argc, char *argv[]) {
   // registering all the types from the libraries
   DlWrapper dlTypesWrapper;
@@ -58,10 +155,11 @@ int main(int argc, char *argv[]) {
   string output_filename;
   string chordal_input_filename;
   string kernel_type;
-  string stats_filename;
   string comparison_stats_filename; 
   string geodesic_graph_filename;
   string solver_type;
+
+  bool optimization_has_kernel = false;
 
   g2o::CommandArgs arg;
   arg.param("listTypes", list_types_flag, false, "list the registered types");
@@ -75,8 +173,7 @@ int main(int argc, char *argv[]) {
   arg.param("robustKernelWidth", kernel_width, -1., "width for the robust Kernel (only if robust_kernel_type)");
   arg.param("solver", solver_type, "gn_fix6_3_cholmod", "specify which solver to use underneat\n\t {gn_var, lm_fix3_2, gn_fix6_3, lm_fix7_3}");
   arg.param("compareStats", comparison_stats_filename, "", "specify a file for comparison stats");
-  arg.param("stats", stats_filename, "", "specify a file for the statistics");
-  arg.param("otherGraph", geodesic_graph_filename, "", "standard graph to compare - geodesic error");
+  arg.param("geodesicGraph", geodesic_graph_filename, "", "standard graph to compare - geodesic error");
   arg.paramLeftOver("graph-input", chordal_input_filename, "", "chordal graph file which will be processed");
   arg.parseArgs(argc, argv);
 
@@ -161,6 +258,7 @@ int main(int argc, char *argv[]) {
 
   //ia robust kernels, if present
   if (kernel_type.size() > 0) {
+    optimization_has_kernel = true;
     std::cerr << "using kernel " << kernel_type << std::endl;
     AbstractRobustKernelCreator* kernel_factory = RobustKernelFactory::instance()->creator(kernel_type);
     if (!kernel_factory)
@@ -178,9 +276,7 @@ int main(int argc, char *argv[]) {
   }
 
   //ia final tweaks
-  if (stats_filename!=""){
-    chordal_optimizer.setComputeBatchStatistics(true);
-  }
+  chordal_optimizer.setComputeBatchStatistics(true);
 
   // ---------------------------------------------------------------------------------- //
   // ---------------------------------------------------------------------------------- //
@@ -241,9 +337,7 @@ int main(int argc, char *argv[]) {
   }
 
   //ia final tweaks
-  if (stats_filename!=""){
-    geodesic_optimizer.setComputeBatchStatistics(true);
-  }
+  geodesic_optimizer.setComputeBatchStatistics(true);
 
 
 
@@ -251,10 +345,18 @@ int main(int argc, char *argv[]) {
   // ---------------------------------------------------------------------------------- //
   // --------------------------- start the damn computation --------------------------- //
   // ---------------------------------------------------------------------------------- //
-  // ---------------------------------------------------------------------------------- //
+  // ---------------------------------------------------------------------------------- //  
   std::cerr << "comparison statistic file: " << comparison_stats_filename << std::endl;
   std::cerr << "stats legend: <iteration>; <chordal chi2>; <reprojected geodesic chi2>" << std::endl;
   std::ofstream comp_stats_stream(comparison_stats_filename);
+
+  //ia install our custom action
+  ComparatorAction* action = new ComparatorAction(&geodesic_optimizer,
+                                                  &chordal_optimizer,
+                                                  &comp_stats_stream,
+                                                  optimization_has_kernel);
+  chordal_optimizer.addPreIterationAction(action);
+  
 
   //ia initialize optimization
   chordal_optimizer.initializeOptimization();
@@ -285,67 +387,14 @@ int main(int argc, char *argv[]) {
     // geodesic_optimizer.computeInitialGuess(geodesic_odometry_cost_function);
   }
 
-  for (int i = 0; i < max_iterations; ++i) {
-    int optimization_result = chordal_optimizer.optimize(1); //ia one step at time
-    if (optimization_result == OptimizationAlgorithm::Fail) {
-      std::cerr << "cholesky failed, stop" << std::endl;
-      break;
-    }
-
-    //ia copy the damn vertices in the geodesic graph and compute the chi2
-    HyperGraph::VertexIDMap::iterator v_it = chordal_optimizer.vertices().begin();
-    HyperGraph::VertexIDMap::iterator v_end = chordal_optimizer.vertices().end();
-    while (v_it != v_end) {
-      //ia take the cordal vertex
-      VertexSE3Chord* chordal_v = dynamic_cast<VertexSE3Chord*>(v_it->second);
-      //ia take the corresponding geodesic vertex
-      VertexSE3* geodesic_v = dynamic_cast<VertexSE3*>(geodesic_optimizer.vertex(v_it->first));
-
-      if (!chordal_v || !geodesic_v)
-        throw std::runtime_error("dynamic cast failed, exit");
-
-      //ia copy the damn estimate
-      geodesic_v->setEstimate(chordal_v->estimate());
-      
-      ++v_it;
-    }
-
-    //ia compute the damn chi2
-    geodesic_optimizer.computeActiveErrors();
-    if (kernel_type == "") {
-      std::cerr << "reprojected chi2: " << geodesic_optimizer.chi2() << std::endl;
-      std::cerr << "reprojected active chi2: " << CL_GREEN(geodesic_optimizer.activeChi2()) << std::endl;
-      //ia write to file
-      comp_stats_stream << i << "; "
-                        << chordal_optimizer.chi2() << "; "
-                        << geodesic_optimizer.chi2();
-    } else {
-      //ia kernelized chi2
-      std::cerr << "reprojected k-chi2: " << geodesic_optimizer.chi2() << std::endl;
-      std::cerr << "reprojected k-active chi2: " << CL_GREEN(geodesic_optimizer.activeRobustChi2()) << std::endl;
-      //ia write to file
-      comp_stats_stream << i << "; "
-                        << chordal_optimizer.activeRobustChi2() << "; "
-                        << geodesic_optimizer.activeRobustChi2();
-    }
-
-    comp_stats_stream << std::endl;
-      
+  int optimization_result = chordal_optimizer.optimize(max_iterations);
+  if (optimization_result == OptimizationAlgorithm::Fail) {
+    std::cerr << "cholesky failed" << std::endl;
   }
+  
 
   //ia close comparative stats
   comp_stats_stream.close();
-
-  //ia write stats
-  if (stats_filename != ""){
-    std::cerr << "writing stats to file \"" << stats_filename << std::endl;
-    ofstream os(stats_filename.c_str());
-    const BatchStatisticsContainer& bsc = chordal_optimizer.batchStatistics();
-    
-    for (int i=0; i<max_iterations; i++) {
-      os << bsc[i] << endl;
-    }
-  }
 
   //ia save the output
   if (output_filename != "") {
@@ -354,5 +403,7 @@ int main(int argc, char *argv[]) {
     cerr << "done!" << endl;
   }
 
+  //ia clean-up
+  delete action;
   return 0;
 }
