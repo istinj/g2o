@@ -1,17 +1,22 @@
 INCLUDE_DIRECTORIES(${CHOLMOD_INCLUDE_DIR})
 
-# chordal comparator
-ADD_EXECUTABLE(chordal_comparator chordal_comparator.cpp)
-SET_TARGET_PROPERTIES(chordal_comparator PROPERTIES OUTPUT_NAME chordal_comparator${EXE_POSTFIX})
-TARGET_LINK_LIBRARIES(chordal_comparator core g2o_cli_library types_slam3d solver_cholmod solver_csparse)
+# chordal comparator app
+ADD_EXECUTABLE(g2o_chordal_geodesic_comparator g2o_chordal_geodesic_comparator.cpp)
+SET_TARGET_PROPERTIES(g2o_chordal_geodesic_comparator PROPERTIES OUTPUT_NAME g2o_chordal_geodesic_comparator${EXE_POSTFIX})
+TARGET_LINK_LIBRARIES(g2o_chordal_geodesic_comparator core g2o_cli_library types_slam3d solver_cholmod solver_csparse)
 
-# chordal converter
-ADD_EXECUTABLE(chordal_converter chordal_converter.cpp)
-SET_TARGET_PROPERTIES(chordal_converter PROPERTIES OUTPUT_NAME chordal_converter${EXE_POSTFIX})
-TARGET_LINK_LIBRARIES(chordal_converter core types_slam3d)
+# g2o mod app with better stats
+ADD_EXECUTABLE(g2o_chordal_app g2o_chordal_app.cpp)
+SET_TARGET_PROPERTIES(g2o_chordal_app PROPERTIES OUTPUT_NAME g2o_chordal_app${EXE_POSTFIX})
+TARGET_LINK_LIBRARIES(g2o_chordal_app core g2o_cli_library types_slam3d solver_cholmod solver_csparse)
 
-# inverse chordal converter
-ADD_EXECUTABLE(reverse_chordal_converter inverse_chordal_converter.cpp)
-SET_TARGET_PROPERTIES(reverse_chordal_converter PROPERTIES OUTPUT_NAME reverse_chordal_converter${EXE_POSTFIX})
-TARGET_LINK_LIBRARIES(reverse_chordal_converter core types_slam3d)
+# chordal -> geodesic converter
+ADD_EXECUTABLE(converter_geodesic2chordal converter_geodesic2chordal.cpp)
+SET_TARGET_PROPERTIES(converter_geodesic2chordal PROPERTIES OUTPUT_NAME converter_geodesic2chordal${EXE_POSTFIX})
+TARGET_LINK_LIBRARIES(converter_geodesic2chordal core types_slam3d)
+
+# geodesic -> chordal converter
+ADD_EXECUTABLE(converter_chordal2geodesic converter_chordal2geodesic.cpp)
+SET_TARGET_PROPERTIES(converter_chordal2geodesic PROPERTIES OUTPUT_NAME converter_chordal2geodesic${EXE_POSTFIX})
+TARGET_LINK_LIBRARIES(converter_chordal2geodesic core types_slam3d)
 

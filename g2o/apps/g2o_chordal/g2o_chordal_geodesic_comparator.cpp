@@ -145,6 +145,8 @@ int main(int argc, char *argv[]) {
   bool initial_guess;
   bool initial_guess_odometry;
 
+  string initial_guess_type("no-guess");
+
   bool list_types_flag;
   bool list_solvers_flag;
   bool list_kernels_flag;
@@ -155,7 +157,8 @@ int main(int argc, char *argv[]) {
   string output_filename;
   string chordal_input_filename;
   string kernel_type;
-  string comparison_stats_filename; 
+  string comparison_stats_filename;
+  string summary_filaname;
   string geodesic_graph_filename;
   string solver_type;
 
@@ -173,6 +176,7 @@ int main(int argc, char *argv[]) {
   arg.param("robustKernelWidth", kernel_width, -1., "width for the robust Kernel (only if robust_kernel_type)");
   arg.param("solver", solver_type, "gn_fix6_3_cholmod", "specify which solver to use underneat\n\t {gn_var, lm_fix3_2, gn_fix6_3, lm_fix7_3}");
   arg.param("compareStats", comparison_stats_filename, "", "specify a file for comparison stats");
+  arg.param("summary", summary_filaname, "", "summary of the optimization - for tables :)");
   arg.param("geodesicGraph", geodesic_graph_filename, "", "standard graph to compare - geodesic error");
   arg.paramLeftOver("graph-input", chordal_input_filename, "", "chordal graph file which will be processed");
   arg.parseArgs(argc, argv);
@@ -370,28 +374,51 @@ int main(int argc, char *argv[]) {
   std::cerr << "chordal graph load chi2  : " << FIXED(chordal_load_chi2) << std::endl;
   std::cerr << "geodesic graph load chi2 : " << FIXED(geodesic_load_chi2) << std::endl;
 
+  //ia damn intial guess
   if (initial_guess && initial_guess_odometry)
     throw std::runtime_error("both initialization techniques selected, exit");
   
   if (initial_guess) {
     std::cerr << "computing initial guess from spanning tree" << std::endl;
+    initial_guess_type = "spanning";
     chordal_optimizer.computeInitialGuess();
     // geodesic_optimizer.computeInitialGuess();
   }
 
   if (initial_guess_odometry) {
     std::cerr << "computing initial guess from odometry" << std::endl;
+    initial_guess_type = "odometry";
     EstimatePropagatorCostOdometry chordal_odometry_cost_function(&chordal_optimizer);
     EstimatePropagatorCostOdometry geodesic_odometry_cost_function(&geodesic_optimizer);
     chordal_optimizer.computeInitialGuess(chordal_odometry_cost_function);
     // geodesic_optimizer.computeInitialGuess(geodesic_odometry_cost_function);
   }
 
+  //ia get the damn initial chi2
+  double initial_chi2 = -1.0;
+  chordal_optimizer.computeActiveErrors();
+  if (optimization_has_kernel)
+    initial_chi2 = chordal_optimizer.activeRobustChi2();
+  else
+    initial_chi2 = chordal_optimizer.activeChi2();
+  std::cerr << "initial chi2: " << FIXED(initial_chi2) << std::endl;
+
+
+  //ua optimize
   int optimization_result = chordal_optimizer.optimize(max_iterations);
   if (optimization_result == OptimizationAlgorithm::Fail) {
     std::cerr << "cholesky failed" << std::endl;
   }
   
+
+  //ia get the damn final chi2
+  double final_chi2 = -1.0;
+  chordal_optimizer.computeActiveErrors();
+  if (optimization_has_kernel)
+    final_chi2 = chordal_optimizer.activeRobustChi2();
+  else
+    final_chi2 = chordal_optimizer.activeChi2();
+
 
   //ia close comparative stats
   comp_stats_stream.close();
@@ -401,6 +428,25 @@ int main(int argc, char *argv[]) {
     cerr << "saving chordal output file : " << output_filename << endl;
     chordal_optimizer.save(output_filename.c_str());
     cerr << "done!" << endl;
+  }
+
+  //ia shit out a summary useful for latex tables
+  if (summary_filaname != "") {
+    std::cerr << "writing summary to file: " << summary_filaname << " ... ";
+    PropertyMap summary;
+    summary.makeProperty<StringProperty>("filename", chordal_input_filename);
+    summary.makeProperty<IntProperty>("n_vertices", chordal_optimizer.vertices().size());
+    summary.makeProperty<IntProperty>("n_edges", chordal_optimizer.edges().size());
+    summary.makeProperty<StringProperty>("initial_guess_type", initial_guess_type);
+    summary.makeProperty<IntProperty>("num_iterations", max_iterations);
+    summary.makeProperty<StringProperty>("solver_type", solver_type);
+    summary.makeProperty<DoubleProperty>("initial_chi", initial_chi2);
+    summary.makeProperty<DoubleProperty>("final_chi", final_chi2);
+
+    std::ofstream summary_stream(summary_filaname.c_str());
+    summary.writeToCSV(summary_stream);
+    summary_stream.close();
+    std::cerr << "done." << std::endl;
   }
 
   //ia clean-up
