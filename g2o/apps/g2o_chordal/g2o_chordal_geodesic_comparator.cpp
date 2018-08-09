@@ -438,7 +438,7 @@ int main(int argc, char *argv[]) {
     summary.makeProperty<IntProperty>("n_vertices", chordal_optimizer.vertices().size());
     summary.makeProperty<IntProperty>("n_edges", chordal_optimizer.edges().size());
     summary.makeProperty<StringProperty>("initial_guess_type", initial_guess_type);
-    summary.makeProperty<IntProperty>("num_iterations", max_iterations);
+    summary.makeProperty<IntProperty>("num_iterations", max_iterations-1);
     summary.makeProperty<StringProperty>("solver_type", solver_type);
     summary.makeProperty<DoubleProperty>("initial_chi", initial_chi2);
     summary.makeProperty<DoubleProperty>("final_chi", final_chi2);

@@ -1,10 +1,5 @@
 #!/bin/bash
 
-if test "$#" -ne 1; then
-  echo "Please specify the working directory"
-  exit 1
-fi
-
 # COLORSSSS
 RED='\033[0;31m'
 CYAN='\033[0;36m'
@@ -25,6 +20,12 @@ UBLUE='\033[4;34m'
 UGREEN='\033[4;32m'
 
 NC='\033[0m' # No Color
+
+
+if test "$#" -ne 1; then
+  echo -e ${BYELLOW}"Please specify the working directory"${NC}
+  exit 1
+fi
 
 target_dir=$1
 directories=($(ls ${target_dir}))
@@ -62,6 +63,14 @@ for d in "${directories[@]}"; do
   fi
   mkdir ${chordal_directory}
 
+  #ia create a directory for the reprojected geodesic
+  reprojected_directory=reprojected
+  if [ -d ${reprojected_directory} ]; then
+      echo -e ${BRED}cleaning reprojected directory${NC}
+      rm -rf ${reprojected_directory}
+  fi
+  mkdir ${reprojected_directory}
+
   #ia for each damn file in the directory 
   for f in "${files[@]}"; do
     if [ -d ${f} ]; then
@@ -73,11 +82,18 @@ for d in "${directories[@]}"; do
     # get the damn name without extension
     f_base=${f##*/}
     f_prefix=${f_base%.*}
-    output_file=${chordal_directory}/${f_prefix}.g2o
-    echo -e output graph: ${UYELLOW}${output_file}${NC}
+    chordal_file=${chordal_directory}/${f_prefix}.g2o
+    reprojected_file=${reprojected_directory}/${f_prefix}.g2o
+    echo -e chordal graph: ${UYELLOW}${chordal_file}${NC}
+    echo -e reprojected graph: ${UYELLOW}${reprojected_file}${NC}
 
     #ia default values for the omega conversion
-    ${G2O_ROOT}/bin/chordal_converter -condType 0 -omegaTresh 0.1 -o ${output_file} ${f}
+    echo -e ${YELLOW}"geodesic->chordal"${NC}
+    ${G2O_ROOT}/bin/converter_geodesic2chordal -condType 0 -omegaTresh 0.1 -o ${chordal_file} ${f}
+    
+    #ia convert back to geodesic to see if the omega are well formed
+    echo -e ${YELLOW}"chordal->geodesic"${NC}
+    ${G2O_ROOT}/bin/converter_chordal2geodesic -o ${reprojected_file} ${chordal_file}
   done
 
 

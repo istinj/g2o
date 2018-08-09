@@ -76,8 +76,15 @@ int main(int argc, char *argv[]) {
   HyperGraph::EdgeSet standard_edges;
   
   // convert the src_edges
+  size_t cnt = 0;
   std::cerr << "convert the src_edges from chordal to standard quaternions" << std::endl;
+  std::cerr << "conversion started" << std::endl;
   for (HyperGraph::Edge* eptr : src_edges) {
+    float percentage = std::ceil((float)cnt++ / (float)src_edges.size() * 100);
+    if ((int)percentage % 5 == 0)
+      std::cerr << "\rcompleted " << percentage << "%" << std::flush;
+
+    
     EdgeSE3Chord* e = dynamic_cast<EdgeSE3Chord*>(eptr);
     const Isometry3& Z = e->measurement();
     const Matrix12& omega = e->information();
@@ -91,7 +98,6 @@ int main(int argc, char *argv[]) {
     standard_edge->setInformation(standard_omega);
     standard_edge->vertices() = eptr->vertices(); // this is a shit but it works
     standard_edges.insert(standard_edge);
-    std::cerr << "x";
   }
   std::cerr << std::endl;
 

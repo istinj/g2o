@@ -23,12 +23,10 @@ NC='\033[0m' # No Color
 
 
 if test "$#" -ne 2; then
-  echo "Please specify the working directory and the output directory for the statics"
-  echo -e S{BYELLOW}"Usage: <run_experiments> <path_to_working_directory> <path_where_to_save_stats>"${NC}
-  echo -e S{BYELLOW}"exit"${NC}
+  echo -e ${BYELLOW}"Please specify the working directory and the output directory for the statics"
+  echo -e ${BYELLOW}"Usage: <run_experiments> <path_to_working_directory> <path_where_to_save_stats>"${NC}
   exit 1
 fi
-
 
 #ia preparing all the damn directories 
 pwd=`pwd`
@@ -109,16 +107,21 @@ for f in "${files[@]}"; do
   stats_file_geodesic=${statics_directory_geodesic}/${f_prefix}.stats
   stats_file_chordal=${statics_directory_chordal}/${f_prefix}.stats
 
+  summary_file_geodesic=${statics_directory_geodesic}/${f_prefix}.summary
+  summary_file_chordal=${statics_directory_chordal}/${f_prefix}.summary
+
   echo -e stats files: ${UYELLOW}${stats_file_geodesic}${NC} and ${UYELLOW}${stats_file_chordal}${NC}
+  echo -e summary files: ${UYELLOW}${summary_file_geodesic}${NC} and ${UYELLOW}${summary_file_chordal}${NC}
   echo -e output files: ${UYELLOW}${output_file_geodesic}${NC} and ${UYELLOW}${output_file_chordal}${NC}
 
   #ia process the standard and the chordal one
   echo -e ${YELLOW}standard${NC}
-  ${G2O_ROOT}/bin/g2o -v -i 100 -guess -solver gn_fix6_3_cholmod -stats ${stats_file_geodesic} -o ${output_file_geodesic} ${f}
-  
+  ${G2O_ROOT}/bin/g2o_chordal_app -v -i 100 -guess -solver gn_fix6_3_cholmod -stats ${stats_file_geodesic} -summary ${summary_file_geodesic} -o ${output_file_geodesic} ${f}
+
   echo $'\n'
   echo -e ${YELLOW}chordal${NC}
-  ${G2O_ROOT}/bin/chordal_comparator -i 100 -guess -solver gn_fix6_3_cholmod -o ${output_file_chordal} -compareStats ${stats_file_chordal} -otherGraph ${f} chordal/${f}
+  ${G2O_ROOT}/bin/g2o_chordal_geodesic_comparator -i 101 -guess -solver gn_fix6_3_cholmod -o ${output_file_chordal} -compareStats ${stats_file_chordal} -summary ${summary_file_chordal} -geodesicGraph ${f} chordal/${f}
+  
 done
 
 echo -e ${BGREEN}finish${NC}
