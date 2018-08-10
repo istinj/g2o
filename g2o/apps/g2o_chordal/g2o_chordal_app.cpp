@@ -271,7 +271,10 @@ int main(int argc, char** argv) {
     complete_bsc.insert(complete_bsc.begin(), initial_stats);
 
     for (size_t i = 0; i < complete_bsc.size(); i++) {
-      stats_stream << complete_bsc[i] << std::endl;
+      const G2OBatchStatistics& s = complete_bsc[i];
+      if (s.choleskyNNZ == 0 && i != 0)
+        continue;
+      stats_stream << s << std::endl;
     }
     std::cerr << "done." << std::endl;
     //ia porco dio close the stats

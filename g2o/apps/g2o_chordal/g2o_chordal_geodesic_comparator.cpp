@@ -110,6 +110,10 @@ struct ComparatorAction : public HyperGraphAction {
       std::cerr << "[ComparatorAction] reprojected active chi2: "
                 << CL_GREEN(FIXED(geo_opt_ptr->activeChi2())) << std::endl;
       
+      if (chord_opt_ptr->activeChi2() == 0) {
+        return this;
+      }
+
       //ia write to file
       (*stats) << "it= "<< current_iteration << "; "
                << "chordalChi2= " << FIXED(chord_opt_ptr->activeChi2()) << "; "
@@ -120,6 +124,10 @@ struct ComparatorAction : public HyperGraphAction {
                 << CL_YELLOW(FIXED(chord_opt_ptr->activeRobustChi2())) << std::endl;
       std::cerr << "[ComparatorAction] reprojected k-active chi2: "
                 << CL_GREEN(FIXED(geo_opt_ptr->activeRobustChi2())) << std::endl;
+
+      if (chord_opt_ptr->activeRobustChi2() == 0) {
+        return this;
+      }
       //ia write to file
       (*stats) << "it= "<< current_iteration << "; "
                << "chordalChi2= " << FIXED(chord_opt_ptr->activeRobustChi2()) << "; "
