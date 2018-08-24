@@ -1,10 +1,5 @@
 #!/bin/bash
 
-if test "$#" -ne 1; then
-  echo "Please specify the working directory"
-  exit 1
-fi
-
 # COLORSSSS
 RED='\033[0;31m'
 CYAN='\033[0;36m'
@@ -27,30 +22,53 @@ UGREEN='\033[4;32m'
 NC='\033[0m' # No Color
 
 
+if test "$#" -ne 2; then
+  echo -e ${BYELLOW}"Please specify the working directory and the output directory for the statics"
+  echo -e ${BYELLOW}"Usage: <run_experiments> <path_to_working_directory> <path_where_to_save_stats>"${NC}
+  exit 1
+fi
+
 target_dir=$1
 files=($(ls ${target_dir}))
 pwd=`pwd`
 
+stats_dir=$2
+
 iterations=100
 
+#ia directories for the stats - in order to easy plot them with gnuplot
+statics_directory=${stats_dir}/stats_noguess
+if [ -d ${statics_directory} ]; then
+    echo -e ${BRED}cleaning statics directory${NC}
+    rm -rf ${statics_directory}
+fi
+mkdir ${statics_directory}
+
+
+#ia print out the all the shit
 echo -e G2O_ROOT: ${UCYAN}${G2O_ROOT}${NC}
-echo -e current directory: ${UCYAN}$pwd${NC}
-echo -e working directory: ${UCYAN}${target_dir}${NC}
-echo -e num iterations: ${UCYAN}${iterations}${NC}
+echo -e current directory : ${UCYAN}$pwd${NC}
+echo -e working directory : ${UCYAN}${target_dir}${NC}
+echo -e stats directory : ${UCYAN}${statics_directory}${NC}
+echo -e running: ${UCYAN}Levemberg-Marquardt no-guess${NC}
 cd ${target_dir}
 echo $'\n'
 
 
-# ia generate stats directory
-output_directory=output
+# ia generate output directory
+output_directory=output_noguess
 if [ -d ${output_directory} ]; then
   echo -e ${BRED}cleaning ouput directory${NC}
   rm -rf ${output_directory}
 fi
 mkdir ${output_directory}
+
+
+
 for f in "${files[@]}"; do
   #ia skip directories
   if [ -d ${f} ]; then
+      echo -e ${RED}skip directory${NC}
       continue
   fi
   
@@ -61,12 +79,14 @@ for f in "${files[@]}"; do
   f_prefix=${f_base%.*}
   
   output_file=${output_directory}/${f_prefix}_output.g2o
-  stats_file=${output_directory}/${f_prefix}.stats
+  stats_file=${statics_directory}/${f_prefix}.stats
+  summary_file=${statics_directory}/${f_prefix}.summary
   echo -e output graph: ${UYELLOW}${output_file}${NC}
   echo -e stats file: ${UYELLOW}${stats_file}${NC}
+  echo -e summary file: ${UYELLOW}${summary_file}${NC}
 
 
-  ${G2O_ROOT}/bin/g2o -v -i ${iterations} -solver lm_var_cholmod -stats ${stats_file} -o ${output_file} ${f}
+  ${G2O_ROOT}/bin/g2o -v -i ${iterations} -solver lm_var_cholmod -stats ${stats_file} -summary ${summary_file} -o ${output_file} ${f}
   echo $'\n'
 done
 
@@ -75,6 +95,7 @@ echo -e ${BGREEN}done${NC}
 
 cd $pwd
 echo exit
+echo $'\n'
 
 
 

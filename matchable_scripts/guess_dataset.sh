@@ -49,7 +49,7 @@ ${G2O_ROOT}/bin/g2o_matchable_simulator3d -numPoses 10000 -numPoints 8000 -numLi
 
 ${G2O_ROOT}/bin/g2o_matchable_simulator3d -numPoses 10000 -numPoints 8000 -numLines 5000 -numPlanes 5000 -worldSize "120;120" -hasPtPt -hasLnLn -hasPlPl ${big_graph_dir}/graph_0_homogeneous.g2o
 
-${G2O_ROOT}/bin/g2o_matchable_simulator3d -numPoses 10000 -numPoses 10000 -numPoints 8000 -numLines 5000 -numPlanes 5000 -worldSize "120;120" -hasLnPt -hasPlLn -hasPlPt ${big_graph_dir}/graph_0_inhomogenous.g2o
+${G2O_ROOT}/bin/g2o_matchable_simulator3d -numPoses 10000 -numPoints 8000 -numLines 5000 -numPlanes 5000 -worldSize "120;120" -hasLnPt -hasPlLn -hasPlPt ${big_graph_dir}/graph_0_inhomogenous.g2o
 
 # point only graph, may be useful for comparison, even if the graph is different
 ${G2O_ROOT}/bin/g2o_matchable_simulator3d -numPoses 10000 -numPoints 8000 -worldSize "120;120" -hasPtPt ${big_graph_dir}/graph_0_pt.g2o
@@ -76,6 +76,8 @@ ${G2O_ROOT}/bin/g2o_matchable_simulator3d -numPoses 1000 -numPoints 1000 -numLin
 ${G2O_ROOT}/bin/g2o_matchable_simulator3d -numPoses 1000 -numPoints 1000 -worldSize "40;40" -hasPtPt ${mid_graph_dir}/graph_0_pt.g2o
 
 
+
+
 # ia generate 100 poses graphs
 small_graph_dir=100_poses
 echo -e ${BCYAN}100_poses graph${NC}
@@ -92,7 +94,7 @@ ${G2O_ROOT}/bin/g2o_matchable_simulator3d -numPoses 100 -numPoints 50 -numLines 
 ${G2O_ROOT}/bin/g2o_matchable_simulator3d -numPoses 100 -numPoints 50 -numLines 50 -numPlanes 50 -hasLnPt -hasPlLn -hasPlPt ${small_graph_dir}/graph_0_inhomogenous.g2o
 
 # point only graph, may be useful for comparison, even if the graph is different
-${G2O_ROOT}/bin/g2o_matchable_simulator3d -numPoses 100 -numPoints 50 -hasPtPt ${small_graph_dir}/graph_0_pt.g2o
+${G2O_ROOT}/bin/g2o_matchable_simulator3d -numPoses 100 -numPoints 50 -numLines 50 -numPlanes 50 -hasPtPt ${small_graph_dir}/graph_0_pt.g2o
 
 echo $'\n'
 echo -e ${BGREEN}done${NC}

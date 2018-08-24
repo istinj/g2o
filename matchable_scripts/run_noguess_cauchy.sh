@@ -37,7 +37,7 @@ stats_dir=$2
 iterations=100
 
 #ia directories for the stats - in order to easy plot them with gnuplot
-statics_directory=${stats_dir}/stats_spanning
+statics_directory=${stats_dir}/stats_noguess
 if [ -d ${statics_directory} ]; then
     echo -e ${BRED}cleaning statics directory${NC}
     rm -rf ${statics_directory}
@@ -50,12 +50,12 @@ echo -e G2O_ROOT: ${UCYAN}${G2O_ROOT}${NC}
 echo -e current directory : ${UCYAN}$pwd${NC}
 echo -e working directory : ${UCYAN}${target_dir}${NC}
 echo -e stats directory : ${UCYAN}${statics_directory}${NC}
-echo -e running: ${UCYAN}Levemberg-Marquardt odometry${NC}
+echo -e running: ${UCYAN}Levemberg-Marquardt with Cauchy kernel no-guess${NC}
 cd ${target_dir}
 echo $'\n'
 
 # ia generate output directory
-output_directory=output_spanning
+output_directory=output_noguess
 if [ -d ${output_directory} ]; then
   echo -e ${BRED}cleaning ouput directory${NC}
   rm -rf ${output_directory}
@@ -83,7 +83,7 @@ for f in "${files[@]}"; do
   echo -e summary file: ${UYELLOW}${summary_file}${NC}
 
 
-  ${G2O_ROOT}/bin/g2o -v -i ${iterations} -guess -solver lm_var_cholmod -stats ${stats_file} -summary ${summary_file} -o ${output_file} ${f}
+  ${G2O_ROOT}/bin/g2o -v -i ${iterations} -solver lm_var_cholmod -robustKernel Cauchy -robustKernelWidth 1.0 -stats ${stats_file} -summary ${summary_file} -o ${output_file} ${f}
   echo $'\n'
 done
 
