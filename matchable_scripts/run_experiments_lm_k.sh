@@ -53,12 +53,6 @@ for d in "${directories[@]}"; do
       continue
   fi
 
-  if [ "${d}" = "chordal_optimum" ]; then
-      echo -e ${REVRED}skip folder ${d}${NC}
-      echo $'\n'
-      continue
-  fi
-
   #ia directories for the stats - in order to easy plot them with gnuplot
   statics_directory_dataset=${stats_dir}/${d}
   if [ -d ${statics_directory_dataset} ]; then

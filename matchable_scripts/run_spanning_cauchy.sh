@@ -29,7 +29,7 @@ if test "$#" -ne 2; then
 fi
 
 target_dir=$1
-files=($(ls ${target_dir}))
+noise_directories=($(ls ${target_dir}))
 pwd=`pwd`
 
 stats_dir=$2
@@ -37,55 +37,89 @@ stats_dir=$2
 iterations=100
 
 #ia directories for the stats - in order to easy plot them with gnuplot
-statics_directory=${stats_dir}/stats_spanning
-if [ -d ${statics_directory} ]; then
+stats_directory_base=${stats_dir}/stats_spanning
+if [ -d ${stats_directory_base} ]; then
     echo -e ${BRED}cleaning statics directory${NC}
-    rm -rf ${statics_directory}
+    rm -rf ${stats_directory_base}
 fi
-mkdir ${statics_directory}
+mkdir ${stats_directory_base}
 
 
 #ia print out the all the shit
 echo -e G2O_ROOT: ${UCYAN}${G2O_ROOT}${NC}
 echo -e current directory : ${UCYAN}$pwd${NC}
 echo -e working directory : ${UCYAN}${target_dir}${NC}
-echo -e stats directory : ${UCYAN}${statics_directory}${NC}
+echo -e stats directory : ${UCYAN}${stats_directory_base}${NC}
 echo -e running: ${UCYAN}Levemberg-Marquardt with Cauchy kernel spanning${NC}
 cd ${target_dir}
 echo $'\n'
 
-# ia generate output directory
-output_directory=output_spanning
-if [ -d ${output_directory} ]; then
-  echo -e ${BRED}cleaning ouput directory${NC}
-  rm -rf ${output_directory}
-fi
-mkdir ${output_directory}
-
-for f in "${files[@]}"; do
-  #ia skip directories
-  if [ -d ${f} ]; then
-      echo -e ${RED}skip directory${NC}
-      continue
+for d in "${noise_directories[@]}"; do
+  #ia skip files for now
+  if [ -f ${d} ]; then
+    echo -e ${RED}skip files${NC}
+    continue
   fi
-  
-  echo -e processing file: ${UCYAN}${f}${NC}
-  
-  # get the damn name without extension
-  f_base=${f##*/}
-  f_prefix=${f_base%.*}
-  
-  output_file=${output_directory}/${f_prefix}_output.g2o
-  stats_file=${statics_directory}/${f_prefix}.stats
-  summary_file=${statics_directory}/${f_prefix}.summary
-  echo -e output graph: ${UYELLOW}${output_file}${NC}
-  echo -e stats file: ${UYELLOW}${stats_file}${NC}
-  echo -e summary file: ${UYELLOW}${summary_file}${NC}
+
+  echo -e current noise level: ${UCYAN}${d}${NC} 
+
+  # ia generate specific stats directory
+  stats_directory_current=${stats_directory_base}/${d}
+  if [ -d ${stats_directory_current} ]; then
+      echo -e ${BRED}cleaning specific statics directory${NC}
+      rm -rf ${stats_directory_current}
+  fi
+  mkdir ${stats_directory_current}
+
+  files=($(ls ${d}))
+  cd ${d}
+
+  # ia generate output directory
+  output_directory=output_spanning
+  if [ -d ${output_directory} ]; then
+    echo -e ${BRED}cleaning ouput directory${NC}
+    rm -rf ${output_directory}
+  fi
+  mkdir ${output_directory}
+
+  for f in "${files[@]}"; do
+    #ia skip directories
+    if [ -d ${f} ]; then
+        echo -e ${RED}skip directory${NC}
+        continue
+    fi
+    
+    echo -e processing file: ${UCYAN}${f}${NC}
+    
+    # get the damn name without extension
+    f_base=${f##*/}
+    f_prefix=${f_base%.*}
+    f_ext=${f_base##*.}
+
+    if [ "${f_ext}" = "txt" ]; then
+      echo -e ${REVRED}skip non-g2o file ${f}${NC}
+      echo $'\n'
+      continue
+    fi
+    
+    output_file=${output_directory}/${f_prefix}_output.g2o
+    stats_file=${stats_directory_current}/${f_prefix}.stats
+    summary_file=${stats_directory_current}/${f_prefix}.summary
+    echo -e output graph: ${UYELLOW}${output_file}${NC}
+    echo -e stats file: ${UYELLOW}${stats_file}${NC}
+    echo -e summary file: ${UYELLOW}${summary_file}${NC}
 
 
-  ${G2O_ROOT}/bin/g2o -v -i ${iterations} -guess -solver lm_var_cholmod -robustKernel Cauchy -robustKernelWidth 1.0 -stats ${stats_file} -summary ${summary_file} -o ${output_file} ${f}
+    ${G2O_ROOT}/bin/g2o -v -i ${iterations} -guess -solver lm_var_cholmod -robustKernel Cauchy -robustKernelWidth 1.0 -stats ${stats_file} -summary ${summary_file} -o ${output_file} ${f}
+    echo $'\n'
+  done
+
+  echo -e ${UGREEN}finished this noise level${NC}
+  cd ..
   echo $'\n'
+
 done
+
 
 echo $'\n'
 echo -e ${BGREEN}done${NC}
