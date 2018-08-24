@@ -8,13 +8,13 @@
 #include "g2o/core/sparse_optimizer.h"
 #include "g2o/core/block_solver.h"
 #include "g2o/core/factory.h"
+#include "g2o/stuff/color_macros.h"
 
 using namespace std;
 using namespace g2o;
 using namespace matchables;
 
 int main(int argc, char** argv) {
-
   std::cerr << "this app will produce a clean graph, i.e. with 0 noise encoded in the edges.\nif you want to add noise, you can use the *g2o_matchable_noise_adder* application." << std::endl << std::endl;
 
   //ia simulator paramers
@@ -97,7 +97,7 @@ int main(int argc, char** argv) {
 
   ws.init();
   
-  ws.compute();
+  ws.process();
 
   opt.save(output_filename.c_str());
   

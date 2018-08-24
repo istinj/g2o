@@ -139,7 +139,7 @@ namespace g2o {
       //ia checks that everything is ok
       void init();
 
-      void compute();
+      void process();
 
     protected:
       //ia moves the robot from prev_vertex, generates a new vertexSE3 and an edge between the two
@@ -165,11 +165,16 @@ namespace g2o {
       HyperGraph::EdgeSet*     _edges = 0;
       MatchableWorld*          _world = 0;
 
+      //ia map that contains already seen matchables
       std::map<Matchable*, VertexMatchable*> _seen_map;
       
+      //ia ids for the vertices. for a correct initialization, pose ids must be contigous
       uint64_t _matchable_vertex_id = 1000000;
       uint64_t _pose_vertex_id = 0;
       
+      //ia uniform sampler
+      UniformSampler _sampler;
+
       //ia parameters
       Parameters _params;
     };

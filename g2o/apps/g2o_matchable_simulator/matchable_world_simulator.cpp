@@ -38,12 +38,16 @@ namespace g2o {
 
       _matchable_vertex_id = _params.num_poses + 1000;
       
+      _sampler.setMin(0);
+      _sampler.setMax(1.0);
+      _sampler.setup();
+
       _seen_map.clear();
       _vertices->clear();
       _edges->clear();
     }
 
-    void WorldSimulator::compute() {
+    void WorldSimulator::process() {
       _params.simulator_stats.setZero();
       uint64_t sim_steps = 0;
       
@@ -182,10 +186,6 @@ namespace g2o {
 
 
     VertexSE3Chord* WorldSimulator::_moveRobot(VertexSE3Chord* from_vertex_) {
-      std::random_device rd;
-      std::mt19937 generator(rd()); //ia not required until you need a lot of numbers
-      std::uniform_real_distribution<> uniform_distribution(0, 1);
-
       const Vector6 current_estimate = internal::toVectorET(from_vertex_->estimate());
       Vector6 next_estimate = Vector6::Zero();
 
@@ -193,7 +193,7 @@ namespace g2o {
       const number_t current_theta = current_estimate[5];
       number_t next_theta = 0;
       number_t x = 0, y = 0;
-      number_t dir_selector = uniform_distribution(generator);
+      const number_t dir_selector = _sampler.sample();
 
       if (dir_selector < 0.5) {
         x = round(cos(current_theta));

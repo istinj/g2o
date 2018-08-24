@@ -31,28 +31,29 @@ namespace g2o {
 
       std::cerr << "\ncreate a grid world with the selected parameters" << std::endl;
 
-      std::random_device rd;
-      std::mt19937 generator(rd()); //ia not required until you need a lot of numbers
+      //ia setup the uniform sampler
+      _sampler.setMin(0);
+      _sampler.setMax(1.0);
+      _sampler.setup();
 
       //ia starting with points...
-      _generateScatteredPoints(generator);
+      _generateScatteredPoints();
       //ia ...now lines...
-      _generateScatteredLines(generator);
+      _generateScatteredLines();
       //ia ..finally planes
-      _generateScatteredPlanes(generator);
+      _generateScatteredPlanes();
 
       std::cerr << "done" << std::endl << std::endl;
       
       _is_valid = true;
     }
 
-    void MatchableWorld::_generateScatteredPoints(std::mt19937& random_generator_) {
+    void MatchableWorld::_generateScatteredPoints() {
       uint32_t cnt = 0;
-      std::uniform_real_distribution<> uniform_distribution(0, 1);
       for (size_t i = 0; i < _params.num_points; ++i) {
-        number_t x = uniform_distribution(random_generator_)*_params.width;
-        number_t y = uniform_distribution(random_generator_)*_params.height;
-        number_t z = uniform_distribution(random_generator_);
+        number_t x = _sampler.sample()*_params.width;
+        number_t y = _sampler.sample()*_params.height;
+        number_t z = _sampler.sample();
         
         Matchable* point_matchable = new Matchable(Matchable::Point, Vector3(x,y,z));
         _landmarks.insert(point_matchable);
@@ -62,8 +63,7 @@ namespace g2o {
       std::cerr << "generated " << cnt << " points" << std::endl;
     }
 
-    void MatchableWorld::_generateScatteredLines(std::mt19937& random_generator_) {
-      std::uniform_real_distribution<> uniform_distribution(0, 1);
+    void MatchableWorld::_generateScatteredLines() {
 
       // uint32_t xcnt = 0;
       // uint32_t ycnt = 0;
@@ -71,12 +71,12 @@ namespace g2o {
       uint32_t cnt = 0;
       
       for (size_t i = 0; i < _params.num_lines; ++i) {
-        number_t x = uniform_distribution(random_generator_)*_params.width;
-        number_t y = uniform_distribution(random_generator_)*_params.height;
-        number_t z = uniform_distribution(random_generator_);
+        number_t x = _sampler.sample()*_params.width;
+        number_t y = _sampler.sample()*_params.height;
+        number_t z = _sampler.sample();
         
         Vector3 axis = Vector3::Zero();
-        const double axis_selector = uniform_distribution(random_generator_);
+        const number_t axis_selector = _sampler.sample();
         if (axis_selector < _params.line_axis_probabilities.x_axis_prob) {
           axis = Vector3::UnitX();
           // ++ xcnt;
@@ -101,8 +101,7 @@ namespace g2o {
       std::cerr << "generated " << cnt << " lines" << std::endl;
     }
 
-    void MatchableWorld::_generateScatteredPlanes(std::mt19937& random_generator_) {
-      std::uniform_real_distribution<> uniform_distribution(0, 1);
+    void MatchableWorld::_generateScatteredPlanes() {
       
       size_t i = 0;
       // uint32_t xcnt = 0;
@@ -125,16 +124,16 @@ namespace g2o {
         Matchable* plane_matchable = 0;
 
 
-        const double selector = uniform_distribution(random_generator_);
+        const double selector = _sampler.sample();
         if (selector < _params.plane_axis_probabilities.x_axis_prob) {
           n = Vector3::UnitX();
-          r = round(uniform_distribution(random_generator_)*_params.width);
-          c = round(uniform_distribution(random_generator_)*_params.height);
+          r = round(_sampler.sample()*_params.width);
+          c = round(_sampler.sample()*_params.height);
 
           x = r * _params.resolution;
           y = c * _params.resolution + _params.resolution/2.0;
           
-          z = uniform_distribution(random_generator_);
+          z = _sampler.sample();
 
           plane_matchable = new Matchable(Matchable::Plane, Vector3(x,y,z));
           plane_matchable->computeRotationMatrixZXY(Vector3::UnitX());
@@ -150,13 +149,13 @@ namespace g2o {
                    _params.plane_axis_probabilities.x_axis_prob < selector) {
           //ia y axis
           n = Vector3::UnitY();
-          r = round(uniform_distribution(random_generator_)*_params.width);
-          c = round(uniform_distribution(random_generator_)*_params.height);
+          r = round(_sampler.sample()*_params.width);
+          c = round(_sampler.sample()*_params.height);
 
           x = r * _params.resolution + _params.resolution/2.0;
           y = c * _params.resolution;
           
-          z = uniform_distribution(random_generator_);
+          z = _sampler.sample();
 
           plane_matchable = new Matchable(Matchable::Plane, Vector3(x,y,z));
           plane_matchable->computeRotationMatrixZXY(Vector3::UnitY());
@@ -169,8 +168,8 @@ namespace g2o {
         } else {
           // z axis (floor)
           n = Vector3::UnitZ();
-          x = round(uniform_distribution(random_generator_)*_params.width) + _params.resolution/2.0f;
-          y = round(uniform_distribution(random_generator_)*_params.height) + _params.resolution/2.0f;
+          x = round(_sampler.sample()*_params.width) + _params.resolution/2.0f;
+          y = round(_sampler.sample()*_params.height) + _params.resolution/2.0f;
 
           plane_matchable = new Matchable(Matchable::Plane, Vector3(x,y,z));
           plane_matchable->computeRotationMatrixZXY(Vector3::UnitZ());

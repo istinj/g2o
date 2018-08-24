@@ -7,8 +7,44 @@
 namespace g2o {
   namespace matchables {
 
-    //!TODO:
-    //3 remove "removeWalls" function and move this phase in the motion simulation phase
+    class UniformSampler {
+    public:
+      UniformSampler(const bool random_seed_ = false) {
+        if (random_seed_) {
+          _rd = new std::random_device();
+          _rnd_generator = std::mt19937(_rd->operator ()());
+        }
+
+        _max = 1.0;
+        _min = 0;
+      }
+
+      virtual ~UniformSampler() {
+        if (_rd)
+          delete _rd;
+      }
+
+      inline void setMax(const number_t& max_) {_max = max_;}
+      inline void setMin(const number_t& min_) {_min = min_;}
+      inline void setup() {
+        _uniform_distribution = std::uniform_real_distribution<number_t>(_min, _max);
+      }
+
+      inline number_t sample() {
+        return _uniform_distribution(_rnd_generator);
+      }
+
+    protected:
+      std::uniform_real_distribution<number_t> _uniform_distribution;
+      std::mt19937 _rnd_generator;
+      std::random_device* _rd = 0;
+
+      number_t _max;
+      number_t _min;
+
+    public:
+      EIGEN_MAKE_ALIGNED_OPERATOR_NEW;
+    };
 
     struct CellPair {
       CellPair(const Eigen::Vector2i& first_cell_,
@@ -122,9 +158,9 @@ namespace g2o {
       
     protected:
       //ia utils functions
-      void _generateScatteredPoints(std::mt19937& random_generator_);
-      void _generateScatteredLines(std::mt19937& random_generator_);
-      void _generateScatteredPlanes(std::mt19937& random_generator_);
+      void _generateScatteredPoints();
+      void _generateScatteredLines();
+      void _generateScatteredPlanes();
 
       //ia world inner structures
       MatchableSet _landmarks;
@@ -136,6 +172,9 @@ namespace g2o {
       //ia stuff
       bool _is_valid;
       size_t _removed_walls;
+
+      //ia uniform sampler
+      UniformSampler _sampler;
     };
   }
 }
