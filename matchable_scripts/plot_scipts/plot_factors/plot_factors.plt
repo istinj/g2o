@@ -1,14 +1,17 @@
 reset
-# set term pngcairo dashed
-# set out 'plots.png'
+if (!exists("output_directory")) print "[gnuplot] invalid output directory"; exit
+
+output_file=output_directory."/plot_factors.eps"
+
+print "[gnuplot] output_directory  = ", output_directory
+print "[gnuplot] output_file       = ", output_file
 
 # set terminal epslatex color
-# set out 'plots.tex'
+# set out output_file
 
-#set terminal postscript eps enhanced color font 'Helvetica,10'
-# set terminal postscript eps enhanced color
+# set terminal postscript eps enhanced color font 'Helvetica,10'
 set terminal postscript eps enhanced color font 'Times-Roman,22'
-set output 'plots.eps'
+set output output_file
 
 set logscale y 10
 set grid x y
@@ -36,14 +39,14 @@ set style line 8 linetype 1 linecolor rgb "#007F3F" linewidth linethickness #gre
 set style line 9 linetype 1 linecolor rgb "#003F1F" linewidth linethickness #green_2
 
 set title 'Factor Comparisons'
-plot '../graph_0_all.stats' using 2:8 with lines linestyle 1 title 'all', \
-'../graph_0_homogeneous.stats' using 2:8 with lines linestyle 2 title 'hom', \
-'../graph_0_inhomogenous.stats' using 2:8 with lines linestyle 3 title 'non-hom', \
-'../graph_0_ln_lnpt.stats' using 2:8 with lines linestyle 4 title 'ln+lnpt', \
-'../graph_0_pl_plln.stats' using 2:8 with lines linestyle 5 title 'pl+plln', \
-'../graph_0_pl_plln_plpt.stats' using 2:8 with lines linestyle 6 title 'pl+plln+plpt', \
-'../graph_0_pt.stats' using 2:8 with lines linestyle 7 title 'pt', \
-'../graph_0_ln.stats' using 2:8 with lines linestyle 8 title 'ln', \
-'../graph_0_pl.stats' using 2:8 with lines linestyle 9 title 'pl'
+plot 'graph_0_all.stats' using 2:8 with lines linestyle 1 title 'all', \
+'graph_0_homogeneous.stats' using 2:8 with lines linestyle 2 title 'hom', \
+'graph_0_inhomogenous.stats' using 2:8 with lines linestyle 3 title 'non-hom', \
+'graph_0_ln_lnpt.stats' using 2:8 with lines linestyle 4 title 'ln+lnpt', \
+'graph_0_pl_plln.stats' using 2:8 with lines linestyle 5 title 'pl+plln', \
+'graph_0_pl_plln_plpt.stats' using 2:8 with lines linestyle 6 title 'pl+plln+plpt', \
+'graph_0_pt.stats' using 2:8 with lines linestyle 7 title 'pt', \
+'graph_0_ln.stats' using 2:8 with lines linestyle 8 title 'ln', \
+'graph_0_pl.stats' using 2:8 with lines linestyle 9 title 'pl'
 
 set term x11
