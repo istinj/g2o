@@ -46,6 +46,9 @@ echo -e statics base directory : ${REVCYAN}${stats_dir}${NC}
 cd ${target_dir}
 echo $'\n'
 
+#ia timing
+SECONDS=0
+
 #ia for each directory - aka each dataset
 for d in "${directories[@]}"; do
   if [ -f ${d} ]; then
@@ -82,5 +85,8 @@ done
 echo $'\n'
 echo $'\n'
 echo $'\n'
-echo -e ${REVGREEN}FINISHED EXPERIMENTS GAUSS-NEWTON NO KERNEL${NC}
+
+duration=$SECONDS
+echo -e ${REVGREEN}"$(($duration / 60)) minutes and $(($duration % 60)) seconds elapsed."${NC}
+echo -e ${REVGREEN}FINISHED EXPERIMENTS LEVEMBERG-MARQUARDT NO KERNEL${NC}
 cd $pwd

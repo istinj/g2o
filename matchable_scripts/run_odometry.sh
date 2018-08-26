@@ -110,7 +110,7 @@ for d in "${noise_directories[@]}"; do
     echo -e summary file: ${UYELLOW}${summary_file}${NC}
 
 
-    ${G2O_ROOT}/bin/g2o -v -i ${iterations} -guessOdometry -solver lm_var_cholmod -stats ${stats_file} -summary ${summary_file} -o ${output_file} ${f}
+    ${G2O_ROOT}/bin/g2o -v -i ${iterations} -statsAdvanced -guessOdometry -solver lm_var_cholmod -stats ${stats_file} -summary ${summary_file} -o ${output_file} ${f}
     echo $'\n'
   done
 

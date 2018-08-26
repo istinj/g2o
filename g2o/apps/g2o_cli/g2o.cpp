@@ -130,8 +130,9 @@ int main(int argc, char** argv)
   string statsFile;
   string summaryFile;
   bool nonSequential;
-  // command line parsing
   std::vector<int> gaugeList;
+  bool statsAdvanced;
+  // command line parsing
   CommandArgs arg;
   arg.param("i", maxIterations, 5, "perform n iterations, if negative consider the gain");
   arg.param("gain", gain, 1e-6, "the gain used to stop optimization (default = 1e-6)");
@@ -158,6 +159,7 @@ int main(int argc, char** argv)
   arg.param("typeslib", dummy, "", "specify a types library which will be loaded");
 #endif
   arg.param("stats", statsFile, "", "specify a file for the statistics");
+  arg.param("statsAdvanced", statsAdvanced, false, "set true to include it -1 in the stats");
   arg.param("listTypes", listTypes, false, "list the registered types");
   arg.param("listRobustKernels", listRobustKernels, false, "list the registered robust kernels");
   arg.param("listSolvers", listSolvers, false, "list the available solvers");
@@ -574,6 +576,12 @@ int main(int argc, char** argv)
     }
     double initChi = optimizer.chi2();
 
+    double initial_chi2 = 0.0;
+    if (robustKernel == "")
+      initial_chi2 = optimizer.activeChi2();
+    else
+      initial_chi2 = optimizer.activeRobustChi2();
+
     signal(SIGINT, sigquit_handler);
     int result=optimizer.optimize(maxIterations);
     if (maxIterations > 0 && result==OptimizationAlgorithm::Fail){
@@ -655,8 +663,17 @@ int main(int argc, char** argv)
     if (statsFile!=""){
       cerr << "writing stats to file \"" << statsFile << "\" ... ";
       ofstream os(statsFile.c_str());
-      const BatchStatisticsContainer& bsc = optimizer.batchStatistics();
       
+      //ia write firstly the damn initial chi2
+      G2OBatchStatistics initial_stats;
+      initial_stats.iteration = -1;
+      initial_stats.chi2 = initial_chi2;
+      initial_stats.choleskyNNZ = 1;
+
+      BatchStatisticsContainer bsc = optimizer.batchStatistics();
+      if (statsAdvanced)
+        bsc.insert(bsc.begin(), initial_stats);
+
       for (int i=0; i<maxIterations; i++) {
         os << bsc[i] << endl;
       }
