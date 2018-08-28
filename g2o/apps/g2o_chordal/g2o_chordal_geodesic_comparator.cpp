@@ -33,8 +33,26 @@
 
 #include "g2o/types/slam3d/types_slam3d.h"
 
+//ia include unscented
+#include "g2o/stuff/unscented.h"
+
 using namespace std;
 using namespace g2o;
+
+// @brief omega remapper
+//ia useful typedefs
+typedef std::pair<int, int> IntPair;
+typedef SigmaPoint<Vector6> SigmaPoint6;
+typedef SigmaPoint<Vector12> SigmaPoint12;
+
+typedef std::vector<SigmaPoint<Vector6>,  Eigen::aligned_allocator<SigmaPoint<Vector6> > > SigmaPoint6Vector;
+typedef std::vector<SigmaPoint<Vector12>, Eigen::aligned_allocator<SigmaPoint<Vector12> > > SigmaPoint12Vector;
+Matrix12 _remapInformationMatrix(const Vector6& src_mean_,
+                                 const Matrix6& src_omega_,
+                                 const double& thresh_);
+
+Matrix12 _reconditionateSigma(const Matrix12& src_sigma_,
+                              const double& threshold_);
 
 //! @brief this is called in the *preiteration* so
 //!        this lives one iteration in the past :)
@@ -50,16 +68,21 @@ struct ComparatorAction : public HyperGraphAction {
   std::ofstream* stats = 0;
   //! @brief robust kernel flag
   bool kernel_flag = false;
+  //! @brief dynamic epsilon flag for omegas
+  bool dynamic_epsilon_flag = false;
+  
   
   //! @breif ctor
   ComparatorAction(SparseOptimizer* geodesic_opt_,
                    SparseOptimizer* chordal_opt_,
                    std::ofstream* stats_stream_,
-                   const bool kernel_flag_) :
+                   const bool kernel_flag_,
+                   const bool dynamic_espilon_flag_) :
     geo_opt_ptr(geodesic_opt_),
     chord_opt_ptr(chordal_opt_),
     stats(stats_stream_),
-    kernel_flag(kernel_flag_) {
+    kernel_flag(kernel_flag_),
+    dynamic_epsilon_flag(dynamic_espilon_flag_) {
     if (!geo_opt_ptr || !chord_opt_ptr)
       throw std::runtime_error("[ComparatorAction] you set a null pointer genious");
   }
@@ -135,7 +158,55 @@ struct ComparatorAction : public HyperGraphAction {
     }
 
     (*stats) << std::endl;
-    
+
+    if (dynamic_epsilon_flag)  {
+      //ia now we can adjust the omega for the next iteration
+      const HyperGraph::EdgeSet& geo_edges = geo_opt_ptr->edges();
+      HyperGraph::EdgeSet& chord_edges = chord_opt_ptr->edges();
+
+
+      //ia standard epsilon
+      number_t epsilon = 0.1;
+
+      //ia adjust epsilon on the basis of the iterations
+      if (current_iteration < 9) {
+        epsilon = epsilon / (1*current_iteration+2);
+      } else if (current_iteration >= 9 && current_iteration < 19) {
+        epsilon = epsilon / (10*current_iteration+2);
+      } else {
+        epsilon = epsilon / (1000*current_iteration+2);
+      }
+
+      std::cerr << "dynamic epsilon = " << CL_LIGHTBLUE(epsilon) << std::endl;
+
+      //ia remap information matrix
+      HyperGraph::EdgeSet::const_iterator geo_edge_it = geo_edges.begin();
+      HyperGraph::EdgeSet::iterator chord_edge_it = chord_edges.begin();
+      
+      while (geo_edge_it != geo_edges.end()) {
+        EdgeSE3* geo_e = dynamic_cast<EdgeSE3*>(*geo_edge_it);
+        EdgeSE3Chord* chord_e = dynamic_cast<EdgeSE3Chord*>(*chord_edge_it);
+
+        std::pair<int, int> geo_ass(geo_e->vertices()[0]->id(), geo_e->vertices()[1]->id());
+        std::pair<int, int> chord_ass(chord_e->vertices()[0]->id(), chord_e->vertices()[1]->id());
+
+        if (geo_ass != chord_ass)
+          throw std::runtime_error("edge mismatch e mo so cazzi");
+
+        const Isometry3& geo_z = geo_e->measurement();
+        const Matrix6& geo_omega = geo_e->information();
+
+        Vector6 geo_z_minimal = internal::toVectorMQT(geo_z);
+        Matrix12 chord_omega =  _remapInformationMatrix(geo_z_minimal, geo_omega, epsilon);
+
+        chord_e->setInformation(chord_omega);
+
+        ++geo_edge_it;
+        ++chord_edge_it;
+      }
+
+    }
+
     return this;
   }
 };
@@ -150,6 +221,8 @@ int main(int argc, char *argv[]) {
   loadStandardSolver(dlSolverWrapper, argc, argv);
 
   // Command line parsing
+  bool dynamic_epsilon;
+  
   bool initial_guess;
   bool initial_guess_odometry;
 
@@ -166,6 +239,7 @@ int main(int argc, char *argv[]) {
   string chordal_input_filename;
   string kernel_type;
   string comparison_stats_filename;
+  string time_stats_filename;
   string summary_filaname;
   string geodesic_graph_filename;
   string solver_type;
@@ -185,7 +259,9 @@ int main(int argc, char *argv[]) {
   arg.param("solver", solver_type, "gn_fix6_3_cholmod", "specify which solver to use underneat\n\t {gn_var, lm_fix3_2, gn_fix6_3, lm_fix7_3}");
   arg.param("compareStats", comparison_stats_filename, "", "specify a file for comparison stats");
   arg.param("summary", summary_filaname, "", "summary of the optimization - for tables :)");
+  arg.param("timeStats", time_stats_filename, "", "stats for timing :)");
   arg.param("geodesicGraph", geodesic_graph_filename, "", "standard graph to compare - geodesic error");
+  arg.param("dynamicEpsilon", dynamic_epsilon, false, "true to remap the omega dynamically");
   arg.paramLeftOver("graph-input", chordal_input_filename, "", "chordal graph file which will be processed");
   arg.parseArgs(argc, argv);
 
@@ -366,7 +442,8 @@ int main(int argc, char *argv[]) {
   ComparatorAction* action = new ComparatorAction(&geodesic_optimizer,
                                                   &chordal_optimizer,
                                                   &comp_stats_stream,
-                                                  optimization_has_kernel);
+                                                  optimization_has_kernel,
+                                                  dynamic_epsilon);
   chordal_optimizer.addPreIterationAction(action);
   
 
@@ -457,7 +534,98 @@ int main(int argc, char *argv[]) {
     std::cerr << "done." << std::endl;
   }
 
+  //ia shit out the statitics
+  if (time_stats_filename != "") {
+    std::cerr << "writing time stats to file: " << time_stats_filename << " ... ";
+    ofstream time_stats_stream(time_stats_filename.c_str());
+
+    BatchStatisticsContainer complete_bsc = chordal_optimizer.batchStatistics();
+
+    for (size_t i = 0; i < complete_bsc.size(); i++) {
+      const G2OBatchStatistics& s = complete_bsc[i];
+      time_stats_stream << "iteration= " << s.iteration << "; ";
+      time_stats_stream << "preIterationTime= " << s.timePreIteration << "; ";
+      time_stats_stream << "iterationTime= " << s.timeIteration << "; ";
+      time_stats_stream << "completeIterationTime= " << s.timeCompleteIteration;
+      time_stats_stream << std::endl;
+    }
+    std::cerr << "done." << std::endl;
+    //ia porco dio close the stats
+    time_stats_stream.close();
+  }
+
   //ia clean-up
   delete action;
   return 0;
+}
+
+
+
+
+
+
+Matrix12 _remapInformationMatrix(const Vector6& src_mean_,
+                                 const Matrix6& src_omega_,
+                                 const double& threshold_) {
+  //ia computing sigma_12D
+  Matrix6 src_sigma = src_omega_.inverse();
+  Isometry3 T_mean = internal::fromVectorMQT(src_mean_);
+
+  Vector12 remapped_mean = Vector12::Zero();
+  Matrix12 remapped_sigma = Matrix12::Zero();
+
+  SigmaPoint6Vector sigma_points_6D;
+  SigmaPoint12Vector sigma_points_12D;
+
+  Vector6 zero_mean = Vector6::Zero();
+  if (!sampleUnscented(sigma_points_6D, zero_mean, src_sigma))
+    throw std::runtime_error("bad things happened while sampling");
+
+  int k = 1;
+  for (int i = 0; i < src_mean_.size(); ++i) {
+    int sample_plus_idx = k++;
+    int sample_minus_idx = k++;
+
+    const Vector6& sample_6D_plus = sigma_points_6D[sample_plus_idx]._sample;
+    const Vector6& sample_6D_minus = sigma_points_6D[sample_minus_idx]._sample;
+
+    Isometry3 T_plus = internal::fromVectorMQT(sample_6D_plus);
+    Isometry3 T_minus = internal::fromVectorMQT(sample_6D_minus);
+
+    Vector12 sample_12D_plus = internal::toFlatten(T_mean*T_plus);
+    Vector12 sample_12D_minus = internal::toFlatten(T_mean*T_minus);
+
+    SigmaPoint12 point_12D_plus(sample_12D_plus, sigma_points_6D[sample_plus_idx]._wi, sigma_points_6D[sample_plus_idx]._wp);
+    SigmaPoint12 point_12D_minus(sample_12D_minus, sigma_points_6D[sample_minus_idx]._wi, sigma_points_6D[sample_minus_idx]._wp);
+    sigma_points_12D.push_back(point_12D_plus);
+    sigma_points_12D.push_back(point_12D_minus);
+  }
+
+  reconstructGaussian(remapped_mean, remapped_sigma, sigma_points_12D);
+  
+  //ia reconditioning the new covariance
+  Matrix12 conditioned_sigma = _reconditionateSigma(remapped_sigma, threshold_);
+  Matrix12 remapped_omega = conditioned_sigma.inverse();
+  return remapped_omega;
+}
+
+
+Matrix12 _reconditionateSigma(const Matrix12& src_sigma_,
+                              const double& threshold_) {
+
+  Matrix12 conditioned_sigma = Matrix12::Zero();
+  Eigen::JacobiSVD<Matrix12> svd(src_sigma_, Eigen::ComputeThinU | Eigen::ComputeThinV);
+  double conditioned_eigenvalue = 1.0;
+  for (int i = 0; i < 12; ++i) {
+    if (svd.singularValues()(i,i) < threshold_) {
+      conditioned_eigenvalue = svd.singularValues()(i,i) + threshold_;
+    } else {
+      conditioned_eigenvalue = svd.singularValues()(i,i);
+    }
+    conditioned_sigma.noalias() += conditioned_eigenvalue *
+      svd.matrixU().col(i) * 
+      svd.matrixU().col(i).transpose();
+    // std::cerr << "conditioned_eigenvalue = " << conditioned_eigenvalue << std::endl;
+  }
+  return conditioned_sigma;
 }

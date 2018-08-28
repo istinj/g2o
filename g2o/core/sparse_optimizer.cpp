@@ -386,7 +386,9 @@ namespace g2o{
     
     OptimizationAlgorithm::SolverResult result = OptimizationAlgorithm::OK;
     for (int i=0; i<iterations && ! terminate() && ok; i++){
+      number_t t_pi_0 = get_monotonic_time();
       preIteration(i);
+      number_t t_preiter = get_monotonic_time() - t_pi_0;
 
       if (_computeBatchStatistics) {
         G2OBatchStatistics& cstat = _batchStatistics[i];
@@ -406,6 +408,9 @@ namespace g2o{
         errorComputed = true;
         _batchStatistics[i].chi2 = activeRobustChi2();
         _batchStatistics[i].timeIteration = get_monotonic_time()-ts;
+        _batchStatistics[i].timePreIteration = t_preiter;
+        _batchStatistics[i].timeCompleteIteration = _batchStatistics[i].timeIteration +
+          _batchStatistics[i].timePreIteration;
       }
 
       if (verbose()){

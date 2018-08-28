@@ -69,6 +69,8 @@ namespace g2o {
     os << PTHING(  iterationsLinearSolver );  // iterations of PCG
     os << PTHING(  timeUpdate ); // oplus
     os << PTHING(  timeIteration ); // total time );
+    os << PTHING(  timePreIteration ); // total time );
+    os << PTHING(  timeCompleteIteration ); // total time );
 
     os << PTHING( levenbergIterations );
     os << PTHING( timeLinearSolver);

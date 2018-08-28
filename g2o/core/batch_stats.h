@@ -62,6 +62,9 @@ namespace g2o {
     number_t timeUpdate;                ///< time to apply the update
     number_t timeIteration;             ///< total time;
 
+    number_t timePreIteration;           ///< time for preIteration
+    number_t timeCompleteIteration;      ///< timeIteration + timePreIteration
+
     number_t timeMarginals;             ///< computing the inverse elements (solve blocks) and thus the marginal covariances
 
     // information about the Hessian matrix
