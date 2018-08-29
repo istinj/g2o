@@ -46,6 +46,9 @@ echo -e statics base directory : ${REVCYAN}${stats_dir}${NC}
 cd ${target_dir}
 echo $'\n'
 
+#ia timing
+SECONDS=0
+
 #ia for each directory - aka each dataset
 for d in "${directories[@]}"; do
   if [ -f ${d} ]; then
@@ -74,10 +77,10 @@ for d in "${directories[@]}"; do
 
   ${pwd}/run_lm_no_guess.sh ${d}/ ${statics_directory_dataset}
   # read -p "press any key to continue"
-  
+
   ${pwd}/run_lm_spanning.sh ${d}/ ${statics_directory_dataset}
   # read -p "press any key to continue"
-  
+
   ${pwd}/run_lm_odom.sh ${d}/ ${statics_directory_dataset}
   # read -p "press any key to continue"
 
@@ -88,5 +91,8 @@ done
 echo $'\n'
 echo $'\n'
 echo $'\n'
+
+duration=$SECONDS
+echo -e ${REVGREEN}"$(($duration / 60)) minutes and $(($duration % 60)) seconds elapsed."${NC}
 echo -e ${REVGREEN}FINISHED EXPERIMENTS LEVEMBERG-MARQUARDT NO KERNEL${NC}
 cd $pwd
