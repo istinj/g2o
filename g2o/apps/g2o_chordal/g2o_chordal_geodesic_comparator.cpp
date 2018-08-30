@@ -140,7 +140,8 @@ struct ComparatorAction : public HyperGraphAction {
       //ia write to file
       (*stats) << "it= "<< current_iteration << "; "
                << "chordalChi2= " << FIXED(chord_opt_ptr->activeChi2()) << "; "
-               << "reprojectedChi2= " << FIXED(geo_opt_ptr->activeChi2());
+               << "reprojectedChi2= " << FIXED(geo_opt_ptr->activeChi2()) << "; "
+               << "totalReprojectedChi2= " << FIXED(geo_opt_ptr->chi2());
     } else {
       //ia kernelized chi2
       std::cerr << "[ComparatorAction] chordal k-active chi2= "
@@ -154,7 +155,8 @@ struct ComparatorAction : public HyperGraphAction {
       //ia write to file
       (*stats) << "it= "<< current_iteration << "; "
                << "chordalChi2= " << FIXED(chord_opt_ptr->activeRobustChi2()) << "; "
-               << "reprojectedChi2= " << FIXED(geo_opt_ptr->activeRobustChi2());
+               << "reprojectedChi2= " << FIXED(geo_opt_ptr->activeRobustChi2()) << "; "
+               << "totalReprojectedChi2= " << FIXED(geo_opt_ptr->chi2());
     }
 
     (*stats) << std::endl;

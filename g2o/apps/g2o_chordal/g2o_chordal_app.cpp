@@ -216,6 +216,7 @@ int main(int argc, char** argv) {
   optimizer.setComputeBatchStatistics(true);
 
   //ia initialize optimization
+  double initial_total_chi2 = -1.0;
   double initial_chi2 = -1.0;
   double final_chi2 = -1.0;
   optimizer.initializeOptimization();
@@ -239,6 +240,7 @@ int main(int argc, char** argv) {
 
   //ia get the damn initial chi2
   optimizer.computeActiveErrors();
+  initial_total_chi2 = optimizer.chi2();
   if (optimization_has_kernel)
     initial_chi2 = optimizer.activeRobustChi2();
   else
@@ -266,6 +268,7 @@ int main(int argc, char** argv) {
     G2OBatchStatistics initial_stats;
     initial_stats.iteration = -1;
     initial_stats.chi2 = initial_chi2;
+    initial_stats.totalChi2 = initial_total_chi2;
 
     BatchStatisticsContainer complete_bsc = optimizer.batchStatistics();
     complete_bsc.insert(complete_bsc.begin(), initial_stats);

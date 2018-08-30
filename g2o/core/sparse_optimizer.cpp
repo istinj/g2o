@@ -411,6 +411,7 @@ namespace g2o{
         _batchStatistics[i].timePreIteration = t_preiter;
         _batchStatistics[i].timeCompleteIteration = _batchStatistics[i].timeIteration +
           _batchStatistics[i].timePreIteration;
+        _batchStatistics[i].totalChi2 = chi2();
       }
 
       if (verbose()){

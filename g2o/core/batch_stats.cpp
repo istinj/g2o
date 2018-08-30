@@ -52,6 +52,7 @@ namespace g2o {
     os << PTHING( numVertices ); // how many vertices are involved
     os << PTHING( numEdges ); // hoe many edges
     os << PTHING(  chi2 );  // total chi2
+    os << PTHING(  totalChi2); // total chi2 ignoring the robust kernel
     
     /** timings **/
     // nonlinear part
@@ -69,8 +70,8 @@ namespace g2o {
     os << PTHING(  iterationsLinearSolver );  // iterations of PCG
     os << PTHING(  timeUpdate ); // oplus
     os << PTHING(  timeIteration ); // total time );
-    os << PTHING(  timePreIteration ); // total time );
-    os << PTHING(  timeCompleteIteration ); // total time );
+    os << PTHING(  timePreIteration ); // preiteration time );
+    os << PTHING(  timeCompleteIteration ); // timeIteration + timePreiteration );
 
     os << PTHING( levenbergIterations );
     os << PTHING( timeLinearSolver);

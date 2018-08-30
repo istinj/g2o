@@ -61,11 +61,13 @@ namespace g2o {
     int    iterationsLinearSolver;    ///< iterations of PCG, (0 if not used, i.e., Cholesky)
     number_t timeUpdate;                ///< time to apply the update
     number_t timeIteration;             ///< total time;
+    number_t timeMarginals;             ///< computing the inverse elements (solve blocks) and thus the marginal covariances
 
+    //ia custom stats :)
     number_t timePreIteration;           ///< time for preIteration
     number_t timeCompleteIteration;      ///< timeIteration + timePreIteration
-
-    number_t timeMarginals;             ///< computing the inverse elements (solve blocks) and thus the marginal covariances
+    number_t totalChi2;                  ///< the optimizer->chi2() always (ignores robust kernel)
+    
 
     // information about the Hessian matrix
     size_t hessianDimension;          ///< rows / cols of the Hessian
