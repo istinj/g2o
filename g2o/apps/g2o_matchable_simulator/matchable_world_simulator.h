@@ -12,7 +12,7 @@ namespace g2o {
   namespace matchables {
 
     //!TODO
-    //3 viewer application?
+    //3 viewer application
     //4 add noise components to the edges
     //5 initialGuess to the edges (not useful)
     
